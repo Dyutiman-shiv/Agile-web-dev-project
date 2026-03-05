@@ -1,3 +1,3 @@
 def favoutite_fruits():
-
-    return []
+    
+    return ["appple", "banana"]
