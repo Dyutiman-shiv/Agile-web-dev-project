@@ -1,3 +1,5 @@
 def favoutite_fruits():
-    
-    return ["Coconut", "Watermelon","strawberries","pears"]
+
+    return ["Coconut", "Watermelon", "Mango", "Kiwi","strawberries","pears"]
+
+
