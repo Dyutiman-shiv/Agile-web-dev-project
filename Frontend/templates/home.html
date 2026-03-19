@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block page_content %}
+<div class="max-w-3xl mx-auto animate-fade-in">
+    <!-- Welcome card -->
+    <div class="bg-white rounded-2xl shadow-md p-6 mb-6">
+        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <span class="text-2xl">👋</span>
+            Welcome, {{ current_user.username }}!
+        </h3>
+        <p class="text-gray-500 mt-1">You are logged in. This is your dashboard.</p>
+    </div>
+
+    <!-- Community members -->
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h4 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+                </svg>
+                Community Members
+            </h4>
+        </div>
+        <ul class="divide-y divide-gray-50">
+            {% for user in users %}
+            <li class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture }}" alt="avatar"
+                     class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-100"
+                     referrerpolicy="no-referrer">
+                {% else %}
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ring-2 ring-indigo-100">
+                    {{ user.username[0]|upper }}
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-gray-800 truncate">{{ user.username }}</span>
+                        {% if user.id == current_user.id %}
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">You</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-400 truncate">{{ user.email }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock page_content %}
