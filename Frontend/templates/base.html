@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}App{% endblock %}</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out forwards',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'slide-down': 'slideDown 0.3s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+                        'shake': 'shake 0.5s ease-in-out',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        shake: {
+                            '0%,100%': { transform: 'translateX(0)' },
+                            '20%': { transform: 'translateX(-8px)' },
+                            '40%': { transform: 'translateX(8px)' },
+                            '60%': { transform: 'translateX(-4px)' },
+                            '80%': { transform: 'translateX(4px)' },
+                        },
+                        blob: {
+                            '0%':   { transform: 'translate(0,0) scale(1)' },
+                            '33%':  { transform: 'translate(30px,-50px) scale(1.1)' },
+                            '66%':  { transform: 'translate(-20px,20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0,0) scale(1)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 antialiased">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="fixed top-4 right-4 z-50 flex flex-col gap-2" id="flash-container">
+        {% for category, message in messages %}
+        <div class="flash-msg animate-slide-down flex items-center gap-2 rounded-lg px-4 py-3 shadow-lg text-sm
+            {% if category == 'danger' %}bg-red-500 text-white
+            {% elif category == 'warning' %}bg-amber-500 text-white
+            {% elif category == 'info' %}bg-blue-500 text-white
+            {% else %}bg-emerald-500 text-white{% endif %}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-2 hover:opacity-70 transition-opacity">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+    {% block scripts %}{% endblock %}
+
+    <!-- Auto-dismiss flash messages -->
+    <script>
+        setTimeout(function(){
+            $(".flash-msg").each(function(i){
+                var el = $(this);
+                setTimeout(function(){ el.fadeOut(400, function(){ el.remove(); }); }, i * 200);
+            });
+        }, 4000);
+    </script>
+</body>
+</html>
