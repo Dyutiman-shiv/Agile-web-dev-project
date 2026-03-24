@@ -36,3 +36,38 @@ input:focus {
     border-radius: 9999px;
     transition: width 0.3s ease, background-color 0.3s ease;
 }
+
+/* ---------- Calendar ---------- */
+/* Mini calendar cell grid alignment */
+#mini-calendar .grid {
+    gap: 1px 0;
+}
+
+/* Agenda panel scrollbar */
+#agenda-panel::-webkit-scrollbar {
+    width: 4px;
+}
+#agenda-panel::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+}
+
+/* Calendar scroll containers */
+#week-scroll::-webkit-scrollbar,
+#day-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+#week-scroll::-webkit-scrollbar-thumb,
+#day-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
