@@ -171,3 +171,22 @@ def google_callback():
 
     login_user(user, remember=True)
     return redirect(url_for("auth.home"))
+
+
+# ---------- Placeholder pages ----------
+@auth_bp.route("/sessions")
+@login_required
+def sessions_view():
+    return render_template("sessions.html")
+
+
+@auth_bp.route("/stats")
+@login_required
+def stats_view():
+    return render_template("stats.html")
+
+
+@auth_bp.route("/scores")
+@login_required
+def scores_view():
+    return render_template("scores.html")
