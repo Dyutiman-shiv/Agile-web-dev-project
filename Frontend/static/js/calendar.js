@@ -13,10 +13,6 @@ $(function () {
     var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    var DAYS_MINI = ["S","M","T","W","T","F","S"];
-
-    // ============ Helpers ============
-    function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
     function toLocalISO(d) {
         return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
