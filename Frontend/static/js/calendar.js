@@ -9,10 +9,18 @@ $(function () {
     var selectedColor = "#6366f1";
     var selectedType = "session";
     var editingEvent = null;
+    var isEditMode = false;  // Track if we're in edit mode
+    var currentSummaryEvent = null;
 
     var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
     var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     var DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    var DAYS_MINI = ["S", "M", "T", "W", "T", "F", "S"];
+
+    //Format date & time
+    function pad(num) {
+        return num.toString().padStart(2, '0');
+    }
 
     function toLocalISO(d) {
         return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
@@ -169,7 +177,7 @@ $(function () {
         // Day-of-week header
         html += '<div class="grid grid-cols-7 mb-1">';
         for (var d = 0; d < 7; d++) {
-            html += '<div class="text-center text-xs font-medium text-gray-400 py-1">' + DAYS_MINI[d] + '</div>';
+            html += '<div class="text-center text-xs font-medium text-gray-400 py-1">' + DAYS_SHORT[d] + '</div>';
         }
         html += '</div>';
 
@@ -292,13 +300,113 @@ $(function () {
         });
     }
 
+    // Show summary popup
+    function showSummaryModal(ev) {
+        currentSummaryEvent = ev;
+        var startDate = new Date(ev.start);
+        var endDate = getEndTime(ev);
+        
+        // Set title and color
+        $("#summary-title").text(ev.title);
+        $("#summary-color-dot").css("background", ev.color || "#6366f1");
+        
+        // Set date and time
+        var dateStr = startDate.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        var timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
+        
+        $("#summary-datetime").text(dateStr + " at " + timeStr);
+        
+        // Show/hide fields based on event type
+        if (ev.type === "session") {
+            $("#summary-duration-container").show();
+            $("#summary-notes-container").show();
+            $("#summary-description-container").hide();
+            $("#summary-completed-container").hide();
+            
+            // Set duration
+            var duration = ev.duration || 60;
+            var hours = Math.floor(duration / 60);
+            var minutes = duration % 60;
+            var durationText = hours > 0 ? hours + " hr" + (hours > 1 ? "s" : "") : "";
+            durationText += minutes > 0 ? (durationText ? " " : "") + minutes + " min" : "";
+            $("#summary-duration").text(durationText || "60 min");
+            
+            // Set notes
+            $("#summary-notes").text(ev.notes || "No notes");
+        } else {
+            $("#summary-duration-container").hide();
+            $("#summary-notes-container").hide();
+            $("#summary-description-container").show();
+            $("#summary-completed-container").show();
+            
+            // Set description
+            $("#summary-description").text(ev.description || "No description");
+            
+            // Set completed status
+            $("#summary-completed").text(ev.completed ? "Completed ✓" : "Not completed");
+            $("#summary-completed").removeClass().addClass("text-sm font-medium " + 
+                (ev.completed ? "text-green-600" : "text-gray-800"));
+        }
+        
+        $("#event-summary-modal").removeClass("hidden");
+    }
+
+    // Summary modal handlers
+    $("#summary-close-btn").on("click", function() {
+        $("#event-summary-modal").addClass("hidden");
+        currentSummaryEvent = null;
+    });
+
+    $("#event-summary-modal").on("click", function(e) {
+        if (e.target === this) {
+            $("#event-summary-modal").addClass("hidden");
+            currentSummaryEvent = null;
+        }
+    });
+
+    // Edit from summary - open the main edit modal
+    $("#summary-edit-btn").on("click", function() {
+        if (currentSummaryEvent) {
+            $("#event-summary-modal").addClass("hidden");
+            openModal(currentSummaryEvent);
+            currentSummaryEvent = null;
+        }
+    });
+
+    // Delete from summary
+    $("#summary-delete-btn").on("click", function() {
+        if (!currentSummaryEvent) return;
+        if (!confirm("Delete this event?")) return;
+        
+        var eventToDelete = currentSummaryEvent;
+        $.ajax({
+            url: "/api/events/" + eventToDelete.id + "?type=" + eventToDelete.type,
+            method: "DELETE",
+            success: function () {
+                $("#event-summary-modal").addClass("hidden");
+                currentSummaryEvent = null;
+                loadEvents();
+            },
+            error: function (xhr) {
+                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Delete failed.";
+                showAlert(msg, "danger");
+            }
+        });
+    });
+
     // Click agenda event → open edit modal
     $(document).on("click", ".agenda-event", function(e) {
         e.stopPropagation();
         var id = $(this).data("id");
         var type = $(this).data("type");
         var ev = allEvents.find(function(x) { return x.id === id && x.type === type; });
-        if (ev) openModal(ev);
+        if (ev) showSummaryModal(ev);
     });
 
     // -- Month view --
@@ -582,42 +690,83 @@ $(function () {
         var id = $(this).data("id");
         var type = $(this).data("type");
         var ev = events.find(function (x) { return x.id === id && x.type === type; });
-        if (ev) openModal(ev);
+        if (ev) showSummaryModal(ev);
     });
+
+    // ============ View Modal (NEW) ============
+    function openViewModal(ev) {
+        $("#event-view-modal").removeClass("hidden");
+
+        var start = new Date(ev.start);
+        var end = getEndTime(ev);
+
+        var html = `
+            <div><strong>${escapeHtml(ev.title)}</strong></div>
+            <div>${formatTime12(start)} - ${formatTime12(end)}</div>
+            <div>${start.toDateString()}</div>
+        `;
+
+        if (ev.type === "session" && ev.notes) {
+            html += `<div>Notes: ${escapeHtml(ev.notes)}</div>`;
+        }
+
+        if (ev.type === "task" && ev.description) {
+            html += `<div>Description: ${escapeHtml(ev.description)}</div>`;
+        }
+
+        $("#view-content").html(html);
+        $("#event-view-modal").data("event", ev);
+    }
 
     // ============ Modal ============
     function openModal(ev, date, time) {
         editingEvent = ev || null;
+        isEditMode = true; // Always in edit mode when opened from summary
         $("#event-alert").html("");
 
         if (ev) {
-            // Editing
+            // Editing existing event
             $("#event-modal-title").text("Edit Event");
-            $("#event-delete-btn").removeClass("hidden");
-            var evDate = new Date(ev.start);
             $("#event-id").val(ev.id);
+            
+            // Enable all form fields for editing
+            $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
+            $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
+            
+            var evDate = new Date(ev.start);
             selectType(ev.type);
             $("#event-title").val(ev.title);
             $("#event-date").val(dateKey(evDate));
             $("#event-time").val(pad(evDate.getHours()) + ":" + pad(evDate.getMinutes()));
+            
             if (ev.type === "session") {
-                $("#event-duration").val(ev.duration || 60);
+                $("#event-reminders").val(ev.duration || 60);
                 $("#event-notes").val(ev.notes || "");
                 selectColor(ev.color || "#6366f1");
             } else {
                 $("#event-description").val(ev.description || "");
                 $("#event-completed").prop("checked", ev.completed);
             }
+            
+            // Set save button text
+            $("#event-save-btn").text("Update").removeClass("bg-indigo-600").addClass("bg-indigo-700");
         } else {
-            // Creating
+            // Creating new event
             $("#event-modal-title").text("New Event");
-            $("#event-delete-btn").addClass("hidden");
             $("#event-id").val("");
             $("#event-form")[0].reset();
+            
+            // Enable all form fields
+            $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
+            $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
+            
             selectType("session");
             selectColor("#6366f1");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
+            
+            // Set save button text
+            $("#event-save-btn").text("Save").removeClass("bg-indigo-700").addClass("bg-indigo-600");
         }
 
         $("#event-modal").removeClass("hidden");
@@ -626,6 +775,12 @@ $(function () {
     function closeModal() {
         $("#event-modal").addClass("hidden");
         editingEvent = null;
+        isEditMode = false;
+        
+        // Reset form state
+        $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
+        $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
+        $("#event-save-btn").text("Save").removeClass("bg-indigo-700").addClass("bg-indigo-600");
     }
 
     $("#event-modal-close, #event-cancel-btn").on("click", closeModal);
@@ -646,8 +801,8 @@ $(function () {
         if (type === "session") {
             $("#session-fields").removeClass("hidden");
             $("#task-fields").addClass("hidden");
-            $("#event-title-label").text("Subject");
-            $("#event-title").attr("placeholder", "e.g. Math 101");
+            $("#event-title-label").text("Task Name");
+            $("#event-title").attr("placeholder", "Description...");
         } else {
             $("#session-fields").addClass("hidden");
             $("#task-fields").removeClass("hidden");
@@ -675,6 +830,36 @@ $(function () {
         selectColor($(this).data("color"));
     });
 
+    // ============ View modal buttons ============
+    $("#view-close").on("click", function () {
+        $("#event-view-modal").addClass("hidden");
+    });
+
+    $("#view-edit").on("click", function () {
+        var ev = $("#event-view-modal").data("event");
+        $("#event-view-modal").addClass("hidden");
+        openModal(ev);
+    });
+
+    $("#view-delete").on("click", function () {
+        var ev = $("#event-view-modal").data("event");
+        if (!ev) return;
+
+        if (!confirm("Delete this event?")) return;
+
+        $.ajax({
+            url: "/api/events/" + ev.id + "?type=" + ev.type,
+            method: "DELETE",
+            success: function () {
+                $("#event-view-modal").addClass("hidden");
+                loadEvents();
+            },
+            error: function () {
+                alert("Delete failed");
+            }
+        });
+    });
+
     // ============ Add event button ============
     $("#add-event-btn, #add-event-btn-mobile").on("click", function () {
         var todayStr = dateKey(new Date());
@@ -684,6 +869,7 @@ $(function () {
     // ============ Save event ============
     $("#event-form").on("submit", function (e) {
         e.preventDefault();
+        
         var id = $("#event-id").val();
         var title = $("#event-title").val().trim();
         var date = $("#event-date").val();
@@ -702,7 +888,7 @@ $(function () {
         };
 
         if (selectedType === "session") {
-            payload.duration = parseInt($("#event-duration").val()) || 60;
+            payload.duration = parseInt($("#event-reminders").val()) || 60;
             payload.notes = $("#event-notes").val();
             payload.color = selectedColor;
         } else {
@@ -739,7 +925,7 @@ $(function () {
     });
 
     // ============ Delete event ============
-    $("#event-delete-btn").on("click", function () {
+   $("#event-delete-btn").on("click", function () {
         if (!editingEvent) return;
         if (!confirm("Delete this event?")) return;
 
