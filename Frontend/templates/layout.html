@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex flex-col h-screen">
+    <!-- Top navigation bar -->
+    <header class="bg-indigo-600 text-white shrink-0 z-30 shadow-md">
+        <div class="flex items-center justify-between px-4 sm:px-6 h-14">
+            <!-- Left: Brand logo -->
+            <a href="{{ url_for('auth.home') }}" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">
+                <div class="grid grid-cols-2 gap-0.5">
+                    <div class="w-3.5 h-3.5 rounded-sm bg-white/90"></div>
+                    <div class="w-3.5 h-3.5 rounded-sm bg-white/60"></div>
+                    <div class="w-3.5 h-3.5 rounded-sm bg-white/60"></div>
+                    <div class="w-3.5 h-3.5 rounded-sm bg-white/90"></div>
+                </div>
+                <span class="text-xl font-bold tracking-tight">Planify</span>
+            </a>
+
+            <!-- Center: Nav links (hidden on small screens, shown via hamburger) -->
+            <nav id="nav-links" class="hidden md:flex items-center gap-1">
+                {% set nav_items = [
+                    ('auth.home', 'Dashboard'),
+                    ('cal.calendar_view', 'Calendar'),
+                    ('auth.sessions_view', 'Sessions'),
+                    ('auth.stats_view', 'Stats'),
+                    ('auth.scores_view', 'Scores'),
+                ] %}
+                {% for endpoint, label in nav_items %}
+                <a href="{{ url_for(endpoint) }}"
+                   class="nav-link relative px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200
+                          {% if request.endpoint == endpoint %}text-white{% else %}text-white/70 hover:text-white hover:bg-white/10{% endif %}">
+                    {{ label }}
+                    {% if request.endpoint == endpoint %}
+                    <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-white rounded-full"></span>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </nav>
+
+            <!-- Right: User section -->
+            <div class="flex items-center gap-3">
+                <!-- Mobile hamburger -->
+                <button id="mobile-nav-btn" class="md:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+                </button>
+
+                <!-- User dropdown -->
+                <div class="relative" id="user-dropdown-wrapper">
+                    <button id="user-dropdown-btn" class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors duration-200">
+                        {% if current_user.profile_picture %}
+                        <img src="{{ current_user.profile_picture }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30" referrerpolicy="no-referrer" alt="avatar">
+                        {% else %}
+                        <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
+                            {{ current_user.username[0]|upper }}
+                        </div>
+                        {% endif %}
+                        <span class="text-sm font-medium hidden sm:block">{{ current_user.username }}</span>
+                    </button>
+
+                    <div id="user-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-slide-down z-50">
+                        <a href="{{ url_for('profile.profile_view') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                            </svg>
+                            Profile
+                        </a>
+                        <div class="border-t border-gray-100 my-1"></div>
+                        <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>
+                            </svg>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile nav dropdown -->
+        <nav id="mobile-nav-menu" class="hidden md:hidden border-t border-white/10 px-4 py-2 space-y-1">
+            {% for endpoint, label in nav_items %}
+            <a href="{{ url_for(endpoint) }}"
+               class="block px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                      {% if request.endpoint == endpoint %}bg-white/15 text-white{% else %}text-white/70 hover:text-white hover:bg-white/10{% endif %}">
+                {{ label }}
+            </a>
+            {% endfor %}
+        </nav>
+    </header>
+
+    <!-- Scrollable page content -->
+    <main class="flex-1 {% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}">
+        {% block page_content %}{% endblock %}
+    </main>
+</div>
+
+<script>
+(function(){
+    // User dropdown
+    var btn = document.getElementById("user-dropdown-btn");
+    var menu = document.getElementById("user-dropdown-menu");
+    if (btn) {
+        btn.addEventListener("click", function(e){
+            e.stopPropagation();
+            menu.classList.toggle("hidden");
+        });
+    }
+    document.addEventListener("click", function(){
+        if (menu) menu.classList.add("hidden");
+    });
+
+    // Mobile nav toggle
+    var mobBtn = document.getElementById("mobile-nav-btn");
+    var mobMenu = document.getElementById("mobile-nav-menu");
+    if (mobBtn) {
+        mobBtn.addEventListener("click", function(e){
+            e.stopPropagation();
+            mobMenu.classList.toggle("hidden");
+        });
+    }
+})();
+</script>
+{% endblock %}

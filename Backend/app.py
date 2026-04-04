@@ -1,5 +1,5 @@
 import os
-from flask import Flask, app
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -7,13 +7,13 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 def create_app():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     app = Flask(
         __name__,
-        template_folder=os.path.join(BASE_DIR, os.pardir, "Frontend", "templates"),
-        static_folder=os.path.join(BASE_DIR, os.pardir, "Frontend", "static"),
+        template_folder=os.path.join(base_dir, "..", "Frontend", "templates"),
+        static_folder=os.path.join(base_dir, "..", "Frontend", "static"),
     )
 
     from config import Config
@@ -52,15 +52,14 @@ def create_app():
 
     from models import User
 
-    from calender_api import calendar_bp
-    app.register_blueprint(calendar_bp)
-
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
     with app.app_context():
         db.create_all()
+    
+    from calendar_api import calendar_api
+    app.register_blueprint(calendar_api)
 
     return app
-

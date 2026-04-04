@@ -1,65 +1,28 @@
-from flask import Blueprint, Response
-from flask_login import current_user
-from datetime import datetime, timedelta
-from models import StudySession, Task
+from flask import Flask, request
+import requests
 
-calendar_bp = Blueprint("calendar", __name__)
+app = Flask(__name__)
 
-@calendar_bp.route("/calendar.ics")
-def generate_calendar():
-    now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+@app.route("/get_ical")
+def get_ical():
+    url = request.args.get("url")
 
-    user_id = 1
+    try:
+        response = requests.get(url)
+        return response.text
+    except:
+        return "Error loading iCal"
 
-    sessions = StudySession.query.filter_by(user_id=user_id).all()
-    tasks = Task.query.filter_by(user_id=user_id).all()
+if __name__ == "__main__":
+    app.run(debug=True)
 
-    events = ""
+from flask import Blueprint, request
+import requests
 
-    for session in sessions:
-        start = session.start_time
-        end = start + timedelta(minutes=session.duration_minutes)
+calendar_api = Blueprint("calendar_api", __name__)
 
-        events += f"""BEGIN:VEVENT
-UID:session-{session.id}@planify
-DTSTAMP:{now}
-DTSTART:{start.strftime("%Y%m%dT%H%M%SZ")}
-DTEND:{end.strftime("%Y%m%dT%H%M%SZ")}
-SUMMARY:{session.subject}
-DESCRIPTION:{session.notes or ""}
-END:VEVENT
-"""
-
-    for task in tasks:
-        start = task.due_date
-        end = start + timedelta(hours=1)
-
-        events += f"""BEGIN:VEVENT
-UID:task-{task.id}@planify
-DTSTAMP:{now}
-DTSTART:{start.strftime("%Y%m%dT%H%M%SZ")}
-DTEND:{end.strftime("%Y%m%dT%H%M%SZ")}
-SUMMARY:{task.title}
-DESCRIPTION:{task.description or ""}
-END:VEVENT
-"""
-
-    if not events:
-        events = f"""BEGIN:VEVENT
-UID:test@planify
-DTSTAMP:{now}
-DTSTART:20260330T090000Z
-DTEND:20260330T100000Z
-SUMMARY:Fallback Event
-DESCRIPTION:No data found
-END:VEVENT
-"""
-
-    ics_content = f"""BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Planify//EN
-CALSCALE:GREGORIAN
-{events}END:VCALENDAR
-"""
-
-    return Response(ics_content, mimetype="text/calendar")
+@calendar_api.route("/get_ical")
+def get_ical():
+    url = request.args.get("url")
+    response = requests.get(url)
+    return response.text

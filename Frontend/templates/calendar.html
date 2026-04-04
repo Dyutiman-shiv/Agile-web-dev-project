@@ -1,0 +1,264 @@
+{% extends "layout.html" %}
+{% block title %}Calendar{% endblock %}
+{% block main_class %}overflow-hidden bg-gray-50{% endblock %}
+
+{% block page_content %}
+<div class="flex gap-0 h-full animate-fade-in">
+
+    <!-- ========== LEFT PANEL ========== -->
+    <aside id="cal-left-panel" class="hidden lg:flex flex-col shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-5" style="width: clamp(280px, 22vw, 400px);">
+        <!-- + Add event button -->
+        <button id="add-event-btn" class="w-full mb-5 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        </button>
+
+        <!-- Mini Calendar -->
+        <div id="mini-calendar" class="mb-5">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Agenda: Today & Tomorrow -->
+        <div id="agenda-panel" class="flex-1 overflow-y-auto">
+            <!-- Rendered by JS -->
+        </div>
+    </aside>
+
+    <!-- ========== RIGHT PANEL ========== -->
+    <div class="flex-1 flex flex-col min-w-0 bg-gray-50">
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 bg-white border-b border-gray-200 shrink-0">
+            <div class="flex items-center gap-2">
+                <button id="cal-today" class="px-4 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">Today</button>
+                <button id="cal-prev" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+                </button>
+                <button id="cal-next" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+                </button>
+                <h2 id="cal-title" class="ml-2 text-base font-semibold text-gray-800 hidden sm:block"></h2>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+                <!-- Mobile add button (visible only on small screens) -->
+                <button id="add-event-btn-mobile" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </button>
+
+                <!-- View switcher -->
+                <div class="inline-flex rounded-xl bg-gray-100 p-1">
+                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all" data-view="day">Day</button>
+                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all" data-view="week">Week</button>
+                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all active" data-view="month">Month</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar grid container -->
+        <div id="calendar-container" class="flex-1 bg-white overflow-hidden min-h-0">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+</div>
+
+<!-- Event create/edit modal -->
+<div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="event-modal-title" class="text-lg font-bold text-gray-800">New Event</h3>
+        </div>
+
+        <div id="event-alert"></div>
+
+        <form id="event-form" class="space-y-4">
+            <input type="hidden" id="event-id" value="">
+            <!-- Type selector -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
+                <div class="flex gap-2">
+                    <button type="button" class="event-type-btn flex-1 px-3 py-2 text-sm font-medium rounded-xl border-2 transition-all" data-type="session">
+                        Study Session
+                    </button>
+                    <button type="button" class="event-type-btn flex-1 px-3 py-2 text-sm font-medium rounded-xl border-2 transition-all" data-type="task">
+                        Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- Title -->
+            <div>
+                <label for="event-title" class="block text-sm font-medium text-gray-700 mb-1.5" id="event-title-label">Task Name</label>
+                <input type="text" id="event-title" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all" placeholder="Description..." required>
+            </div>
+
+            <!-- Date + Time -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="event-date" class="block text-sm font-medium text-gray-700 mb-1.5">Date</label>
+                    <input type="date" id="event-date" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all" required>
+                </div>
+                <div>
+                    <label for="event-time" class="block text-sm font-medium text-gray-700 mb-1.5">Time</label>
+                    <input type="time" id="event-time" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all" required>
+                </div>
+            </div>
+
+            <!-- Session-specific: reminder + color -->
+            <div id="session-fields">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="event-reminders" class="block text-sm font-medium text-gray-700 mb-1.5">Reminder (min)</label>
+                        <input type="number" id="event-reminders" value="60" min="5" max="480" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all">
+                    </div>
+                    <div>
+                        <label for="event-color" class="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
+                        <div class="flex gap-2 mt-1" id="color-picker">
+                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label for="event-notes" class="block text-sm font-medium text-gray-700 mb-1.5">Comments</label>
+                    <textarea id="event-notes" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all resize-none" placeholder="Add comments..."></textarea>
+                </div>
+            </div>
+
+            <!-- Task-specific: description + completed -->
+            <div id="task-fields" class="hidden">
+                <div>
+                    <label for="event-description" class="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                    <textarea id="event-description" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all resize-none" placeholder="Optional description..."></textarea>
+                </div>
+                <div class="mt-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="event-completed" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                        <span class="text-sm text-gray-700">Mark as completed</span>
+                    </label>
+                </div>
+                <hr class="my-3">
+                <div class="mt-3">
+                    <label class="block text-sm font-medium mb-1">
+                        Import iCal Link
+                    </label>
+                    <input 
+                        id="ical-input-popup"
+                        type="text"
+                        placeholder="Paste iCal link..."
+                        class="w-full border rounded px-3 py-2 text-sm"
+                        >
+                        <button 
+                        type="button"
+                        onclick="importICal()"
+                        class="mt-2 w-full bg-indigo-600 text-white py-2 rounded"
+                        >
+                        Import iCal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-between pt-2">
+                <button type="button" id="event-delete-btn" class="hidden px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+                    Delete
+                </button>
+                <div class="flex gap-2 ml-auto">
+                    <button type="button" id="event-cancel-btn" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button type="submit" id="event-save-btn" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+                        <span id="event-spinner" class="hidden inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1 align-middle"></span>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Event Summary Popup -->
+<div id="event-summary-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center gap-2">
+                <div id="summary-color-dot" class="w-3 h-3 rounded-full"></div>
+                <h3 id="summary-title" class="text-lg font-bold text-gray-800">Event</h3>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="summary-edit-btn" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500" title="Edit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                </button>
+                <button id="summary-delete-btn" class="p-1.5 rounded-lg hover:bg-red-50 transition-colors text-red-500" title="Delete">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                </button>
+                <button id="summary-close-btn" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-3 mb-6">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-500">Date & Time</p>
+                    <p id="summary-datetime" class="text-sm font-medium text-gray-800"></p>
+                </div>
+            </div>
+            
+            <div id="summary-duration-container" class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-500">Reminder</p>
+                    <p id="summary-duration" class="text-sm font-medium text-gray-800"></p>
+                </div>
+            </div>
+            
+            <div id="summary-notes-container" class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-500">Comments</p>
+                    <p id="summary-notes" class="text-sm text-gray-800"></p>
+                </div>
+            </div>
+            
+            <div id="summary-description-container" class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-500">Description</p>
+                    <p id="summary-description" class="text-sm text-gray-800"></p>
+                </div>
+            </div>
+            
+            <div id="summary-completed-container" class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                    <p class="text-sm text-gray-500">Status</p>
+                    <p id="summary-completed" class="text-sm font-medium text-gray-800"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+{% endblock %}
