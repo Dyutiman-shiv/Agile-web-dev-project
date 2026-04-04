@@ -71,3 +71,19 @@ input:focus {
 .animate-fade-in {
     animation: fadeIn 0.3s ease-out;
 }
+
+.montserrat-logo {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.montserrat-semi-bold{
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+
+}
+
