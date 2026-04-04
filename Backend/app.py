@@ -7,12 +7,13 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
 def create_app():
     app = Flask(
         __name__,
-        template_folder=os.path.join(os.pardir, "Frontend", "templates"),
-        static_folder=os.path.join(os.pardir, "Frontend", "static"),
+        template_folder=os.path.join(base_dir, "..", "Frontend", "templates"),
+        static_folder=os.path.join(base_dir, "..", "Frontend", "static"),
     )
 
     from config import Config
@@ -57,5 +58,8 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+    
+    from calendar_api import calendar_api
+    app.register_blueprint(calendar_api)
 
     return app

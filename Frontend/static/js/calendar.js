@@ -945,4 +945,83 @@ $(function () {
 
     // ============ Initial load ============
     loadEvents();
-});
+
+    //==Load iCal events from external .ics source and merge into current calendar==
+    
+    function loadICalEvents(icalUrl) {
+        if (!icalUrl) {
+            alert("Please enter a valid iCal link");
+            return;
+        }
+        fetch(`/get_ical?url=${encodeURIComponent(icalUrl)}`)
+        .then(res => res.text())
+        .then(data => {
+            const parsedEvents = [];
+
+            const blocks = data.split("BEGIN:VEVENT");
+
+            blocks.forEach(block => {
+                if (block.includes("SUMMARY")) {
+
+                    const summaryMatch = block.match(/SUMMARY:(.*)/);
+                    const dtstartMatch = block.match(/DTSTART.*:(\d{8}T\d{6})/);
+
+                    if (summaryMatch && dtstartMatch) {
+
+                        const title = summaryMatch[1];
+                        const dt = dtstartMatch[1];
+
+                        const formatted = formatDateTime(dt);
+
+                        parsedEvents.push({
+                            title: title,
+                            start: formatted,
+                            type: "task",
+                            color: "#3b82f6"
+                        });
+                    }
+                }
+            });
+            
+            fetch("/api/events/bulk", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(parsedEvents)
+            })
+            .then(() => {
+                loadEvents();
+            });
+
+            events = events.concat(parsedEvents);
+            allEvents = allEvents.concat(parsedEvents);
+
+            render();
+            renderAgenda();
+
+            alert("iCal imported successfully!");
+        });
+   }
+
+    // Convert ICS datetime format (YYYYMMDDTHHMMSS) to ISO format (YYYY-MM-DDTHH:mm)
+    function formatDateTime(dt) {
+        const year = dt.slice(0, 4);
+        const month = dt.slice(4, 6);
+        const day = dt.slice(6, 8);
+        const hour = dt.slice(9, 11);
+        const minute = dt.slice(11, 13);
+
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+
+    function importICal() {
+        console.log("clicked");
+        const url = document.getElementById("ical-input-popup").value;
+        console.log("input:", url);
+        loadICalEvents(url);
+    }
+
+    window.importICal = importICal;
+}
+)
