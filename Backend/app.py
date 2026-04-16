@@ -50,6 +50,15 @@ def create_app():
     from session_routes import session_bp
     app.register_blueprint(session_bp)
 
+    from semester_routes import semester_bp
+    app.register_blueprint(semester_bp)
+
+    from unit_routes import unit_bp
+    app.register_blueprint(unit_bp)
+
+    from stats_routes import stats_bp
+    app.register_blueprint(stats_bp)
+
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 

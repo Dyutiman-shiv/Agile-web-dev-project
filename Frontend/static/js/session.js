@@ -488,7 +488,8 @@ $(function () {
             timer_mode: timerMode,
             color: "#6366f1",
             notes: "",
-            checklist: checklistItems
+            checklist: checklistItems,
+            unit_id: $("#session-unit").val() || null
         };
 
         var $btn = $("#end-session-btn");
@@ -570,6 +571,7 @@ $(function () {
                     '      <div class="flex items-center gap-2">' +
                     '        <span class="montserrat-medium text-sm text-gray-800 truncate">' + $("<span>").text(s.title).html() + '</span>' +
                     '        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500 roboto-regular shrink-0">' + (s.timer_mode || 'stopwatch') + '</span>' +
+                    (s.unit_code ? '        <span class="px-2 py-0.5 text-xs rounded-full text-white roboto-regular shrink-0" style="background:' + (s.color || '#6366f1') + '">' + $("<span>").text(s.unit_code).html() + '</span>' : '') +
                     '      </div>' +
                     '      <p class="text-xs text-gray-400 roboto-regular mt-0.5">' + dateStr + ' at ' + timeStr + ' · ' + formatDurationShort(s.duration) + '</p>' +
                     '    </div>' +
@@ -655,4 +657,17 @@ $(function () {
     initClockFace();
     loadHistory();
     validateStart();
+
+    // Load units for dropdown (current semester only)
+    $.getJSON("/api/semesters/current", function (sem) {
+        var url = "/api/units?archived=false";
+        if (sem && sem.id) url += "&semester_id=" + sem.id;
+        $.getJSON(url, function (data) {
+            var $sel = $("#session-unit");
+            $sel.html('<option value="">None</option>');
+            data.forEach(function (u) {
+                $sel.append('<option value="' + u.id + '">' + $("<span>").text((u.code ? u.code + " — " : "") + u.name).html() + '</option>');
+            });
+        });
+    });
 });

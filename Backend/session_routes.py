@@ -28,6 +28,7 @@ def create_session():
     timer_mode = data.get("timer_mode", "stopwatch")
     color = data.get("color", "#6366f1")
     notes = data.get("notes", "")
+    unit_id = data.get("unit_id")
 
     session = StudySession(
         user_id=current_user.id,
@@ -37,6 +38,7 @@ def create_session():
         notes=notes,
         color=color,
         timer_mode=timer_mode,
+        unit_id=int(unit_id) if unit_id else None,
     )
     db.session.add(session)
     db.session.flush()  # get session.id before adding checklist items
@@ -88,3 +90,24 @@ def delete_session(session_id):
     db.session.delete(session)
     db.session.commit()
     return jsonify({"success": True, "message": "Session deleted."})
+
+
+@session_bp.route("/api/sessions/<int:session_id>", methods=["PUT"])
+@login_required
+def update_session(session_id):
+    session = db.session.get(StudySession, session_id)
+    if not session or session.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    data = request.get_json()
+    if "name" in data:
+        session.subject = (data["name"] or "").strip() or session.subject
+    if "unit_id" in data:
+        session.unit_id = int(data["unit_id"]) if data["unit_id"] else None
+    if "color" in data:
+        session.color = data["color"]
+    if "notes" in data:
+        session.notes = data["notes"]
+
+    db.session.commit()
+    return jsonify({"success": True, "session": session.to_dict()})

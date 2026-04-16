@@ -50,6 +50,7 @@ def create_event():
     if event_type == "session":
         if not data.get("title") or not data.get("start"):
             return jsonify({"success": False, "message": "Subject and start time required."}), 400
+        unit_id = data.get("unit_id")
         event = StudySession(
             user_id=current_user.id,
             subject=data["title"],
@@ -57,6 +58,7 @@ def create_event():
             duration_minutes=int(data.get("duration", 60)),
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
+            unit_id=int(unit_id) if unit_id else None,
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -96,6 +98,8 @@ def update_event(event_id):
             event.notes = data["notes"]
         if "color" in data:
             event.color = data["color"]
+        if "unit_id" in data:
+            event.unit_id = int(data["unit_id"]) if data["unit_id"] else None
     elif event_type == "task":
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
