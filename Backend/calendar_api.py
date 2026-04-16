@@ -1,28 +1,20 @@
-from flask import Flask, request
-import requests
-
-app = Flask(__name__)
-
-@app.route("/get_ical")
-def get_ical():
-    url = request.args.get("url")
-
-    try:
-        response = requests.get(url)
-        return response.text
-    except:
-        return "Error loading iCal"
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-from flask import Blueprint, request
+import re
+from flask import Blueprint, request, jsonify
+from flask_login import login_required
 import requests
 
 calendar_api = Blueprint("calendar_api", __name__)
 
+
 @calendar_api.route("/get_ical")
+@login_required
 def get_ical():
-    url = request.args.get("url")
-    response = requests.get(url)
-    return response.text
+    url = request.args.get("url", "")
+    if not url or not re.match(r"^https?://", url):
+        return jsonify({"error": "A valid http(s) URL is required."}), 400
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        return jsonify({"error": "Failed to fetch iCal data."}), 502

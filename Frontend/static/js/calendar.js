@@ -104,6 +104,7 @@ $(function () {
     // ============ Fetch events ============
     // We fetch for both the visible calendar range AND the agenda range
     var allEvents = []; // superset for agenda
+    var dbEvents = [];  // DB events only (before iCal merge)
     function loadEvents() {
         var range = getViewRange();
         var agendaRange = getAgendaRange();
@@ -115,6 +116,7 @@ $(function () {
             start: toLocalISO(fetchStart),
             end: toLocalISO(fetchEnd)
         }, function (data) {
+            dbEvents = data;
             allEvents = data;
             events = data;
             render();
@@ -339,6 +341,12 @@ $(function () {
             
             // Set notes
             $("#summary-notes").text(ev.notes || "No notes");
+        } else if (ev.type === "ical") {
+            $("#summary-duration-container").hide();
+            $("#summary-notes-container").hide();
+            $("#summary-description-container").show();
+            $("#summary-completed-container").hide();
+            $("#summary-description").text("Imported from: " + (ev.calendarName || "iCal"));
         } else {
             $("#summary-duration-container").hide();
             $("#summary-notes-container").hide();
@@ -354,6 +362,15 @@ $(function () {
                 (ev.completed ? "text-green-600" : "text-gray-800"));
         }
         
+        // Hide edit/delete for iCal events (read-only)
+        if (ev.readonly) {
+            $("#summary-edit-btn").hide();
+            $("#summary-delete-btn").hide();
+        } else {
+            $("#summary-edit-btn").show();
+            $("#summary-delete-btn").show();
+        }
+
         $("#event-summary-modal").removeClass("hidden");
     }
 
@@ -956,82 +973,80 @@ $(function () {
     // ============ Initial load ============
     loadEvents();
 
-    //==Load iCal events from external .ics source and merge into current calendar==
-    
-    function loadICalEvents(icalUrl) {
-        if (!icalUrl) {
-            alert("Please enter a valid iCal link");
-            return;
-        }
-        fetch(`/get_ical?url=${encodeURIComponent(icalUrl)}`)
-        .then(res => res.text())
-        .then(data => {
-            const parsedEvents = [];
+    // ============ iCal Calendar Integration ============
+    var icalEvents = [];  // parsed iCal events (read-only, not in DB)
 
-            const blocks = data.split("BEGIN:VEVENT");
+    function loadICalCalendars() {
+        $.getJSON("/api/ical-calendars", function (calendars) {
+            icalEvents = [];
+            var pending = 0;
+            var visibleCals = calendars.filter(function (c) { return c.visible; });
 
-            blocks.forEach(block => {
-                if (block.includes("SUMMARY")) {
+            if (visibleCals.length === 0) {
+                mergeICalEvents();
+                return;
+            }
 
-                    const summaryMatch = block.match(/SUMMARY:(.*)/);
-                    const dtstartMatch = block.match(/DTSTART.*:(\d{8}T\d{6})/);
-
-                    if (summaryMatch && dtstartMatch) {
-
-                        const title = summaryMatch[1];
-                        const dt = dtstartMatch[1];
-
-                        const formatted = formatDateTime(dt);
-
-                        parsedEvents.push({
-                            title: title,
-                            start: formatted,
-                            type: "task",
-                            color: "#3b82f6"
-                        });
+            visibleCals.forEach(function (cal) {
+                pending++;
+                $.get("/get_ical", { url: cal.url }, function (data) {
+                    var parsed = parseICalData(data, cal.color, cal.name);
+                    icalEvents = icalEvents.concat(parsed);
+                }).always(function () {
+                    pending--;
+                    if (pending === 0) {
+                        mergeICalEvents();
                     }
-                }
+                });
             });
-            
-            fetch("/api/events/bulk", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(parsedEvents)
-            })
-            .then(() => {
-                loadEvents();
-            });
-
-            events = events.concat(parsedEvents);
-            allEvents = allEvents.concat(parsedEvents);
-
-            render();
-            renderAgenda();
-
-            alert("iCal imported successfully!");
         });
-   }
-
-    // Convert ICS datetime format (YYYYMMDDTHHMMSS) to ISO format (YYYY-MM-DDTHH:mm)
-    function formatDateTime(dt) {
-        const year = dt.slice(0, 4);
-        const month = dt.slice(4, 6);
-        const day = dt.slice(6, 8);
-        const hour = dt.slice(9, 11);
-        const minute = dt.slice(11, 13);
-
-        return `${year}-${month}-${day}T${hour}:${minute}`;
     }
 
-    function importICal() {
-        console.log("clicked");
-        const url = document.getElementById("ical-input-popup").value;
-        console.log("input:", url);
-        loadICalEvents(url);
+    function parseICalData(data, color, calName) {
+        var parsed = [];
+        var blocks = data.split("BEGIN:VEVENT");
+        blocks.forEach(function (block) {
+            if (block.indexOf("SUMMARY") === -1) return;
+            var summaryMatch = block.match(/SUMMARY:(.*)/);
+            var dtstartMatch = block.match(/DTSTART[^:]*:(\d{8}T?\d{0,6})/);
+            if (!summaryMatch || !dtstartMatch) return;
+
+            var title = summaryMatch[1].replace(/\r/g, "").trim();
+            var dt = dtstartMatch[1];
+            var formatted = formatICalDateTime(dt);
+
+            parsed.push({
+                id: "ical-" + calName + "-" + formatted + "-" + title,
+                title: title,
+                start: formatted,
+                type: "ical",
+                color: color,
+                calendarName: calName,
+                readonly: true
+            });
+        });
+        return parsed;
     }
 
-    window.importICal = importICal;
-}
-)
+    function formatICalDateTime(dt) {
+        var year = dt.slice(0, 4);
+        var month = dt.slice(4, 6);
+        var day = dt.slice(6, 8);
+        var hour = dt.length >= 13 ? dt.slice(9, 11) : "00";
+        var minute = dt.length >= 13 ? dt.slice(11, 13) : "00";
+        return year + "-" + month + "-" + day + "T" + hour + ":" + minute;
+    }
+
+    function mergeICalEvents() {
+        // Rebuild events and allEvents with DB events + iCal events
+        events = dbEvents.concat(icalEvents);
+        allEvents = events;
+        render();
+        renderMiniCalendar();
+        renderAgenda();
+    }
+
+    // Load iCal calendars after DB events are loaded
+    loadICalCalendars();
+});
+

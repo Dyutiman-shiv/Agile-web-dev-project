@@ -17,6 +17,7 @@ class User(db.Model):  # type: ignore[name-defined]
     # Relationships
     study_sessions = db.relationship("StudySession", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     tasks = db.relationship("Task", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    ical_calendars = db.relationship("ICalCalendar", backref="user", lazy="dynamic", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -122,4 +123,27 @@ class ChecklistItem(db.Model):  # type: ignore[name-defined]
             "id": self.id,
             "title": self.title,
             "completed": self.completed,
+        }
+
+
+class ICalCalendar(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "ical_calendars"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    url = db.Column(db.String(512), nullable=False)
+    color = db.Column(db.String(20), nullable=False, default="#3b82f6")
+    visible = db.Column(db.Boolean, nullable=False, default=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "url": self.url,
+            "color": self.color,
+            "visible": self.visible,
         }
