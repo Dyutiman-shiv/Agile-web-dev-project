@@ -47,6 +47,9 @@ def create_app():
     from calendar_routes import cal_bp
     app.register_blueprint(cal_bp)
 
+    from session_routes import session_bp
+    app.register_blueprint(session_bp)
+
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 

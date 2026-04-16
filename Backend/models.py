@@ -59,6 +59,10 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     duration_minutes = db.Column(db.Integer, nullable=False, default=60)
     notes = db.Column(db.Text, nullable=True)
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
+    timer_mode = db.Column(db.String(20), nullable=True)  # "stopwatch" or "countdown"
+
+    # Relationship to checklist items
+    checklist_items = db.relationship("ChecklistItem", backref="session", lazy="select", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -72,6 +76,8 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "duration": self.duration_minutes,
             "notes": self.notes or "",
             "color": self.color,
+            "timer_mode": self.timer_mode,
+            "checklist": [ci.to_dict() for ci in self.checklist_items],
         }
 
 
@@ -97,4 +103,23 @@ class Task(db.Model):  # type: ignore[name-defined]
             "description": self.description or "",
             "completed": self.completed,
             "color": "#10b981" if self.completed else "#f59e0b",
+        }
+
+
+class ChecklistItem(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "checklist_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey("study_sessions.id"), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "completed": self.completed,
         }

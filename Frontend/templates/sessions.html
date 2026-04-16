@@ -1,12 +1,350 @@
 {% extends "layout.html" %}
 {% block title %}Sessions{% endblock %}
+{% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}
 
 {% block page_content %}
-<div class="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-    <svg class="w-16 h-16 text-indigo-300 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Sessions</h2>
-    <p class="text-gray-400 text-sm">Coming Soon</p>
+<div class="max-w-6xl mx-auto animate-fade-in">
+
+    <!-- ========== SETUP PHASE ========== -->
+    <div id="setup-phase">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left: Session Setup -->
+            <div class="lg:col-span-2 space-y-5">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-5 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        New Study Session
+                    </h3>
+
+                    <div id="setup-alert"></div>
+
+                    <!-- Session Name -->
+                    <div class="mb-4">
+                        <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Session Name</label>
+                        <input type="text" id="session-name" maxlength="120" placeholder="e.g. CITS3403 Revision"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                                      focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                                      transition-all duration-200 text-sm roboto-regular">
+                    </div>
+
+                    <!-- Timer Mode -->
+                    <div class="mb-4">
+                        <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Timer Mode</label>
+                        <div class="inline-flex rounded-xl bg-gray-100 p-1">
+                            <button type="button" class="timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium bg-primary_purp text-white" data-mode="stopwatch">
+                                Stopwatch
+                            </button>
+                            <button type="button" class="timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium text-gray-500 hover:text-gray-700" data-mode="countdown">
+                                Countdown
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Countdown Duration (hidden by default) -->
+                    <div id="countdown-setup" class="mb-4 hidden">
+                        <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Duration</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="countdown-hours" min="0" max="23" value="0"
+                                   class="w-20 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm text-center
+                                          focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all duration-200">
+                            <span class="text-sm text-gray-500 roboto-regular">h</span>
+                            <input type="number" id="countdown-minutes" min="0" max="59" value="25"
+                                   class="w-20 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm text-center
+                                          focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all duration-200">
+                            <span class="text-sm text-gray-500 roboto-regular">m</span>
+                        </div>
+                    </div>
+
+                    <!-- Checklist Builder -->
+                    <div class="mb-5">
+                        <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Checklist</label>
+                        <div id="checklist-builder" class="space-y-2 mb-3">
+                            <!-- Items rendered by JS -->
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-checklist-item" placeholder="Add a task…" maxlength="200"
+                                   class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                                          focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                                          transition-all duration-200 roboto-regular">
+                            <button type="button" id="add-checklist-btn"
+                                    class="px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Start Button -->
+                    <button type="button" id="start-session-btn" disabled
+                            class="w-full py-3 rounded-xl text-white text-sm montserrat-semi-bold transition-all duration-200
+                                   bg-gray-300 cursor-not-allowed">
+                        Start Session
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Quick Tips -->
+            <div class="space-y-5">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h4 class="text-sm montserrat-semi-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/>
+                        </svg>
+                        Tips
+                    </h4>
+                    <ul class="space-y-2 text-xs text-gray-500 roboto-regular">
+                        <li class="flex items-start gap-2">
+                            <span class="text-primary_purp mt-0.5">•</span>
+                            <span><strong>Stopwatch</strong> counts up — great for open-ended study.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-primary_purp mt-0.5">•</span>
+                            <span><strong>Countdown</strong> counts down — perfect for timed focus sprints.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-primary_purp mt-0.5">•</span>
+                            <span>Check off tasks as you go. Completed sessions appear in your <strong>Calendar</strong>.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ACTIVE SESSION PHASE ========== -->
+    <div id="active-phase" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Left: Timer -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <!-- Session header -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 id="active-session-name" class="text-lg montserrat-semi-bold text-gray-800"></h3>
+                            <p id="active-timer-mode" class="text-xs text-gray-400 roboto-regular mt-0.5"></p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="edit-session-btn" title="Edit session"
+                                    class="p-2 rounded-lg text-gray-400 hover:text-primary_purp hover:bg-indigo-50 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
+                                </svg>
+                            </button>
+                            <span id="active-badge" class="px-3 py-1 rounded-full text-xs montserrat-semi-bold bg-emerald-100 text-emerald-700 animate-pulse">
+                                In Progress
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Clock + Digital Timer -->
+                    <div class="flex flex-col items-center gap-6 mb-8">
+                        <!-- Analog Clock -->
+                        <div class="analog-clock-wrapper">
+                            <svg id="analog-clock" viewBox="0 0 200 200" class="analog-clock">
+                                <!-- Clock face -->
+                                <circle cx="100" cy="100" r="95" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+                                <circle cx="100" cy="100" r="90" fill="#fafafa" stroke="none"/>
+
+                                <!-- Tick marks (generated in JS) -->
+                                <g id="clock-ticks"></g>
+
+                                <!-- Hour numbers -->
+                                <g id="clock-numbers" class="roboto-medium" fill="#374151" font-size="12" text-anchor="middle" dominant-baseline="central"></g>
+
+                                <!-- Clock hands -->
+                                <line id="clock-hour" x1="100" y1="100" x2="100" y2="50" stroke="#374151" stroke-width="4" stroke-linecap="round"/>
+                                <line id="clock-minute" x1="100" y1="100" x2="100" y2="35" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+                                <line id="clock-second" x1="100" y1="100" x2="100" y2="28" stroke="#ef4444" stroke-width="1" stroke-linecap="round"/>
+
+                                <!-- Center dot -->
+                                <circle cx="100" cy="100" r="4" fill="#374151"/>
+                                <circle cx="100" cy="100" r="2" fill="#fff"/>
+                            </svg>
+                        </div>
+
+                        <!-- Digital Timer -->
+                        <div id="digital-timer" class="text-5xl montserrat-bold text-gray-800 tracking-wider tabular-nums">
+                            00:00:00
+                        </div>
+
+                        <!-- Pause / Resume Button -->
+                        <button type="button" id="pause-resume-btn"
+                                class="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm montserrat-semi-bold transition-colors flex items-center gap-2">
+                            <svg id="pause-icon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>
+                            <svg id="resume-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <span id="pause-resume-label">Pause</span>
+                        </button>
+
+                        <!-- Countdown finished indicator -->
+                        <div id="countdown-done-badge" class="hidden px-4 py-1.5 rounded-full bg-amber-100 text-amber-700 text-xs montserrat-semi-bold animate-pulse">
+                            Time's up! Click End Session when ready.
+                        </div>
+                    </div>
+
+                    <!-- End Session Button -->
+                    <button type="button" id="end-session-btn"
+                            class="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm montserrat-semi-bold transition-colors">
+                        End Session
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Live Checklist -->
+            <div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h4 class="text-sm montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Tasks
+                        <span id="checklist-progress" class="ml-auto text-xs text-gray-400 roboto-regular">0/0</span>
+                    </h4>
+                    <div id="live-checklist" class="space-y-2">
+                        <!-- Rendered by JS -->
+                    </div>
+
+                    <!-- Inline add task -->
+                    <div class="flex gap-2 mt-3">
+                        <input type="text" id="live-new-item" placeholder="Add a task…" maxlength="200"
+                               class="flex-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-xs
+                                      focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                                      transition-all duration-200 roboto-regular">
+                        <button type="button" id="live-add-item-btn"
+                                class="px-3 py-2 rounded-xl bg-primary_purp text-white text-xs montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SESSION HISTORY ========== -->
+    <div class="mt-8">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h4 class="text-lg montserrat-semi-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Session History
+                </h4>
+                <span id="history-count" class="text-xs text-gray-400 roboto-regular"></span>
+            </div>
+            <div id="history-list" class="divide-y divide-gray-50">
+                <!-- Rendered by JS -->
+            </div>
+            <div id="history-empty" class="hidden py-12 text-center">
+                <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <p class="text-sm text-gray-400 roboto-regular">No sessions yet. Start your first one above!</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Edit Session Modal -->
+<div id="edit-session-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Edit Session</h3>
+            <button id="edit-modal-close" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="edit-alert"></div>
+
+        <!-- Session Name -->
+        <div class="mb-4">
+            <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Session Name</label>
+            <input type="text" id="edit-session-name" maxlength="120"
+                   class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                          focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                          transition-all duration-200 text-sm roboto-regular">
+        </div>
+
+        <!-- Timer Mode -->
+        <div class="mb-4">
+            <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Timer Mode</label>
+            <div class="inline-flex rounded-xl bg-gray-100 p-1">
+                <button type="button" class="edit-timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="stopwatch">
+                    Stopwatch
+                </button>
+                <button type="button" class="edit-timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="countdown">
+                    Countdown
+                </button>
+            </div>
+        </div>
+
+        <!-- Countdown Duration (shown only when countdown selected) -->
+        <div id="edit-countdown-setup" class="mb-4 hidden">
+            <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Remaining Duration</label>
+            <div class="flex items-center gap-2">
+                <input type="number" id="edit-countdown-hours" min="0" max="23" value="0"
+                       class="w-20 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm text-center
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all duration-200">
+                <span class="text-sm text-gray-500 roboto-regular">h</span>
+                <input type="number" id="edit-countdown-minutes" min="0" max="59" value="25"
+                       class="w-20 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm text-center
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all duration-200">
+                <span class="text-sm text-gray-500 roboto-regular">m</span>
+            </div>
+            <p class="text-xs text-gray-400 roboto-regular mt-1">Adjust how much time is left on the countdown.</p>
+        </div>
+
+        <!-- Checklist -->
+        <div class="mb-5">
+            <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Checklist</label>
+            <div id="edit-checklist-list" class="space-y-2 mb-3 max-h-48 overflow-y-auto">
+                <!-- Rendered by JS -->
+            </div>
+            <div class="flex gap-2">
+                <input type="text" id="edit-new-item" placeholder="Add a task…" maxlength="200"
+                       class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 roboto-regular">
+                <button type="button" id="edit-add-item-btn"
+                        class="px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+            <button id="edit-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="edit-save-btn" class="flex-1 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-session-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Session</h3>
+        <p class="text-sm text-gray-500 mb-5">This will permanently remove this session from your history and calendar.</p>
+        <div class="flex gap-3">
+            <button id="delete-session-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="delete-session-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm montserrat-semi-bold hover:bg-red-600 transition-colors">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/session.js') }}"></script>
 {% endblock %}
