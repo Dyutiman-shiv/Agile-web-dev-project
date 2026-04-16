@@ -5,12 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}App{% endblock %}</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital@0;1&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    colors:{
+
+                        primary_purp: '#725AEA',
+                        secondary_blu: '#3E90EB',
+                        tertiary_blu: '#4D69E7',
+                        backgroud_cal_light: '#E6E3E3',
+                        background_dark: '#152032',
+                        Sun_Sat_Grid: '#F6F6F6',
+                        text_unactive_day: '#AFAFAF',
+                        text_dark_gray: '#393939',
+                        task_yellow: '#FFB703',
+                        task_green: '#4C956C',
+                        task_pink: '#F72585',
+                        task_purp: '#725AEA',
+                        tasl_blu: '#3E90EB'
+                    },
                     animation: {
                         'fade-in': 'fadeIn 0.6s ease-out forwards',
                         'slide-up': 'slideUp 0.5s ease-out forwards',

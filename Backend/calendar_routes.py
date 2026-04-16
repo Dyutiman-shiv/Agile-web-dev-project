@@ -133,3 +133,43 @@ def delete_event(event_id):
     db.session.delete(event)
     db.session.commit()
     return jsonify({"success": True, "message": "Deleted."})
+
+@cal_bp.route("/api/events/bulk", methods=["POST"])
+@login_required
+def bulk_add_events():
+    data = request.get_json()
+
+    created = []
+
+    for item in data:
+        if not item.get("title") or not item.get("start"):
+            continue
+
+        start_time = datetime.fromisoformat(item["start"])
+        
+        existing = Task.query.filter_by(
+            user_id=current_user.id,
+            title=item["title"],
+            due_date=start_time
+            ).first()
+
+        if existing:
+            continue
+
+        event = Task(
+            user_id=current_user.id,
+            title=item["title"],
+            due_date=datetime.fromisoformat(item["start"]),
+            description="Imported from iCal",
+            completed=False,
+        )
+
+        db.session.add(event)
+        created.append(event)
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "count": len(created)
+    })
