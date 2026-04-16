@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
 {% block title %}Calendar{% endblock %}
-{% block main_class %}overflow-hidden bg-gray-50{% endblock %}
+{% block main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %}
 
 {% block page_content %}
 <div class="flex gap-0 h-full animate-fade-in">
 
     <!-- ========== LEFT PANEL ========== -->
-    <aside id="cal-left-panel" class="hidden lg:flex flex-col shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-5" style="width: clamp(280px, 22vw, 400px);">
+    <aside id="cal-left-panel" class="hidden lg:flex flex-col shrink-0 border-r border-gray-200 overflow-y-auto p-5" style="width: clamp(280px, 22vw, 400px);">
         <!-- + Add event button -->
-        <button id="add-event-btn" class="w-full mb-5 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-sm">
+        <button id="add-event-btn" class="w-hug mb-5 ml-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/50 text-text_dark_gray text-sm montserrat-semi-bold rounded-xl hover:bg-white/80 transition-all shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
         </button>
 
@@ -24,18 +24,18 @@
     </aside>
 
     <!-- ========== RIGHT PANEL ========== -->
-    <div class="flex-1 flex flex-col min-w-0 bg-gray-50">
+    <div class="flex-1 flex flex-col min-w-0">
         <!-- Toolbar -->
-        <div class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 bg-white border-b border-gray-200 shrink-0">
+        <div class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-b border-gray-200 shrink-0">
             <div class="flex items-center gap-2">
-                <button id="cal-today" class="px-4 py-1.5 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors">Today</button>
+                <button id="cal-today" class="px-4 py-1.5 text-sm montserrat-medium rounded-lg border border-gray-300 bg-white text-text_dark_gray hover:bg-gray-50 transition-colors">Today</button>
                 <button id="cal-prev" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
                 </button>
                 <button id="cal-next" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
                 </button>
-                <h2 id="cal-title" class="ml-2 text-base font-semibold text-gray-800 hidden sm:block"></h2>
+                <h2 id="cal-title" class="ml-2 text-base montserrat-semi-bold text-text_dark_gray hidden sm:block"></h2>
             </div>
 
             <div class="flex items-center gap-1.5">
@@ -46,15 +46,15 @@
 
                 <!-- View switcher -->
                 <div class="inline-flex rounded-xl bg-gray-100 p-1">
-                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all" data-view="day">Day</button>
-                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all" data-view="week">Week</button>
-                    <button class="cal-view-btn px-3 py-1.5 text-xs font-medium rounded-lg transition-all active" data-view="month">Month</button>
+                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="day">Day</button>
+                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="week">Week</button>
+                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all active" data-view="month">Month</button>
                 </div>
             </div>
         </div>
 
         <!-- Calendar grid container -->
-        <div id="calendar-container" class="flex-1 bg-white overflow-hidden min-h-0">
+        <div id="calendar-container" class="flex-1 bg-white rounded-[30px] overflow-hidden min-h-0 mr-[20px] mb-[20px]">
             <!-- Rendered by JS -->
         </div>
     </div>
@@ -62,7 +62,7 @@
 
 <!-- Event create/edit modal -->
 <div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+    <div class="bg-white rounded-4xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
         <div class="flex items-center justify-between mb-4">
             <h3 id="event-modal-title" class="text-lg font-bold text-gray-800">New Event</h3>
         </div>
