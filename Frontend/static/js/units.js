@@ -1,16 +1,16 @@
 $(function () {
     "use strict";
 
-    var selectedColor = "#6366f1";
-    var deleteUnitId = null;
-    var semesters = [];
+    let selectedColor = "#6366f1";
+    let deleteUnitId = null;
+    let semesters = [];
 
     function escapeHtml(str) {
         return $("<div>").text(str).html();
     }
 
     function showAlert(containerId, msg, type) {
-        var cls = type === "success" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200";
+        const cls = type === "success" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200";
         $("#" + containerId).html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + msg + '</span>' +
@@ -22,9 +22,9 @@ $(function () {
     function loadSemesters(cb) {
         $.getJSON("/api/semesters", function (data) {
             semesters = data;
-            var filterHtml = '<option value="">All Semesters</option>';
-            var modalHtml = '<option value="">None</option>';
-            for (var i = 0; i < data.length; i++) {
+            let filterHtml = '<option value="">All Semesters</option>';
+            let modalHtml = '<option value="">None</option>';
+            for (let i = 0; i < data.length; i++) {
                 filterHtml += '<option value="' + data[i].id + '">' + escapeHtml(data[i].name) + '</option>';
                 modalHtml += '<option value="' + data[i].id + '">' + escapeHtml(data[i].name) + '</option>';
             }
@@ -35,8 +35,8 @@ $(function () {
     }
 
     function loadUnits() {
-        var params = {};
-        var semId = $("#filter-semester").val();
+        const params = {};
+        const semId = $("#filter-semester").val();
         if (semId) params.semester_id = semId;
         if (!$("#show-archived").is(":checked")) params.archived = "false";
 
@@ -49,9 +49,9 @@ $(function () {
             $("#units-empty").addClass("hidden");
             $("#units-grid").removeClass("hidden");
 
-            var html = "";
-            for (var i = 0; i < data.length; i++) {
-                var u = data[i];
+            let html = "";
+            for (let i = 0; i < data.length; i++) {
+                const u = data[i];
                 html += '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow' + (u.archived ? ' opacity-60' : '') + '">' +
                     '<div class="flex items-start justify-between mb-3">' +
                     '<div class="flex items-center gap-2">' +
@@ -113,7 +113,7 @@ $(function () {
 
     // Open edit modal
     $(document).on("click", ".edit-unit-btn", function () {
-        var $btn = $(this);
+        const $btn = $(this);
         $("#unit-modal-title").text("Edit Unit");
         $("#unit-edit-id").val($btn.data("id"));
         $("#unit-name").val($btn.data("name"));
@@ -132,19 +132,19 @@ $(function () {
 
     // Save (create or update)
     $("#unit-save-btn").on("click", function () {
-        var id = $("#unit-edit-id").val();
-        var name = $("#unit-name").val().trim();
-        var code = $("#unit-code").val().trim();
-        var semesterId = $("#unit-semester").val() || null;
+        const id = $("#unit-edit-id").val();
+        const name = $("#unit-name").val().trim();
+        const code = $("#unit-code").val().trim();
+        const semesterId = $("#unit-semester").val() || null;
 
         if (!name) {
             showAlert("unit-alert", "Unit name is required.", "danger");
             return;
         }
 
-        var payload = { name: name, code: code, color: selectedColor, semester_id: semesterId ? parseInt(semesterId) : null };
-        var url = id ? "/api/units/" + id : "/api/units";
-        var method = id ? "PUT" : "POST";
+        const payload = { name: name, code: code, color: selectedColor, semester_id: semesterId ? parseInt(semesterId) : null };
+        const url = id ? "/api/units/" + id : "/api/units";
+        const method = id ? "PUT" : "POST";
 
         $.ajax({
             url: url,
@@ -156,7 +156,7 @@ $(function () {
                 loadUnits();
             },
             error: function (xhr) {
-                var msg = "Failed to save unit.";
+                const msg = "Failed to save unit.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert("unit-alert", msg, "danger");
             }
@@ -165,8 +165,8 @@ $(function () {
 
     // Archive toggle
     $(document).on("click", ".archive-unit-btn", function () {
-        var id = $(this).data("id");
-        var isArchived = $(this).data("archived") === true || $(this).data("archived") === "true";
+        const id = $(this).data("id");
+        const isArchived = $(this).data("archived") === true || $(this).data("archived") === "true";
         $.ajax({
             url: "/api/units/" + id,
             method: "PUT",

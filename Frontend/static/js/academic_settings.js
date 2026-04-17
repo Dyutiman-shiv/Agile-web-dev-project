@@ -1,10 +1,10 @@
 $(function () {
     "use strict";
 
-    var deleteSemId = null;
+    let deleteSemId = null;
 
     function showAlert(containerId, msg, type) {
-        var cls = type === "success" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200";
+        const cls = type === "success" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-red-100 text-red-700 border-red-200";
         $("#" + containerId).html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + msg + '</span>' +
@@ -17,7 +17,7 @@ $(function () {
     }
 
     function formatDate(iso) {
-        var d = new Date(iso + "T00:00:00");
+        const d = new Date(iso + "T00:00:00");
         return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
     }
 
@@ -32,9 +32,9 @@ $(function () {
             $("#semesters-empty").addClass("hidden");
             $("#semesters-list").removeClass("hidden");
 
-            var html = "";
-            for (var i = 0; i < data.length; i++) {
-                var s = data[i];
+            let html = "";
+            for (let i = 0; i < data.length; i++) {
+                const s = data[i];
                 html += '<div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors">' +
                     '<div>' +
                     '<p class="text-sm montserrat-semi-bold text-gray-800">' + escapeHtml(s.name) + '</p>' +
@@ -58,9 +58,9 @@ $(function () {
 
     // Add semester
     $("#add-sem-btn").on("click", function () {
-        var name = $("#sem-name").val().trim();
-        var start = $("#sem-start").val();
-        var end = $("#sem-end").val();
+        const name = $("#sem-name").val().trim();
+        const start = $("#sem-start").val();
+        const end = $("#sem-end").val();
 
         if (!name || !start || !end) {
             showAlert("add-alert", "All fields are required.", "danger");
@@ -84,7 +84,7 @@ $(function () {
                 loadSemesters();
             },
             error: function (xhr) {
-                var msg = "Failed to add semester.";
+                const msg = "Failed to add semester.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert("add-alert", msg, "danger");
             }
@@ -106,10 +106,10 @@ $(function () {
     $("#edit-sem-modal").on("click", function (e) { if (e.target === this) closeEditModal(); });
 
     $("#edit-sem-save").on("click", function () {
-        var id = $("#edit-sem-id").val();
-        var name = $("#edit-sem-name").val().trim();
-        var start = $("#edit-sem-start").val();
-        var end = $("#edit-sem-end").val();
+        const id = $("#edit-sem-id").val();
+        const name = $("#edit-sem-name").val().trim();
+        const start = $("#edit-sem-start").val();
+        const end = $("#edit-sem-end").val();
 
         if (!name || !start || !end) {
             showAlert("edit-sem-alert", "All fields are required.", "danger");
@@ -126,7 +126,7 @@ $(function () {
                 loadSemesters();
             },
             error: function (xhr) {
-                var msg = "Failed to update.";
+                const msg = "Failed to update.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert("edit-sem-alert", msg, "danger");
             }

@@ -1,10 +1,10 @@
 $(function () {
     "use strict";
 
-    var semesters = [{ name: "", start_date: "", end_date: "" }];
+    const semesters = [{ name: "", start_date: "", end_date: "" }];
 
     function showAlert(msg, type) {
-        var cls = type === "success" ? "bg-emerald-500/90 text-white" : "bg-red-500/90 text-white";
+        const cls = type === "success" ? "bg-emerald-500/90 text-white" : "bg-red-500/90 text-white";
         $("#setup-alert").removeClass("hidden").html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm shadow-md mb-4 ' + cls + '">' +
             '<span>' + msg + '</span>' +
@@ -14,8 +14,8 @@ $(function () {
     }
 
     function render() {
-        var html = "";
-        for (var i = 0; i < semesters.length; i++) {
+        let html = "";
+        for (let i = 0; i < semesters.length; i++) {
             html += '<div class="bg-white/10 rounded-xl p-4 border border-white/10">' +
                 '<div class="flex items-center justify-between mb-3">' +
                 '<span class="text-xs text-white/50 montserrat-medium">Semester ' + (i + 1) + '</span>' +
@@ -66,7 +66,7 @@ $(function () {
         $(".sem-start").each(function () { semesters[$(this).data("idx")].start_date = $(this).val(); });
         $(".sem-end").each(function () { semesters[$(this).data("idx")].end_date = $(this).val(); });
 
-        var valid = semesters.filter(function (s) {
+        const valid = semesters.filter(function (s) {
             return s.name.trim() && s.start_date && s.end_date;
         });
 
@@ -75,7 +75,7 @@ $(function () {
             return;
         }
 
-        for (var i = 0; i < valid.length; i++) {
+        for (let i = 0; i < valid.length; i++) {
             if (valid[i].end_date <= valid[i].start_date) {
                 showAlert("End date must be after start date for \"" + valid[i].name + "\".", "danger");
                 return;
@@ -93,7 +93,7 @@ $(function () {
                 window.location.href = "/home";
             },
             error: function (xhr) {
-                var msg = "Something went wrong.";
+                const msg = "Something went wrong.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert(msg, "danger");
                 $("#save-spinner").addClass("hidden");
