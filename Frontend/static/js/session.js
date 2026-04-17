@@ -2,44 +2,44 @@ $(function () {
     "use strict";
 
     // ============ State ============
-    var sessionName = "";
-    var checklistItems = [];   // [{title, completed}]
-    var timerMode = "stopwatch";
-    var countdownTotalSeconds = 25 * 60; // default 25 min
-    var timerRunning = false;
-    var startTimestamp = null;  // Date when session started
-    var elapsedSeconds = 0;
-    var timerInterval = null;
-    var deleteTargetId = null;
-    var editTempName = "";
-    var editTempChecklist = [];
-    var timerPaused = false;
-    var editTempTimerMode = "stopwatch";
-    var editTempCountdownTotal = 25 * 60;
+    let sessionName = "";
+    let checklistItems = [];   // [{title, completed}]
+    let timerMode = "stopwatch";
+    let countdownTotalSeconds = 25 * 60; // default 25 min
+    let timerRunning = false;
+    let startTimestamp = null;  // Date when session started
+    let elapsedSeconds = 0;
+    let timerInterval = null;
+    let deleteTargetId = null;
+    let editTempName = "";
+    let editTempChecklist = [];
+    let timerPaused = false;
+    let editTempTimerMode = "stopwatch";
+    let editTempCountdownTotal = 25 * 60;
 
     // ============ Helpers ============
     function pad(n) { return n < 10 ? "0" + n : "" + n; }
 
     function formatDuration(totalSec) {
-        var h = Math.floor(totalSec / 3600);
-        var m = Math.floor((totalSec % 3600) / 60);
-        var s = totalSec % 60;
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
         return pad(h) + ":" + pad(m) + ":" + pad(s);
     }
 
     function formatDurationShort(minutes) {
         if (minutes < 60) return minutes + "m";
-        var h = Math.floor(minutes / 60);
-        var m = minutes % 60;
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
         return h + "h" + (m > 0 ? " " + m + "m" : "");
     }
 
     function showSetupAlert(msg, type) {
-        var colors = {
+        const colors = {
             danger: "bg-red-100 text-red-700 border-red-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
-        var cls = colors[type] || colors.danger;
+        const cls = colors[type] || colors.danger;
         $("#setup-alert").html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + $("<span>").text(msg).html() + '</span>' +
@@ -50,24 +50,24 @@ $(function () {
 
     // ============ Init Clock Ticks & Numbers ============
     function initClockFace() {
-        var ticksG = document.getElementById("clock-ticks");
-        var numsG = document.getElementById("clock-numbers");
+        const ticksG = document.getElementById("clock-ticks");
+        const numsG = document.getElementById("clock-numbers");
         if (!ticksG || !numsG) return;
 
         ticksG.innerHTML = "";
         numsG.innerHTML = "";
 
-        for (var i = 0; i < 60; i++) {
-            var angle = (i * 6) * Math.PI / 180;
-            var isHour = i % 5 === 0;
-            var r1 = isHour ? 78 : 83;
-            var r2 = 88;
-            var x1 = 100 + r1 * Math.sin(angle);
-            var y1 = 100 - r1 * Math.cos(angle);
-            var x2 = 100 + r2 * Math.sin(angle);
-            var y2 = 100 - r2 * Math.cos(angle);
+        for (let i = 0; i < 60; i++) {
+            const angle = (i * 6) * Math.PI / 180;
+            const isHour = i % 5 === 0;
+            const r1 = isHour ? 78 : 83;
+            const r2 = 88;
+            const x1 = 100 + r1 * Math.sin(angle);
+            const y1 = 100 - r1 * Math.cos(angle);
+            const x2 = 100 + r2 * Math.sin(angle);
+            const y2 = 100 - r2 * Math.cos(angle);
 
-            var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
             line.setAttribute("x1", x1);
             line.setAttribute("y1", y1);
             line.setAttribute("x2", x2);
@@ -77,13 +77,13 @@ $(function () {
             ticksG.appendChild(line);
         }
 
-        for (var h = 1; h <= 12; h++) {
-            var a = (h * 30) * Math.PI / 180;
-            var r = 68;
-            var x = 100 + r * Math.sin(a);
-            var y = 100 - r * Math.cos(a);
+        for (let h = 1; h <= 12; h++) {
+            const a = (h * 30) * Math.PI / 180;
+            const r = 68;
+            const x = 100 + r * Math.sin(a);
+            const y = 100 - r * Math.cos(a);
 
-            var txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            const txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
             txt.setAttribute("x", x);
             txt.setAttribute("y", y);
             txt.textContent = h;
@@ -93,13 +93,13 @@ $(function () {
 
     // ============ Update Clock Hands ============
     function updateClockHands(totalSeconds) {
-        var hours = totalSeconds / 3600;
-        var minutes = (totalSeconds % 3600) / 60;
-        var seconds = totalSeconds % 60;
+        const hours = totalSeconds / 3600;
+        const minutes = (totalSeconds % 3600) / 60;
+        const seconds = totalSeconds % 60;
 
-        var secDeg = (seconds / 60) * 360;
-        var minDeg = (minutes / 60) * 360;
-        var hourDeg = (hours / 12) * 360;
+        const secDeg = (seconds / 60) * 360;
+        const minDeg = (minutes / 60) * 360;
+        const hourDeg = (hours / 12) * 360;
 
         $("#clock-second").attr("transform", "rotate(" + secDeg + " 100 100)");
         $("#clock-minute").attr("transform", "rotate(" + minDeg + " 100 100)");
@@ -108,12 +108,12 @@ $(function () {
 
     // ============ Validate Start ============
     function validateStart() {
-        var name = $("#session-name").val().trim();
-        var hasName = name.length > 0;
-        var hasItems = checklistItems.length > 0;
-        var enabled = hasName && hasItems;
+        const name = $("#session-name").val().trim();
+        const hasName = name.length > 0;
+        const hasItems = checklistItems.length > 0;
+        const enabled = hasName && hasItems;
 
-        var $btn = $("#start-session-btn");
+        const $btn = $("#start-session-btn");
         $btn.prop("disabled", !enabled);
         if (enabled) {
             $btn.removeClass("bg-gray-300 cursor-not-allowed").addClass("bg-primary_purp hover:bg-indigo-600 cursor-pointer");
@@ -124,7 +124,7 @@ $(function () {
 
     // ============ Render Checklist Builder ============
     function renderChecklistBuilder() {
-        var $c = $("#checklist-builder");
+        const $c = $("#checklist-builder");
         $c.empty();
         checklistItems.forEach(function (item, idx) {
             $c.append(
@@ -143,9 +143,9 @@ $(function () {
 
     // ============ Render Live Checklist ============
     function renderLiveChecklist() {
-        var $c = $("#live-checklist");
+        const $c = $("#live-checklist");
         $c.empty();
-        var done = 0;
+        let done = 0;
         checklistItems.forEach(function (item, idx) {
             if (item.completed) done++;
             $c.append(
@@ -164,7 +164,7 @@ $(function () {
 
     // ============ Timer Mode Toggle ============
     $(document).on("click", ".timer-mode-btn", function () {
-        var mode = $(this).data("mode");
+        const mode = $(this).data("mode");
         timerMode = mode;
         $(".timer-mode-btn").removeClass("bg-primary_purp text-white").addClass("text-gray-500 hover:text-gray-700");
         $(this).addClass("bg-primary_purp text-white").removeClass("text-gray-500 hover:text-gray-700");
@@ -177,7 +177,7 @@ $(function () {
 
     // ============ Add Checklist Item ============
     function addChecklistItem() {
-        var val = $("#new-checklist-item").val().trim();
+        const val = $("#new-checklist-item").val().trim();
         if (!val) return;
         checklistItems.push({ title: val, completed: false });
         $("#new-checklist-item").val("");
@@ -194,7 +194,7 @@ $(function () {
 
     // ============ Remove Checklist Item ============
     $(document).on("click", ".remove-checklist-btn", function () {
-        var idx = $(this).closest("[data-idx]").data("idx");
+        const idx = $(this).closest("[data-idx]").data("idx");
         checklistItems.splice(idx, 1);
         renderChecklistBuilder();
     });
@@ -212,8 +212,8 @@ $(function () {
 
         // Countdown total
         if (timerMode === "countdown") {
-            var h = parseInt($("#countdown-hours").val()) || 0;
-            var m = parseInt($("#countdown-minutes").val()) || 0;
+            const h = parseInt($("#countdown-hours").val()) || 0;
+            const m = parseInt($("#countdown-minutes").val()) || 0;
             countdownTotalSeconds = h * 3600 + m * 60;
             if (countdownTotalSeconds <= 0) {
                 showSetupAlert("Please set a countdown duration greater than 0.", "danger");
@@ -270,7 +270,7 @@ $(function () {
 
     // ============ Update Timer Display ============
     function updateTimerDisplay() {
-        var displaySeconds;
+        let displaySeconds;
         if (timerMode === "stopwatch") {
             displaySeconds = elapsedSeconds;
         } else {
@@ -286,14 +286,14 @@ $(function () {
 
     // ============ Live Checklist Toggle ============
     $(document).on("change", ".live-check", function () {
-        var idx = $(this).data("idx");
+        const idx = $(this).data("idx");
         checklistItems[idx].completed = this.checked;
         renderLiveChecklist();
     });
 
     // ============ Inline Add Task (during session) ============
     function addLiveItem() {
-        var val = $("#live-new-item").val().trim();
+        const val = $("#live-new-item").val().trim();
         if (!val) return;
         checklistItems.push({ title: val, completed: false });
         $("#live-new-item").val("");
@@ -307,7 +307,7 @@ $(function () {
 
     // ============ Edit Session Modal ============
     function renderEditChecklist() {
-        var $c = $("#edit-checklist-list");
+        const $c = $("#edit-checklist-list");
         $c.empty();
         editTempChecklist.forEach(function (item, idx) {
             $c.append(
@@ -327,11 +327,11 @@ $(function () {
     }
 
     function showEditAlert(msg, type) {
-        var colors = {
+        const colors = {
             danger: "bg-red-100 text-red-700 border-red-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
-        var cls = colors[type] || colors.danger;
+        const cls = colors[type] || colors.danger;
         $("#edit-alert").html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + $("<span>").text(msg).html() + '</span>' +
@@ -358,9 +358,9 @@ $(function () {
 
         // Show/hide countdown fields
         if (editTempTimerMode === "countdown") {
-            var remaining = Math.max(0, countdownTotalSeconds - elapsedSeconds);
-            var rH = Math.floor(remaining / 3600);
-            var rM = Math.floor((remaining % 3600) / 60);
+            const remaining = Math.max(0, countdownTotalSeconds - elapsedSeconds);
+            const rH = Math.floor(remaining / 3600);
+            const rM = Math.floor((remaining % 3600) / 60);
             $("#edit-countdown-hours").val(rH);
             $("#edit-countdown-minutes").val(rM);
             $("#edit-countdown-setup").removeClass("hidden");
@@ -387,7 +387,7 @@ $(function () {
 
     // Toggle timer mode in edit modal
     $(document).on("click", ".edit-timer-mode-btn", function () {
-        var mode = $(this).data("mode");
+        const mode = $(this).data("mode");
         editTempTimerMode = mode;
         $(".edit-timer-mode-btn").removeClass("bg-primary_purp text-white").addClass("text-gray-500 hover:text-gray-700");
         $(this).addClass("bg-primary_purp text-white").removeClass("text-gray-500 hover:text-gray-700");
@@ -405,7 +405,7 @@ $(function () {
 
     // Add item in edit modal
     function addEditItem() {
-        var val = $("#edit-new-item").val().trim();
+        const val = $("#edit-new-item").val().trim();
         if (!val) return;
         editTempChecklist.push({ title: val, completed: false });
         $("#edit-new-item").val("");
@@ -419,14 +419,14 @@ $(function () {
 
     // Remove item in edit modal
     $(document).on("click", ".edit-remove-item", function () {
-        var idx = $(this).closest("[data-edit-idx]").data("edit-idx");
+        const idx = $(this).closest("[data-edit-idx]").data("edit-idx");
         editTempChecklist.splice(idx, 1);
         renderEditChecklist();
     });
 
     // Save edits
     $("#edit-save-btn").on("click", function () {
-        var name = $("#edit-session-name").val().trim();
+        const name = $("#edit-session-name").val().trim();
         if (!name) {
             showEditAlert("Session name cannot be empty.", "danger");
             return;
@@ -438,9 +438,9 @@ $(function () {
 
         // Validate countdown duration if switching to or staying on countdown
         if (editTempTimerMode === "countdown") {
-            var newH = parseInt($("#edit-countdown-hours").val()) || 0;
-            var newM = parseInt($("#edit-countdown-minutes").val()) || 0;
-            var newRemaining = newH * 3600 + newM * 60;
+            const newH = parseInt($("#edit-countdown-hours").val()) || 0;
+            const newM = parseInt($("#edit-countdown-minutes").val()) || 0;
+            const newRemaining = newH * 3600 + newM * 60;
             if (newRemaining <= 0) {
                 showEditAlert("Countdown duration must be greater than 0.", "danger");
                 return;
@@ -479,9 +479,9 @@ $(function () {
         timerRunning = false;
         clearInterval(timerInterval);
 
-        var durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+        const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
 
-        var payload = {
+        const payload = {
             name: sessionName,
             start_time: startTimestamp.toISOString(),
             duration_minutes: durationMinutes,
@@ -492,7 +492,7 @@ $(function () {
             unit_id: $("#session-unit").val() || null
         };
 
-        var $btn = $("#end-session-btn");
+        const $btn = $("#end-session-btn");
         $btn.prop("disabled", true).text("Saving…");
 
         $.ajax({
@@ -507,7 +507,7 @@ $(function () {
                 showSetupAlert("Session saved! It will now appear in your Calendar.", "success");
             },
             error: function (xhr) {
-                var msg = "Failed to save session.";
+                const msg = "Failed to save session.";
                 try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
                 showSetupAlert(msg, "danger");
                 $btn.prop("disabled", false).text("End Session");
@@ -542,7 +542,7 @@ $(function () {
     // ============ Load History ============
     function loadHistory() {
         $.getJSON("/api/sessions", function (data) {
-            var $list = $("#history-list");
+            const $list = $("#history-list");
             $list.empty();
 
             if (!data || data.length === 0) {
@@ -555,11 +555,11 @@ $(function () {
             $("#history-count").text(data.length + " session" + (data.length !== 1 ? "s" : ""));
 
             data.forEach(function (s) {
-                var d = new Date(s.start);
-                var dateStr = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-                var timeStr = d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
-                var checklist = s.checklist || [];
-                var done = checklist.filter(function (c) { return c.completed; }).length;
+                const d = new Date(s.start);
+                const dateStr = d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
+                const timeStr = d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+                const checklist = s.checklist || [];
+                const done = checklist.filter(function (c) { return c.completed; }).length;
 
                 $list.append(
                     '<div class="history-item px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">' +
@@ -593,7 +593,7 @@ $(function () {
 
     function renderHistoryChecklist(checklist) {
         if (!checklist || checklist.length === 0) return '<p class="text-xs text-gray-400 roboto-regular">No checklist items.</p>';
-        var html = "";
+        let html = "";
         checklist.forEach(function (c) {
             html += '<div class="flex items-center gap-2">' +
                 '<svg class="w-3.5 h-3.5 shrink-0 ' + (c.completed ? 'text-emerald-500' : 'text-gray-300') + '" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
@@ -634,8 +634,8 @@ $(function () {
 
     $("#delete-session-confirm").on("click", function () {
         if (!deleteTargetId) return;
-        var id = deleteTargetId;
-        var $btn = $(this);
+        const id = deleteTargetId;
+        const $btn = $(this);
         $btn.prop("disabled", true).text("Deleting…");
 
         $.ajax({
@@ -660,10 +660,10 @@ $(function () {
 
     // Load units for dropdown (current semester only)
     $.getJSON("/api/semesters/current", function (sem) {
-        var url = "/api/units?archived=false";
+        let url = "/api/units?archived=false";
         if (sem && sem.id) url += "&semester_id=" + sem.id;
         $.getJSON(url, function (data) {
-            var $sel = $("#session-unit");
+            const $sel = $("#session-unit");
             $sel.html('<option value="">None</option>');
             data.forEach(function (u) {
                 $sel.append('<option value="' + u.id + '">' + $("<span>").text((u.code ? u.code + " — " : "") + u.name).html() + '</option>');

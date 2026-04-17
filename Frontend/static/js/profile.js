@@ -2,12 +2,12 @@ $(function () {
     "use strict";
 
     function showAlert(containerId, message, type) {
-        var colorMap = {
+        const colorMap = {
             danger:  "bg-red-100 text-red-700 border-red-200",
             warning: "bg-amber-100 text-amber-700 border-amber-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
-        var cls = colorMap[type] || colorMap.danger;
+        const cls = colorMap[type] || colorMap.danger;
         $("#" + containerId).html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + message + '</span>' +
@@ -18,16 +18,16 @@ $(function () {
 
     // =========== Profile picture preview ===========
     $("#profile_picture").on("change", function () {
-        var file = this.files[0];
+        const file = this.files[0];
         if (!file) return;
         if (file.size > 2 * 1024 * 1024) {
             showAlert("profile-alert", "File too large. Max 2MB.", "danger");
             this.value = "";
             return;
         }
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.onload = function (e) {
-            var $img = $("#avatar-preview");
+            const $img = $("#avatar-preview");
             $img.attr("src", e.target.result).removeClass("hidden");
             $("#avatar-preview-placeholder").addClass("hidden");
         };
@@ -37,9 +37,9 @@ $(function () {
     // =========== Save profile (username + picture) ===========
     $("#profile-form").on("submit", function (e) {
         e.preventDefault();
-        var formData = new FormData(this);
-        var $btn = $("#profile-save-btn");
-        var $spinner = $("#profile-save-spinner");
+        const formData = new FormData(this);
+        const $btn = $("#profile-save-btn");
+        const $spinner = $("#profile-save-spinner");
         $btn.prop("disabled", true);
         $spinner.removeClass("hidden");
 
@@ -55,7 +55,7 @@ $(function () {
                 $spinner.addClass("hidden");
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Update failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Update failed.";
                 showAlert("profile-alert", msg, "danger");
                 $btn.prop("disabled", false);
                 $spinner.addClass("hidden");
@@ -66,8 +66,8 @@ $(function () {
     // =========== Change password ===========
     $("#password-form").on("submit", function (e) {
         e.preventDefault();
-        var $btn = $("#password-btn");
-        var $spinner = $("#password-spinner");
+        const $btn = $("#password-btn");
+        const $spinner = $("#password-spinner");
         $btn.prop("disabled", true);
         $spinner.removeClass("hidden");
 
@@ -87,7 +87,7 @@ $(function () {
                 $spinner.addClass("hidden");
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Password update failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Password update failed.";
                 showAlert("password-alert", msg, "danger");
                 $btn.prop("disabled", false);
                 $spinner.addClass("hidden");
@@ -112,8 +112,8 @@ $(function () {
 
     $("#delete-form").on("submit", function (e) {
         e.preventDefault();
-        var $btn = $("#delete-confirm-btn");
-        var $spinner = $("#delete-spinner");
+        const $btn = $("#delete-confirm-btn");
+        const $spinner = $("#delete-spinner");
         $btn.prop("disabled", true);
         $spinner.removeClass("hidden");
 
@@ -126,7 +126,7 @@ $(function () {
                 window.location.href = resp.redirect || "/";
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Deletion failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Deletion failed.";
                 showAlert("delete-alert", msg, "danger");
                 $btn.prop("disabled", false);
                 $spinner.addClass("hidden");

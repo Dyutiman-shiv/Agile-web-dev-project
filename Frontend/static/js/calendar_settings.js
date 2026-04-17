@@ -1,16 +1,16 @@
 $(function () {
     "use strict";
 
-    var selectedColor = "#3b82f6";
-    var editColor = "#3b82f6";
+    let selectedColor = "#3b82f6";
+    let editColor = "#3b82f6";
 
     // ============ Helpers ============
     function showAlert(containerId, msg, type) {
-        var colors = {
+        const colors = {
             danger: "bg-red-100 text-red-700 border-red-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
-        var cls = colors[type] || colors.danger;
+        const cls = colors[type] || colors.danger;
         $("#" + containerId).html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
             '<span>' + $("<span>").text(msg).html() + '</span>' +
@@ -42,7 +42,7 @@ $(function () {
     // ============ Load Calendars ============
     function loadCalendars() {
         $.getJSON("/api/ical-calendars", function (data) {
-            var $list = $("#calendars-list");
+            const $list = $("#calendars-list");
             $list.empty();
 
             if (!data || data.length === 0) {
@@ -80,14 +80,14 @@ $(function () {
 
     // ============ Add Calendar ============
     $("#add-ical-btn").on("click", function () {
-        var name = $("#ical-name").val().trim();
-        var url = $("#ical-url").val().trim();
+        const name = $("#ical-name").val().trim();
+        const url = $("#ical-url").val().trim();
 
         if (!name) { showAlert("add-alert", "Please enter a calendar name.", "danger"); return; }
         if (!url) { showAlert("add-alert", "Please enter an iCal URL.", "danger"); return; }
         if (!/^https?:\/\//i.test(url)) { showAlert("add-alert", "URL must start with http:// or https://", "danger"); return; }
 
-        var $btn = $(this);
+        const $btn = $(this);
         $btn.prop("disabled", true).text("Adding…");
 
         $.ajax({
@@ -103,7 +103,7 @@ $(function () {
                 $btn.prop("disabled", false).text("Add Calendar");
             },
             error: function (xhr) {
-                var msg = "Failed to add calendar.";
+                const msg = "Failed to add calendar.";
                 try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
                 showAlert("add-alert", msg, "danger");
                 $btn.prop("disabled", false).text("Add Calendar");
@@ -113,8 +113,8 @@ $(function () {
 
     // ============ Toggle Visibility ============
     $(document).on("change", ".toggle-visible", function () {
-        var id = $(this).data("id");
-        var visible = this.checked;
+        const id = $(this).data("id");
+        const visible = this.checked;
         $.ajax({
             url: "/api/ical-calendars/" + id,
             method: "PUT",
@@ -125,10 +125,10 @@ $(function () {
 
     // ============ Edit Calendar ============
     $(document).on("click", ".edit-cal-btn", function () {
-        var id = $(this).data("id");
-        var name = $(this).data("name");
-        var url = $(this).data("url");
-        var color = $(this).data("color");
+        const id = $(this).data("id");
+        const name = $(this).data("name");
+        const url = $(this).data("url");
+        const color = $(this).data("color");
 
         $("#edit-cal-id").val(id);
         $("#edit-cal-name").val(name);
@@ -151,15 +151,15 @@ $(function () {
     $("#edit-cal-modal").on("click", function (e) { if (e.target === this) closeEditModal(); });
 
     $("#edit-cal-save").on("click", function () {
-        var id = $("#edit-cal-id").val();
-        var name = $("#edit-cal-name").val().trim();
-        var url = $("#edit-cal-url").val().trim();
+        const id = $("#edit-cal-id").val();
+        const name = $("#edit-cal-name").val().trim();
+        const url = $("#edit-cal-url").val().trim();
 
         if (!name) { showAlert("edit-cal-alert", "Name cannot be empty.", "danger"); return; }
         if (!url) { showAlert("edit-cal-alert", "URL cannot be empty.", "danger"); return; }
         if (!/^https?:\/\//i.test(url)) { showAlert("edit-cal-alert", "URL must start with http:// or https://", "danger"); return; }
 
-        var $btn = $(this);
+        const $btn = $(this);
         $btn.prop("disabled", true).text("Saving…");
 
         $.ajax({
@@ -173,7 +173,7 @@ $(function () {
                 $btn.prop("disabled", false).text("Save Changes");
             },
             error: function (xhr) {
-                var msg = "Failed to save changes.";
+                const msg = "Failed to save changes.";
                 try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
                 showAlert("edit-cal-alert", msg, "danger");
                 $btn.prop("disabled", false).text("Save Changes");
@@ -195,8 +195,8 @@ $(function () {
     $("#delete-cal-modal").on("click", function (e) { if (e.target === this) closeDeleteModal(); });
 
     $("#delete-cal-confirm").on("click", function () {
-        var id = $("#delete-cal-id").val();
-        var $btn = $(this);
+        const id = $("#delete-cal-id").val();
+        const $btn = $(this);
         $btn.prop("disabled", true).text("Deleting…");
 
         $.ajax({

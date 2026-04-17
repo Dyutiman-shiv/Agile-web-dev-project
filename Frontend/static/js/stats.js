@@ -1,9 +1,9 @@
 $(function () {
     "use strict";
 
-    var currentPeriod = "all";
-    var currentSemesterId = "";
-    var charts = {};
+    let currentPeriod = "all";
+    let currentSemesterId = "";
+    const charts = {};
 
     // ============ Period Tabs ============
     $(".period-btn").on("click", function () {
@@ -21,7 +21,7 @@ $(function () {
 
     // ============ Semester Filter ============
     $.getJSON("/api/semesters", function (data) {
-        var $sel = $("#semester-filter");
+        const $sel = $("#semester-filter");
         $sel.html('<option value="">All Semesters</option>');
         data.forEach(function (s) {
             $sel.append('<option value="' + s.id + '">' + $("<span>").text(s.name).html() + '</option>');
@@ -35,7 +35,7 @@ $(function () {
 
     // ============ Helpers ============
     function qs() {
-        var p = "?period=" + currentPeriod;
+        let p = "?period=" + currentPeriod;
         if (currentSemesterId) p += "&semester_id=" + currentSemesterId;
         return p;
     }
@@ -82,9 +82,9 @@ $(function () {
             }
             $("#hours-empty").addClass("hidden");
 
-            var labels = data.map(function (d) { return d.code || d.name; });
-            var hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
-            var colors = data.map(function (d) { return d.color || "#6366f1"; });
+            const labels = data.map(function (d) { return d.code || d.name; });
+            const hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
+            const colors = data.map(function (d) { return d.color || "#6366f1"; });
 
             charts.hoursBar = new ApexCharts(document.querySelector("#chart-hours-by-unit"), {
                 chart: { type: "bar", height: Math.max(200, labels.length * 42), toolbar: { show: false }, fontFamily: "Roboto, sans-serif" },
@@ -114,9 +114,9 @@ $(function () {
         }
         $("#donut-empty").addClass("hidden");
 
-        var labels = data.map(function (d) { return d.code || d.name; });
-        var hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
-        var colors = data.map(function (d) { return d.color || "#6366f1"; });
+        const labels = data.map(function (d) { return d.code || d.name; });
+        const hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
+        const colors = data.map(function (d) { return d.color || "#6366f1"; });
 
         charts.donut = new ApexCharts(document.querySelector("#chart-donut"), {
             chart: { type: "donut", height: 300, fontFamily: "Roboto, sans-serif" },
@@ -142,13 +142,13 @@ $(function () {
             }
             $("#trend-empty").addClass("hidden");
 
-            var dates = data.map(function (d) { return d.date; });
-            var hours = data.map(function (d) { return parseFloat(d.hours.toFixed(2)); });
+            const dates = data.map(function (d) { return d.date; });
+            const hours = data.map(function (d) { return parseFloat(d.hours.toFixed(2)); });
 
             charts.trend = new ApexCharts(document.querySelector("#chart-daily-trend"), {
                 chart: { type: "area", height: 300, toolbar: { show: false }, fontFamily: "Roboto, sans-serif", zoom: { enabled: false } },
                 series: [{ name: "Hours", data: hours }],
-                xaxis: { categories: dates, type: "category", labels: { rotate: -45, style: { fontSize: "11px" }, formatter: function (val) { if (!val) return ""; var parts = val.split("-"); return parts[2] + "/" + parts[1]; } }, tickAmount: Math.min(dates.length, 15) },
+                xaxis: { categories: dates, type: "category", labels: { rotate: -45, style: { fontSize: "11px" }, formatter: function (val) { if (!val) return ""; const parts = val.split("-"); return parts[2] + "/" + parts[1]; } }, tickAmount: Math.min(dates.length, 15) },
                 yaxis: { labels: { formatter: function (v) { return v.toFixed(1) + "h"; } } },
                 colors: ["#725AEA"],
                 fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05, stops: [0, 100] } },
@@ -166,14 +166,14 @@ $(function () {
         $.getJSON("/api/stats/hourly-heatmap" + qs(), function (data) {
             destroyChart("heatmap");
 
-            var dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-            var series = [];
+            const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const series = [];
 
-            for (var d = 0; d < 7; d++) {
-                var dayRow = { name: dayNames[d], data: [] };
-                for (var h = 6; h <= 23; h++) {
-                    var key = d + "-" + h;
-                    var val = 0;
+            for (let d = 0; d < 7; d++) {
+                const dayRow = { name: dayNames[d], data: [] };
+                for (let h = 6; h <= 23; h++) {
+                    const key = d + "-" + h;
+                    let val = 0;
                     data.forEach(function (item) {
                         if (item.day === d && item.hour === h) val = item.minutes;
                     });
@@ -213,9 +213,9 @@ $(function () {
             }
             $("#tasks-empty").addClass("hidden");
 
-            var labels    = data.map(function (d) { return d.code || d.name; });
-            var completed = data.map(function (d) { return d.completed; });
-            var remaining = data.map(function (d) { return d.total - d.completed; });
+            const labels    = data.map(function (d) { return d.code || d.name; });
+            const completed = data.map(function (d) { return d.completed; });
+            const remaining = data.map(function (d) { return d.total - d.completed; });
 
             charts.tasks = new ApexCharts(document.querySelector("#chart-task-completion"), {
                 chart: { type: "bar", height: Math.max(200, labels.length * 44), stacked: true, toolbar: { show: false }, fontFamily: "Roboto, sans-serif" },
