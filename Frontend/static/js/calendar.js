@@ -97,13 +97,14 @@ $(function () {
 
     function getEndTime(ev) {
         var start = new Date(ev.start);
-        var dur = ev.type === "session" ? (ev.duration || 60) : 30;
+        var dur = ev.duration || (ev.type === "session" ? 60 : 30);
         return new Date(start.getTime() + dur * 60000);
     }
 
     // ============ Fetch events ============
     // We fetch for both the visible calendar range AND the agenda range
     var allEvents = []; // superset for agenda
+    var dbEvents = [];  // DB events only (before iCal merge)
     function loadEvents() {
         var range = getViewRange();
         var agendaRange = getAgendaRange();
@@ -115,8 +116,10 @@ $(function () {
             start: toLocalISO(fetchStart),
             end: toLocalISO(fetchEnd)
         }, function (data) {
-            allEvents = data;
-            events = data;
+            dbEvents = data;
+            // Always merge with cached iCal events
+            events = dbEvents.concat(icalEvents);
+            allEvents = events;
             render();
             renderMiniCalendar();
             renderAgenda();
@@ -339,6 +342,26 @@ $(function () {
             
             // Set notes
             $("#summary-notes").text(ev.notes || "No notes");
+        } else if (ev.type === "ical") {
+            $("#summary-duration-container").show();
+            $("#summary-notes-container").hide();
+            $("#summary-description-container").show();
+            $("#summary-completed-container").hide();
+
+            // Show duration for iCal events
+            var icalDur = ev.duration || 60;
+            var icalH = Math.floor(icalDur / 60);
+            var icalM = icalDur % 60;
+            var icalDurText = icalH > 0 ? icalH + " hr" + (icalH > 1 ? "s" : "") : "";
+            icalDurText += icalM > 0 ? (icalDurText ? " " : "") + icalM + " min" : "";
+            if (ev.allDay) icalDurText = "All day";
+            $("#summary-duration").text(icalDurText || "60 min");
+
+            var descParts = [];
+            if (ev.location) descParts.push("Location: " + ev.location);
+            if (ev.description) descParts.push(ev.description);
+            descParts.push("Calendar: " + (ev.calendarName || "iCal"));
+            $("#summary-description").text(descParts.join("\n"));
         } else {
             $("#summary-duration-container").hide();
             $("#summary-notes-container").hide();
@@ -354,6 +377,15 @@ $(function () {
                 (ev.completed ? "text-green-600" : "text-gray-800"));
         }
         
+        // Hide edit/delete for iCal events (read-only)
+        if (ev.readonly) {
+            $("#summary-edit-btn").hide();
+            $("#summary-delete-btn").hide();
+        } else {
+            $("#summary-edit-btn").show();
+            $("#summary-delete-btn").show();
+        }
+
         $("#event-summary-modal").removeClass("hidden");
     }
 
@@ -753,6 +785,7 @@ $(function () {
                 $("#event-reminders").val(ev.duration || 60);
                 $("#event-notes").val(ev.notes || "");
                 selectColor(ev.color || "#6366f1");
+                $("#event-unit").val(ev.unit_id || "");
             } else {
                 $("#event-description").val(ev.description || "");
                 $("#event-completed").prop("checked", ev.completed);
@@ -772,6 +805,7 @@ $(function () {
             
             selectType("session");
             selectColor("#6366f1");
+            $("#event-unit").val("");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
             
@@ -901,6 +935,7 @@ $(function () {
             payload.duration = parseInt($("#event-reminders").val()) || 60;
             payload.notes = $("#event-notes").val();
             payload.color = selectedColor;
+            payload.unit_id = $("#event-unit").val() || null;
         } else {
             payload.description = $("#event-description").val();
             payload.completed = $("#event-completed").is(":checked");
@@ -956,82 +991,289 @@ $(function () {
     // ============ Initial load ============
     loadEvents();
 
-    //==Load iCal events from external .ics source and merge into current calendar==
-    
-    function loadICalEvents(icalUrl) {
-        if (!icalUrl) {
-            alert("Please enter a valid iCal link");
-            return;
-        }
-        fetch(`/get_ical?url=${encodeURIComponent(icalUrl)}`)
-        .then(res => res.text())
-        .then(data => {
-            const parsedEvents = [];
-
-            const blocks = data.split("BEGIN:VEVENT");
-
-            blocks.forEach(block => {
-                if (block.includes("SUMMARY")) {
-
-                    const summaryMatch = block.match(/SUMMARY:(.*)/);
-                    const dtstartMatch = block.match(/DTSTART.*:(\d{8}T\d{6})/);
-
-                    if (summaryMatch && dtstartMatch) {
-
-                        const title = summaryMatch[1];
-                        const dt = dtstartMatch[1];
-
-                        const formatted = formatDateTime(dt);
-
-                        parsedEvents.push({
-                            title: title,
-                            start: formatted,
-                            type: "task",
-                            color: "#3b82f6"
-                        });
-                    }
-                }
+    // Load units for event modal (current semester only)
+    $.getJSON("/api/semesters/current", function (sem) {
+        var url = "/api/units?archived=false";
+        if (sem && sem.id) url += "&semester_id=" + sem.id;
+        $.getJSON(url, function (data) {
+            var $sel = $("#event-unit");
+            $sel.html('<option value="">None</option>');
+            data.forEach(function (u) {
+                $sel.append('<option value="' + u.id + '">' + $("<span>").text((u.code ? u.code + " — " : "") + u.name).html() + '</option>');
             });
-            
-            fetch("/api/events/bulk", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(parsedEvents)
-            })
-            .then(() => {
-                loadEvents();
-            });
-
-            events = events.concat(parsedEvents);
-            allEvents = allEvents.concat(parsedEvents);
-
-            render();
-            renderAgenda();
-
-            alert("iCal imported successfully!");
         });
-   }
+    });
 
-    // Convert ICS datetime format (YYYYMMDDTHHMMSS) to ISO format (YYYY-MM-DDTHH:mm)
-    function formatDateTime(dt) {
-        const year = dt.slice(0, 4);
-        const month = dt.slice(4, 6);
-        const day = dt.slice(6, 8);
-        const hour = dt.slice(9, 11);
-        const minute = dt.slice(11, 13);
+    // ============ iCal Calendar Integration ============
+    var icalEvents = [];  // parsed iCal events (read-only, not in DB)
+    var icalRefreshTimer = null;
+    var ICAL_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh every 5 minutes
 
-        return `${year}-${month}-${day}T${hour}:${minute}`;
+    function loadICalCalendars(silent) {
+        $.getJSON("/api/ical-calendars", function (calendars) {
+            var newIcalEvents = [];
+            var pending = 0;
+            var visibleCals = calendars.filter(function (c) { return c.visible; });
+
+            if (visibleCals.length === 0) {
+                icalEvents = [];
+                mergeICalEvents();
+                return;
+            }
+
+            visibleCals.forEach(function (cal) {
+                pending++;
+                $.get("/get_ical", { url: cal.url }, function (data) {
+                    var parsed = parseICalData(data, cal.color, cal.name);
+                    newIcalEvents = newIcalEvents.concat(parsed);
+                }).always(function () {
+                    pending--;
+                    if (pending === 0) {
+                        icalEvents = newIcalEvents;
+                        mergeICalEvents();
+                    }
+                });
+            });
+        });
     }
 
-    function importICal() {
-        console.log("clicked");
-        const url = document.getElementById("ical-input-popup").value;
-        console.log("input:", url);
-        loadICalEvents(url);
+    // Unfold iCal lines (RFC 5545: lines starting with space/tab are continuations)
+    function unfoldICalLines(raw) {
+        return raw.replace(/\r\n[ \t]/g, "").replace(/\n[ \t]/g, "");
     }
 
-    window.importICal = importICal;
-}
-)
+    function parseICalDate(dt) {
+        // Parse iCal date or datetime string into a JS Date
+        // Formats: 20260415, 20260415T103000, 20260415T103000Z
+        if (!dt) return null;
+        dt = dt.replace(/Z$/, "");
+        var year  = parseInt(dt.slice(0, 4), 10);
+        var month = parseInt(dt.slice(4, 6), 10) - 1;
+        var day   = parseInt(dt.slice(6, 8), 10);
+        var hour = 0, minute = 0, second = 0;
+        if (dt.length >= 13) {
+            hour   = parseInt(dt.slice(9, 11), 10);
+            minute = parseInt(dt.slice(11, 13), 10);
+            second = dt.length >= 15 ? parseInt(dt.slice(13, 15), 10) : 0;
+        }
+        return new Date(year, month, day, hour, minute, second);
+    }
+
+    function parseICalDuration(dur) {
+        // Parse iCal DURATION like PT1H30M, P1DT2H, PT45M, P7D
+        if (!dur) return 0;
+        var totalMin = 0;
+        var dMatch = dur.match(/(\d+)D/);
+        var hMatch = dur.match(/(\d+)H/);
+        var mMatch = dur.match(/(\d+)M/);
+        if (dMatch) totalMin += parseInt(dMatch[1], 10) * 1440;
+        if (hMatch) totalMin += parseInt(hMatch[1], 10) * 60;
+        if (mMatch) totalMin += parseInt(mMatch[1], 10);
+        return totalMin || 60; // default 60min if unparseable
+    }
+
+    function expandRRule(rrule, dtstart, limitYears) {
+        // Basic RRULE expansion for DAILY, WEEKLY, MONTHLY, YEARLY
+        // Returns array of Date objects for occurrences
+        var dates = [];
+        if (!rrule) return dates;
+
+        var parts = {};
+        rrule.replace(/^RRULE:/i, "").split(";").forEach(function (p) {
+            var kv = p.split("=");
+            if (kv.length === 2) parts[kv[0].toUpperCase()] = kv[1];
+        });
+
+        var freq = parts.FREQ;
+        if (!freq) return dates;
+
+        var count = parts.COUNT ? parseInt(parts.COUNT, 10) : null;
+        var until = parts.UNTIL ? parseICalDate(parts.UNTIL) : null;
+        var interval = parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : 1;
+        var byDay = parts.BYDAY ? parts.BYDAY.split(",") : null;
+
+        // Limit to prevent infinite loops
+        var maxDate = new Date(dtstart);
+        maxDate.setFullYear(maxDate.getFullYear() + (limitYears || 2));
+        if (until && until < maxDate) maxDate = until;
+
+        var maxOccurrences = count || 520; // ~10 years weekly
+        var current = new Date(dtstart);
+        var dayMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+
+        if (freq === "DAILY") {
+            for (var i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setDate(current.getDate() + interval);
+            }
+        } else if (freq === "WEEKLY") {
+            if (byDay) {
+                // Expand for specific days of week
+                var targetDays = byDay.map(function (d) { return dayMap[d.replace(/[^A-Z]/g, "")] || 0; });
+                var weekStart = new Date(current);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                var occ = 0;
+                while (occ < maxOccurrences && weekStart <= maxDate) {
+                    for (var di = 0; di < 7 && occ < maxOccurrences; di++) {
+                        var candidate = new Date(weekStart);
+                        candidate.setDate(candidate.getDate() + di);
+                        candidate.setHours(dtstart.getHours(), dtstart.getMinutes(), 0, 0);
+                        if (candidate >= dtstart && candidate <= maxDate && targetDays.indexOf(candidate.getDay()) !== -1) {
+                            dates.push(new Date(candidate));
+                            occ++;
+                        }
+                    }
+                    weekStart.setDate(weekStart.getDate() + 7 * interval);
+                }
+            } else {
+                for (var i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                    dates.push(new Date(current));
+                    current.setDate(current.getDate() + 7 * interval);
+                }
+            }
+        } else if (freq === "MONTHLY") {
+            for (var i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setMonth(current.getMonth() + interval);
+            }
+        } else if (freq === "YEARLY") {
+            for (var i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setFullYear(current.getFullYear() + interval);
+            }
+        }
+
+        return dates;
+    }
+
+    function parseICalData(data, color, calName) {
+        var parsed = [];
+        var unfolded = unfoldICalLines(data);
+        var blocks = unfolded.split("BEGIN:VEVENT");
+
+        blocks.forEach(function (block) {
+            if (block.indexOf("SUMMARY") === -1) return;
+
+            var summaryMatch = block.match(/SUMMARY:(.*)/);
+            var dtstartMatch = block.match(/DTSTART[^:]*:(\d{8}T?\d{0,6}Z?)/);
+            if (!summaryMatch || !dtstartMatch) return;
+
+            var title = summaryMatch[1].replace(/\r/g, "").trim();
+            // Unescape iCal special chars
+            title = title.replace(/\\n/g, " ").replace(/\\,/g, ",").replace(/\\\\/g, "\\");
+
+            var dtRaw = dtstartMatch[1];
+            var dtstart = parseICalDate(dtRaw);
+            if (!dtstart) return;
+
+            var isAllDay = dtRaw.length === 8; // YYYYMMDD = all-day
+
+            // Parse end time or duration
+            var dtendMatch = block.match(/DTEND[^:]*:(\d{8}T?\d{0,6}Z?)/);
+            var durationMatch = block.match(/DURATION:(.*?)\r?\n/);
+            var durationMinutes = 60;
+            if (dtendMatch) {
+                var dtend = parseICalDate(dtendMatch[1]);
+                if (dtend) durationMinutes = Math.round((dtend - dtstart) / 60000);
+            } else if (durationMatch) {
+                durationMinutes = parseICalDuration(durationMatch[1].trim());
+            } else if (isAllDay) {
+                durationMinutes = 1440;
+            }
+
+            // Parse description & location
+            var descMatch = block.match(/DESCRIPTION:(.*)/);
+            var locMatch = block.match(/LOCATION:(.*)/);
+            var description = descMatch ? descMatch[1].replace(/\r/g, "").replace(/\\n/g, "\n").replace(/\\,/g, ",").trim() : "";
+            var location = locMatch ? locMatch[1].replace(/\r/g, "").replace(/\\,/g, ",").trim() : "";
+
+            // Check for RRULE
+            var rruleMatch = block.match(/(RRULE:.*)/);
+            var rrule = rruleMatch ? rruleMatch[1].replace(/\r/g, "").trim() : null;
+
+            // Parse EXDATE (excluded dates)
+            var exdates = [];
+            var exdateMatches = block.match(/EXDATE[^:]*:[^\n]*/g);
+            if (exdateMatches) {
+                exdateMatches.forEach(function (line) {
+                    var vals = line.replace(/EXDATE[^:]*:/, "").replace(/\r/g, "").split(",");
+                    vals.forEach(function (v) {
+                        var d = parseICalDate(v.trim());
+                        if (d) exdates.push(dateKey(d));
+                    });
+                });
+            }
+
+            if (rrule) {
+                // Expand recurring events
+                var occurrences = expandRRule(rrule, dtstart, 2);
+                occurrences.forEach(function (occ) {
+                    // Skip excluded dates
+                    if (exdates.indexOf(dateKey(occ)) !== -1) return;
+
+                    var formatted = toLocalISO(occ);
+                    parsed.push({
+                        id: "ical-" + calName + "-" + formatted + "-" + title,
+                        title: title,
+                        start: formatted,
+                        duration: durationMinutes,
+                        type: "ical",
+                        color: color,
+                        calendarName: calName,
+                        description: description,
+                        location: location,
+                        allDay: isAllDay,
+                        readonly: true
+                    });
+                });
+            } else {
+                var formatted = toLocalISO(dtstart);
+                parsed.push({
+                    id: "ical-" + calName + "-" + formatted + "-" + title,
+                    title: title,
+                    start: formatted,
+                    duration: durationMinutes,
+                    type: "ical",
+                    color: color,
+                    calendarName: calName,
+                    description: description,
+                    location: location,
+                    allDay: isAllDay,
+                    readonly: true
+                });
+            }
+        });
+        return parsed;
+    }
+
+    function formatICalDateTime(dt) {
+        var year = dt.slice(0, 4);
+        var month = dt.slice(4, 6);
+        var day = dt.slice(6, 8);
+        var hour = dt.length >= 13 ? dt.slice(9, 11) : "00";
+        var minute = dt.length >= 13 ? dt.slice(11, 13) : "00";
+        return year + "-" + month + "-" + day + "T" + hour + ":" + minute;
+    }
+
+    function mergeICalEvents() {
+        // Rebuild events and allEvents with DB events + iCal events
+        events = dbEvents.concat(icalEvents);
+        allEvents = events;
+        render();
+        renderMiniCalendar();
+        renderAgenda();
+    }
+
+    // Start auto-refresh for iCal calendars
+    function startICalAutoRefresh() {
+        if (icalRefreshTimer) clearInterval(icalRefreshTimer);
+        icalRefreshTimer = setInterval(function () {
+            loadICalCalendars(true);
+        }, ICAL_REFRESH_INTERVAL);
+    }
+
+    // Load iCal calendars after DB events are loaded
+    loadICalCalendars();
+    startICalAutoRefresh();
+});
+

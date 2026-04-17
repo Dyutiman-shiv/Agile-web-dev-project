@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% block title %}Calendar Settings{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
+
+    <!-- Add Calendar -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            Add iCal Calendar
+        </h3>
+
+        <div id="add-alert"></div>
+
+        <div class="space-y-4">
+            <!-- Name -->
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Calendar Name</label>
+                <input type="text" id="ical-name" maxlength="120" placeholder="e.g. University Timetable"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 text-sm roboto-regular">
+            </div>
+
+            <!-- URL -->
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">iCal URL</label>
+                <input type="url" id="ical-url" maxlength="512" placeholder="https://example.com/calendar.ics"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 text-sm roboto-regular">
+            </div>
+
+            <!-- Color -->
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Color</label>
+                <div class="flex gap-2" id="add-color-picker">
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#3b82f6" style="background:#3b82f6"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                    <button type="button" class="ical-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+                </div>
+            </div>
+
+            <!-- Save -->
+            <button type="button" id="add-ical-btn"
+                    class="w-full py-3 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                Add Calendar
+            </button>
+        </div>
+    </div>
+
+    <!-- Your Calendars -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+            </svg>
+            Your Calendars
+            <span id="cal-count" class="ml-auto text-xs text-gray-400 roboto-regular"></span>
+        </h3>
+
+        <div id="calendars-list" class="space-y-3">
+            <!-- Rendered by JS -->
+        </div>
+
+        <div id="calendars-empty" class="hidden py-10 text-center">
+            <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+            </svg>
+            <p class="text-sm text-gray-400 roboto-regular">No iCal calendars added yet.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Calendar Modal -->
+<div id="edit-cal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Edit Calendar</h3>
+            <button id="edit-cal-close" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="edit-cal-alert"></div>
+        <input type="hidden" id="edit-cal-id">
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Calendar Name</label>
+                <input type="text" id="edit-cal-name" maxlength="120"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 text-sm roboto-regular">
+            </div>
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">iCal URL</label>
+                <input type="url" id="edit-cal-url" maxlength="512"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 text-sm roboto-regular">
+            </div>
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Color</label>
+                <div class="flex gap-2" id="edit-color-picker">
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#3b82f6" style="background:#3b82f6"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                    <button type="button" class="edit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="edit-cal-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button id="edit-cal-save" class="flex-1 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-cal-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Calendar</h3>
+        <p class="text-sm text-gray-500 mb-5">Are you sure you want to remove this calendar? Its events will no longer appear on your calendar.</p>
+        <input type="hidden" id="delete-cal-id">
+        <div class="flex gap-3">
+            <button id="delete-cal-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="delete-cal-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm montserrat-semi-bold hover:bg-red-600 transition-colors">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/calendar_settings.js') }}"></script>
+{% endblock %}
