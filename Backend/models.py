@@ -20,6 +20,8 @@ class User(db.Model):  # type: ignore[name-defined]
     ical_calendars = db.relationship("ICalCalendar", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     semesters = db.relationship("Semester", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     units = db.relationship("Unit", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -99,6 +101,8 @@ class Task(db.Model):  # type: ignore[name-defined]
     due_date = db.Column(db.DateTime, nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
+    notified_due = db.Column(db.Boolean, nullable=False, default=False)
+    notified_overdue = db.Column(db.Boolean, nullable=False, default=False)
 
     unit = db.relationship("Unit", foreign_keys=[unit_id])
 
@@ -221,4 +225,57 @@ class Unit(db.Model):  # type: ignore[name-defined]
             "archived": self.archived,
             "semester_id": self.semester_id,
             "semester_name": self.semester.name if self.semester else None,
+        }
+
+
+class Notification(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    type = db.Column(db.String(40), nullable=False)  # task_due, task_overdue, session_reminder, semester_alert, timer_done
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.String(500), nullable=False, default="")
+    link = db.Column(db.String(200), nullable=True)
+    read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "type": self.type,
+            "title": self.title,
+            "message": self.message,
+            "link": self.link,
+            "read": self.read,
+            "created_at": self.created_at.isoformat(),
+        }
+
+
+class NotificationPreference(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "notification_preferences"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    session_reminders = db.Column(db.Boolean, nullable=False, default=True)
+    task_due_reminders = db.Column(db.Boolean, nullable=False, default=True)
+    task_overdue_alerts = db.Column(db.Boolean, nullable=False, default=True)
+    semester_alerts = db.Column(db.Boolean, nullable=False, default=True)
+    timer_done_push = db.Column(db.Boolean, nullable=False, default=True)
+    browser_push_enabled = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "session_reminders": self.session_reminders,
+            "task_due_reminders": self.task_due_reminders,
+            "task_overdue_alerts": self.task_overdue_alerts,
+            "semester_alerts": self.semester_alerts,
+            "timer_done_push": self.timer_done_push,
+            "browser_push_enabled": self.browser_push_enabled,
         }

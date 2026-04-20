@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}Notification Settings{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
+
+    <!-- Notification Preferences -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+            </svg>
+            Notification Preferences
+        </h3>
+
+        <div id="prefs-alert"></div>
+
+        <p class="text-sm text-gray-500 mb-5">Choose which notifications you'd like to receive. Changes are saved automatically.</p>
+
+        <div class="space-y-4" id="prefs-toggles">
+            <!-- Session Reminders -->
+            <label class="flex items-center justify-between gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Study session reminders</p>
+                    <p class="text-xs text-gray-500">Get notified before your scheduled sessions start</p>
+                </div>
+                <input type="checkbox" id="pref-session_reminders" class="pref-toggle w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" data-field="session_reminders">
+            </label>
+
+            <!-- Task Due -->
+            <label class="flex items-center justify-between gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Task due date reminders</p>
+                    <p class="text-xs text-gray-500">Get notified when tasks are due within 24 hours</p>
+                </div>
+                <input type="checkbox" id="pref-task_due_reminders" class="pref-toggle w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" data-field="task_due_reminders">
+            </label>
+
+            <!-- Task Overdue -->
+            <label class="flex items-center justify-between gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Task overdue alerts</p>
+                    <p class="text-xs text-gray-500">Get notified when tasks pass their due date</p>
+                </div>
+                <input type="checkbox" id="pref-task_overdue_alerts" class="pref-toggle w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" data-field="task_overdue_alerts">
+            </label>
+
+            <!-- Semester Alerts -->
+            <label class="flex items-center justify-between gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Semester start/end alerts</p>
+                    <p class="text-xs text-gray-500">Get notified when semesters are starting or ending soon</p>
+                </div>
+                <input type="checkbox" id="pref-semester_alerts" class="pref-toggle w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" data-field="semester_alerts">
+            </label>
+
+            <!-- Timer Done -->
+            <label class="flex items-center justify-between gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Timer done (browser notification)</p>
+                    <p class="text-xs text-gray-500">Get a browser notification when your countdown timer ends</p>
+                </div>
+                <input type="checkbox" id="pref-timer_done_push" class="pref-toggle w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" data-field="timer_done_push">
+            </label>
+        </div>
+    </div>
+
+    <!-- Browser Notifications -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/>
+            </svg>
+            Browser Push Notifications
+        </h3>
+
+        <p class="text-sm text-gray-500 mb-4">Allow Planify to send native browser notifications even when you're on another tab.</p>
+
+        <div id="browser-push-status" class="mb-4">
+            <!-- Filled by JS -->
+        </div>
+
+        <button id="enable-push-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+            Enable Browser Notifications
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/notification_settings.js') }}"></script>
+{% endblock %}
