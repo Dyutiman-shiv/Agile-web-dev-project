@@ -64,6 +64,18 @@
                             </svg>
                             Profile
                         </a>
+                        <a href="{{ url_for('cal.calendar_settings_view') }}" class="flex items-center gap-3 px-4 py-2.5 roboto-regular text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                            </svg>
+                            Calendar Settings
+                        </a>
+                        <a href="{{ url_for('semesters.academic_settings_view') }}" class="flex items-center gap-3 px-4 py-2.5 roboto-regular text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347"/>
+                            </svg>
+                            Academic Settings
+                        </a>
                         <div class="border-t border-gray-100 my-1"></div>
                         <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 roboto-regular hover:bg-red-50 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">

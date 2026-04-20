@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Set Up Your Semesters{% endblock %}
+
+{% block content %}
+<div class="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary_purp via-tertiary_blu to-secondary_blu">
+    <div class="absolute top-0 -left-4 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+    <div class="absolute -bottom-8 right-20 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob" style="animation-delay:2s"></div>
+
+    <div class="relative z-10 w-full max-w-lg mx-4 my-8 animate-slide-up">
+        <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/20 mb-4">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl montserrat-bold text-white mb-1">Set Up Your Semesters</h2>
+                <p class="text-sm text-white/60 roboto-regular">Add your academic semesters to track study progress over time.</p>
+            </div>
+
+            <div id="setup-alert" class="hidden"></div>
+
+            <!-- Semester rows -->
+            <div id="semester-rows" class="space-y-4 mb-6">
+                <!-- Rendered by JS -->
+            </div>
+
+            <!-- Add another -->
+            <button type="button" id="add-semester-btn" class="w-full py-2.5 rounded-xl border border-dashed border-white/30 text-white/70 text-sm montserrat-medium hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2 mb-6">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Add Another Semester
+            </button>
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                <button type="button" id="save-semesters-btn" class="w-full py-3 rounded-xl bg-white text-primary_purp text-sm montserrat-semi-bold hover:bg-white/90 transition-all shadow-lg">
+                    <span id="save-spinner" class="hidden inline-block w-4 h-4 border-2 border-primary_purp/30 border-t-primary_purp rounded-full animate-spin mr-2 align-middle"></span>
+                    Continue to Dashboard
+                </button>
+                <a href="{{ url_for('auth.home') }}" class="block text-center text-sm text-white/50 hover:text-white/80 transition-colors roboto-regular">
+                    I'll set this up later
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/semester_setup.js') }}"></script>
+{% endblock %}

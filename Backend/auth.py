@@ -1,7 +1,14 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import User
+from models import User, Semester
 from app import db
+
+def _redirect_destination(user):
+    """Return home or semester setup depending on whether the user has semesters."""
+    if Semester.query.filter_by(user_id=user.id).count() == 0:
+        return url_for("semesters.semester_setup_view")
+    return url_for("auth.home")
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -46,9 +53,10 @@ def login():
             return render_template("login.html"), 401
 
         login_user(user, remember=remember)
+        dest = _redirect_destination(user)
         if request.is_json:
-            return jsonify({"success": True, "redirect": url_for("auth.home")})
-        return redirect(url_for("auth.home"))
+            return jsonify({"success": True, "redirect": dest})
+        return redirect(dest)
 
     return render_template("login.html")
 
@@ -97,9 +105,10 @@ def signup():
         db.session.commit()
 
         login_user(user, remember=False)
+        dest = _redirect_destination(user)
         if request.is_json:
-            return jsonify({"success": True, "redirect": url_for("auth.home")})
-        return redirect(url_for("auth.home"))
+            return jsonify({"success": True, "redirect": dest})
+        return redirect(dest)
 
     return render_template("signup.html")
 
@@ -170,7 +179,7 @@ def google_callback():
         db.session.commit()
 
     login_user(user, remember=True)
-    return redirect(url_for("auth.home"))
+    return redirect(_redirect_destination(user))
 
 
 # ---------- Placeholder pages ----------
