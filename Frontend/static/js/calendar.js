@@ -2,20 +2,20 @@ $(function () {
     "use strict";
 
     // ============ State ============
-    var currentView = "month"; // day | week | month
-    var currentDate = new Date();
-    var miniDate = new Date(); // independent mini-calendar month
-    var events = [];
-    var selectedColor = "#6366f1";
-    var selectedType = "session";
-    var editingEvent = null;
-    var isEditMode = false;  // Track if we're in edit mode
-    var currentSummaryEvent = null;
+    let currentView = "month"; // day | week | month
+    let currentDate = new Date();
+    let miniDate = new Date(); // independent mini-calendar month
+    let events = [];
+    let selectedColor = "#6366f1";
+    let selectedType = "session";
+    let editingEvent = null;
+    let isEditMode = false;  // Track if we're in edit mode
+    let currentSummaryEvent = null;
 
-    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    var MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    var DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    var DAYS_MINI = ["S", "M", "T", "W", "T", "F", "S"];
+    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const DAYS_MINI = ["S", "M", "T", "W", "T", "F", "S"];
 
     //Format date & time
     function pad(num) {
@@ -33,14 +33,14 @@ $(function () {
     function sameDay(a, b) { return dateKey(a) === dateKey(b); }
 
     function startOfWeek(d) {
-        var s = new Date(d);
+        const s = new Date(d);
         s.setDate(s.getDate() - s.getDay());
         s.setHours(0,0,0,0);
         return s;
     }
 
     function getViewRange() {
-        var start, end;
+        let start, end;
         if (currentView === "month") {
             start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
             start.setDate(start.getDate() - start.getDay());
@@ -60,19 +60,19 @@ $(function () {
     }
 
     function getAgendaRange() {
-        var today = new Date();
+        const today = new Date();
         today.setHours(0,0,0,0);
-        var end = new Date(today);
+        const end = new Date(today);
         end.setDate(end.getDate() + 2);
         return { start: today, end: end };
     }
 
     function showAlert(msg, type) {
-        var colorMap = {
+        const colorMap = {
             danger:  "bg-red-100 text-red-700 border-red-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
-        var cls = colorMap[type] || colorMap.danger;
+        const cls = colorMap[type] || colorMap.danger;
         $("#event-alert").html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm border mb-3 ' + cls + '">' +
             '<span>' + msg + '</span></div>'
@@ -80,43 +80,46 @@ $(function () {
     }
 
     function formatTime12(d) {
-        var h = d.getHours();
-        var m = d.getMinutes();
-        var ampm = h >= 12 ? "PM" : "AM";
+        let h = d.getHours();
+        const m = d.getMinutes();
+        const ampm = h >= 12 ? "PM" : "AM";
         h = h % 12; if (h === 0) h = 12;
         return h + ":" + pad(m) + " " + ampm;
     }
 
     function formatTimeShort(d) {
-        var h = d.getHours();
-        var m = d.getMinutes();
-        var ampm = h >= 12 ? "pm" : "am";
+        let h = d.getHours();
+        const m = d.getMinutes();
+        const ampm = h >= 12 ? "pm" : "am";
         h = h % 12; if (h === 0) h = 12;
         return h + ":" + pad(m) + " " + ampm;
     }
 
     function getEndTime(ev) {
-        var start = new Date(ev.start);
-        var dur = ev.type === "session" ? (ev.duration || 60) : 30;
+        const start = new Date(ev.start);
+        const dur = ev.duration || (ev.type === "session" ? 60 : 30);
         return new Date(start.getTime() + dur * 60000);
     }
 
     // ============ Fetch events ============
     // We fetch for both the visible calendar range AND the agenda range
-    var allEvents = []; // superset for agenda
+    let allEvents = []; // superset for agenda
+    let dbEvents = [];  // DB events only (before iCal merge)
     function loadEvents() {
-        var range = getViewRange();
-        var agendaRange = getAgendaRange();
+        const range = getViewRange();
+        const agendaRange = getAgendaRange();
         // Merge ranges to get one request
-        var fetchStart = range.start < agendaRange.start ? range.start : agendaRange.start;
-        var fetchEnd = range.end > agendaRange.end ? range.end : agendaRange.end;
+        const fetchStart = range.start < agendaRange.start ? range.start : agendaRange.start;
+        const fetchEnd = range.end > agendaRange.end ? range.end : agendaRange.end;
 
         $.getJSON("/api/events", {
             start: toLocalISO(fetchStart),
             end: toLocalISO(fetchEnd)
         }, function (data) {
-            allEvents = data;
-            events = data;
+            dbEvents = data;
+            // Always merge with cached iCal events
+            events = dbEvents.concat(icalEvents);
+            allEvents = events;
             render();
             renderMiniCalendar();
             renderAgenda();
@@ -125,12 +128,12 @@ $(function () {
 
     // ============ Title & view button state ============
     function updateTitle() {
-        var title = "";
+        let title = "";
         if (currentView === "month") {
             title = MONTHS[currentDate.getMonth()] + " " + currentDate.getFullYear();
         } else if (currentView === "week") {
-            var ws = startOfWeek(currentDate);
-            var we = new Date(ws); we.setDate(we.getDate() + 6);
+            const ws = startOfWeek(currentDate);
+            const we = new Date(ws); we.setDate(we.getDate() + 6);
             title = MONTHS[ws.getMonth()] + " " + ws.getDate() + " – " + (ws.getMonth() !== we.getMonth() ? MONTHS[we.getMonth()] + " " : "") + we.getDate() + ", " + we.getFullYear();
         } else {
             title = MONTHS[currentDate.getMonth()] + " " + currentDate.getDate() + ", " + currentDate.getFullYear();
@@ -138,7 +141,7 @@ $(function () {
         $("#cal-title").text(title);
 
         $(".cal-view-btn").each(function () {
-            var $b = $(this);
+            const $b = $(this);
             if ($b.data("view") === currentView) {
                 $b.addClass("bg-gradient-to-r from-secondary_blu  to-primary_purp to-80% text-white shadow-sm").removeClass("text-text_dark_gray bg-transparent");
             } else {
@@ -150,7 +153,7 @@ $(function () {
     // ============ Render calendar ============
     function render() {
         updateTitle();
-        var $c = $("#calendar-container");
+        const $c = $("#calendar-container");
         if (currentView === "month") renderMonth($c);
         else if (currentView === "week") renderWeek($c);
         else renderDay($c);
@@ -158,14 +161,14 @@ $(function () {
 
     // ============ Mini Calendar ============
     function renderMiniCalendar() {
-        var $mc = $("#mini-calendar");
+        const $mc = $("#mini-calendar");
         if (!$mc.length) return;
 
-        var year = miniDate.getFullYear();
-        var month = miniDate.getMonth();
-        var today = new Date(); today.setHours(0,0,0,0);
+        const year = miniDate.getFullYear();
+        const month = miniDate.getMonth();
+        const today = new Date(); today.setHours(0,0,0,0);
 
-        var html = '<div class="select-none">';
+        let html = '<div class="select-none">';
         // Header: Month Year < >
         html += '<div class="flex items-center justify-between mb-3 pr-[8px] pl-[12px]">';
         html += '<span class="text-md roboto-semi-bold text-text_dark_gray">' + MONTHS[month] + ' ' + year + '</span>';
@@ -176,25 +179,25 @@ $(function () {
 
         // Day-of-week header
         html += '<div class="grid grid-cols-7 mb-1">';
-        for (var d = 0; d < 7; d++) {
+        for (let d = 0; d < 7; d++) {
             html += '<div class="text-center text-xs roboto-semi-bold text-text_dark_gray py-1">' + DAYS_SHORT[d] + '</div>';
         }
         html += '</div>';
 
         // Day cells
-        var first = new Date(year, month, 1);
-        var startDay = new Date(first);
+        const first = new Date(year, month, 1);
+        const startDay = new Date(first);
         startDay.setDate(startDay.getDate() - startDay.getDay());
 
         html += '<div class="grid grid-cols-7">';
-        for (var i = 0; i < 42; i++) {
-            var cell = new Date(startDay);
+        for (let i = 0; i < 42; i++) {
+            const cell = new Date(startDay);
             cell.setDate(cell.getDate() + i);
-            var isCurrentMonth = cell.getMonth() === month;
-            var isToday = sameDay(cell, today);
-            var isSelected = sameDay(cell, currentDate);
+            const isCurrentMonth = cell.getMonth() === month;
+            const isToday = sameDay(cell, today);
+            const isSelected = sameDay(cell, currentDate);
 
-            var cls = "mini-cal-cell w-8 h-8 flex items-center justify-center text-xs roboto-semi-bold text-text_dark_gray rounded-full cursor-pointer transition-all mx-auto ";
+            let cls = "mini-cal-cell w-8 h-8 flex items-center justify-center text-xs roboto-semi-bold text-text_dark_gray rounded-full cursor-pointer transition-all mx-auto ";
             if (isToday) {
                 cls += "bg-tertiary_blu text-white roboto-semi-bold ";
             } else if (isSelected) {
@@ -224,23 +227,23 @@ $(function () {
 
     // Click mini calendar cell → navigate main calendar
     $(document).on("click", ".mini-cal-cell", function() {
-        var parts = $(this).data("date").split("-");
+        const parts = $(this).data("date").split("-");
         currentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         loadEvents();
     });
 
     // ============ Agenda Panel ============
     function renderAgenda() {
-        var $ap = $("#agenda-panel");
+        const $ap = $("#agenda-panel");
         if (!$ap.length) return;
 
-        var today = new Date(); today.setHours(0,0,0,0);
-        var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
-        var todayEvents = getEventsForDateFromAll(today);
-        var tomorrowEvents = getEventsForDateFromAll(tomorrow);
+        const todayEvents = getEventsForDateFromAll(today);
+        const tomorrowEvents = getEventsForDateFromAll(tomorrow);
 
-        var html = '';
+        let html = '';
 
         // Today section
         html += '<div class="mb-5">';
@@ -252,7 +255,7 @@ $(function () {
         if (todayEvents.length === 0) {
             html += '<p class="text-xs text-gray-400 roboto-regular-italic">No events</p>';
         } else {
-            for (var i = 0; i < todayEvents.length; i++) {
+            for (let i = 0; i < todayEvents.length; i++) {
                 html += renderAgendaItem(todayEvents[i]);
             }
         }
@@ -268,7 +271,7 @@ $(function () {
         if (tomorrowEvents.length === 0) {
             html += '<p class="text-xs text-gray-400 roboto-regular-italic">No events</p>';
         } else {
-            for (var j = 0; j < tomorrowEvents.length; j++) {
+            for (let j = 0; j < tomorrowEvents.length; j++) {
                 html += renderAgendaItem(tomorrowEvents[j]);
             }
         }
@@ -278,11 +281,11 @@ $(function () {
     }
 
     function renderAgendaItem(ev) {
-        var start = new Date(ev.start);
-        var end = getEndTime(ev);
-        var timeStr = formatTime12(start) + " - " + formatTime12(end);
-        var dotColor = ev.color || "#725AEA";
-        var html = '<div class="flex items-start gap-2.5 py-2 cursor-pointer agenda-event hover:bg-gray-50 rounded-lg px-1 -mx-1 transition-colors" data-id="' + ev.id + '" data-type="' + ev.type + '">';
+        const start = new Date(ev.start);
+        const end = getEndTime(ev);
+        const timeStr = formatTime12(start) + " - " + formatTime12(end);
+        const dotColor = ev.color || "#725AEA";
+        let html = '<div class="flex items-start gap-2.5 py-2 cursor-pointer agenda-event hover:bg-gray-50 rounded-lg px-1 -mx-1 transition-colors" data-id="' + ev.id + '" data-type="' + ev.type + '">';
         html += '<div class="w-2 h-2 rounded-full mt-1.5 shrink-0" style="background:' + dotColor + '"></div>';
         html += '<div class="min-w-0">';
         html += '<div class="text-xs text-text_dark_gray roboto-regular">' + timeStr + '</div>';
@@ -292,7 +295,7 @@ $(function () {
     }
 
     function getEventsForDateFromAll(date) {
-        var key = dateKey(date);
+        const key = dateKey(date);
         return allEvents.filter(function(ev) {
             return dateKey(new Date(ev.start)) === key;
         }).sort(function(a, b) {
@@ -303,22 +306,22 @@ $(function () {
     // Show summary popup
     function showSummaryModal(ev) {
         currentSummaryEvent = ev;
-        var startDate = new Date(ev.start);
-        var endDate = getEndTime(ev);
+        const startDate = new Date(ev.start);
+        const endDate = getEndTime(ev);
         
         // Set title and color
         $("#summary-title").text(ev.title);
         $("#summary-color-dot").css("background", ev.color || "#725AEA");
         
         // Set date and time
-        var dateStr = startDate.toLocaleDateString('en-US', { 
+        const dateStr = startDate.toLocaleDateString('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
         });
 
-        var timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
+        const timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
         
         $("#summary-datetime").text(dateStr + " at " + timeStr);
         
@@ -330,15 +333,35 @@ $(function () {
             $("#summary-completed-container").hide();
             
             // Set duration
-            var duration = ev.duration || 60;
-            var hours = Math.floor(duration / 60);
-            var minutes = duration % 60;
-            var durationText = hours > 0 ? hours + " hr" + (hours > 1 ? "s" : "") : "";
+            const duration = ev.duration || 60;
+            const hours = Math.floor(duration / 60);
+            const minutes = duration % 60;
+            let durationText = hours > 0 ? hours + " hr" + (hours > 1 ? "s" : "") : "";
             durationText += minutes > 0 ? (durationText ? " " : "") + minutes + " min" : "";
             $("#summary-duration").text(durationText || "60 min");
             
             // Set notes
             $("#summary-notes").text(ev.notes || "No notes");
+        } else if (ev.type === "ical") {
+            $("#summary-duration-container").show();
+            $("#summary-notes-container").hide();
+            $("#summary-description-container").show();
+            $("#summary-completed-container").hide();
+
+            // Show duration for iCal events
+            const icalDur = ev.duration || 60;
+            const icalH = Math.floor(icalDur / 60);
+            const icalM = icalDur % 60;
+            let icalDurText = icalH > 0 ? icalH + " hr" + (icalH > 1 ? "s" : "") : "";
+            icalDurText += icalM > 0 ? (icalDurText ? " " : "") + icalM + " min" : "";
+            if (ev.allDay) icalDurText = "All day";
+            $("#summary-duration").text(icalDurText || "60 min");
+
+            const descParts = [];
+            if (ev.location) descParts.push("Location: " + ev.location);
+            if (ev.description) descParts.push(ev.description);
+            descParts.push("Calendar: " + (ev.calendarName || "iCal"));
+            $("#summary-description").text(descParts.join("\n"));
         } else {
             $("#summary-duration-container").hide();
             $("#summary-notes-container").hide();
@@ -354,6 +377,15 @@ $(function () {
                 (ev.completed ? "text-green-600" : "text-gray-800"));
         }
         
+        // Hide edit/delete for iCal events (read-only)
+        if (ev.readonly) {
+            $("#summary-edit-btn").hide();
+            $("#summary-delete-btn").hide();
+        } else {
+            $("#summary-edit-btn").show();
+            $("#summary-delete-btn").show();
+        }
+
         $("#event-summary-modal").removeClass("hidden");
     }
 
@@ -384,7 +416,7 @@ $(function () {
         if (!currentSummaryEvent) return;
         if (!confirm("Delete this event?")) return;
         
-        var eventToDelete = currentSummaryEvent;
+        const eventToDelete = currentSummaryEvent;
         $.ajax({
             url: "/api/events/" + eventToDelete.id + "?type=" + eventToDelete.type,
             method: "DELETE",
@@ -394,7 +426,7 @@ $(function () {
                 loadEvents();
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Delete failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Delete failed.";
                 showAlert(msg, "danger");
             }
         });
@@ -403,38 +435,38 @@ $(function () {
     // Click agenda event → open edit modal
     $(document).on("click", ".agenda-event", function(e) {
         e.stopPropagation();
-        var id = $(this).data("id");
-        var type = $(this).data("type");
-        var ev = allEvents.find(function(x) { return x.id === id && x.type === type; });
+        const id = $(this).data("id");
+        const type = $(this).data("type");
+        const ev = allEvents.find(function(x) { return x.id === id && x.type === type; });
         if (ev) showSummaryModal(ev);
     });
 
     // -- Month view --
     function renderMonth($c) {
-        var html = '<div class="grid grid-cols-7 h-full" style="grid-template-rows: auto repeat(6, 1fr);">';
+        let html = '<div class="grid grid-cols-7 h-full" style="grid-template-rows: auto repeat(6, 1fr);">';
         // Header row
-        for (var d = 0; d < 7; d++) {
+        for (let d = 0; d < 7; d++) {
             html += '<div class="px-2 py-2 text-center text-xs roboto-light text-black border-b border-gray-100">' + DAYS_SHORT[d] + '</div>';
         }
 
-        var first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        var startDay = new Date(first); startDay.setDate(startDay.getDate() - startDay.getDay());
-        var today = new Date(); today.setHours(0,0,0,0);
+        const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const startDay = new Date(first); startDay.setDate(startDay.getDate() - startDay.getDay());
+        const today = new Date(); today.setHours(0,0,0,0);
 
-        for (var i = 0; i < 42; i++) {
-            var cell = new Date(startDay);
+        for (let i = 0; i < 42; i++) {
+            const cell = new Date(startDay);
             cell.setDate(cell.getDate() + i);
-            var isCurrentMonth = cell.getMonth() === currentDate.getMonth();
-            var isToday = sameDay(cell, today);
-            var dayEvents = getEventsForDate(cell);
+            const isCurrentMonth = cell.getMonth() === currentDate.getMonth();
+            const isToday = sameDay(cell, today);
+            const dayEvents = getEventsForDate(cell);
 
             html += '<div class="border-b border-r border-gray-100 p-1.5 cursor-pointer hover:bg-tertiary_blu/10 transition-colors overflow-hidden cal-cell" data-date="' + dateKey(cell) + '">';
             html += '<div class="text-xs roboto-semi-bold mb-1 ' + (isToday ? 'bg-tertiary_blu text-white w-6 h-6 rounded-full flex items-center justify-center' : (isCurrentMonth ? 'text-black' : 'text-text_unactive_day')) + '">' + cell.getDate() + '</div>';
 
-            for (var e = 0; e < Math.min(dayEvents.length, 3); e++) {
-                var ev = dayEvents[e];
-                var evStart = new Date(ev.start);
-                var timeLabel = formatTimeShort(evStart);
+            for (let e = 0; e < Math.min(dayEvents.length, 3); e++) {
+                const ev = dayEvents[e];
+                const evStart = new Date(ev.start);
+                const timeLabel = formatTimeShort(evStart);
                 html += '<div class="event-pill flex items-center gap-1 text-xs py-0.5 mb-0.5 truncate cursor-pointer group" data-id="' + ev.id + '" data-type="' + ev.type + '">';
                 html += '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + ev.color + '"></span>';
                 html += '<span class="text-black roboto-regular">' + timeLabel + '</span>';
@@ -452,18 +484,18 @@ $(function () {
 
     // -- Week view --
     function renderWeek($c) {
-        var ws = startOfWeek(currentDate);
-        var today = new Date(); today.setHours(0,0,0,0);
-        var hours = [];
-        for (var h = 0; h < 24; h++) hours.push(h);
+        const ws = startOfWeek(currentDate);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const hours = [];
+        for (let h = 0; h < 24; h++) hours.push(h);
 
-        var html = '<div class="w-full flex flex-col h-full">';
+        let html = '<div class="w-full flex flex-col h-full">';
         // Header row with day columns
         html += '<div class="grid grid-cols-8 border-b border-gray-200 shrink-0">';
         html += '<div class="w-16 shrink-0"></div>';
-        for (var d = 0; d < 7; d++) {
-            var dayDate = new Date(ws); dayDate.setDate(dayDate.getDate() + d);
-            var isTodayCol = sameDay(dayDate, today);
+        for (let d = 0; d < 7; d++) {
+            const dayDate = new Date(ws); dayDate.setDate(dayDate.getDate() + d);
+            const isTodayCol = sameDay(dayDate, today);
             html += '<div class="flex-1 text-center py-2 border-l border-gray-100">';
             html += '<div class="text-xs roboto-light' + (isTodayCol ? 'text-tertiary_blu' : 'text-black') + '">' + DAYS_SHORT[d] + '</div>';
             if (isTodayCol) {
@@ -481,39 +513,39 @@ $(function () {
         html += '<div class="grid grid-cols-8 relative" style="height:' + (hours.length * 60) + 'px">';
 
         // Hour labels + grid lines
-        for (var hi = 0; hi < hours.length; hi++) {
-            var hour = hours[hi];
-            var topPx = hi * 60;
-            var label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
+        for (let hi = 0; hi < hours.length; hi++) {
+            const hour = hours[hi];
+            const topPx = hi * 60;
+            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
             html += '<div class="absolute text-xs text-text_dark_gray roboto-regular text-right pr-2 pt-2" style="top:' + (topPx - 8) + 'px;width:4rem">' + label + '</div>';
             html += '<div class="absolute border-t border-gray-100" style="top:' + topPx + 'px;left:4rem;right:0"></div>';
         }
 
         //Adding vertical borders
-        var colWidthPercent = 100 / 8;
+        const colWidthPercent = 100 / 8;
 
-        for (var ci = 0; ci < 8; ci++) {
-            var leftPercent = ci * colWidthPercent;
+        for (let ci = 0; ci < 8; ci++) {
+            const leftPercent = ci * colWidthPercent;
 
             html += '<div class="absolute border-l border-gray-100" ' +
                     'style="top:0; bottom:0; left:' + leftPercent + '%"></div>';
         }
 
         // Events
-        var firstHour = hours[0];
-        for (var d2 = 0; d2 < 7; d2++) {
-            var dayDate2 = new Date(ws); dayDate2.setDate(dayDate2.getDate() + d2);
-            var dayEvts = getEventsForDate(dayDate2);
-            for (var ei = 0; ei < dayEvts.length; ei++) {
-                var ev = dayEvts[ei];
-                var evDate = new Date(ev.start);
-                var evEnd = getEndTime(ev);
-                var topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-                var height = ev.type === "session" ? (ev.duration || 60) : 30;
+        const firstHour = hours[0];
+        for (let d2 = 0; d2 < 7; d2++) {
+            const dayDate2 = new Date(ws); dayDate2.setDate(dayDate2.getDate() + d2);
+            const dayEvts = getEventsForDate(dayDate2);
+            for (let ei = 0; ei < dayEvts.length; ei++) {
+                const ev = dayEvts[ei];
+                const evDate = new Date(ev.start);
+                const evEnd = getEndTime(ev);
+                let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
+                const height = ev.type === "session" ? (ev.duration || 60) : 30;
                 if (topMin < 0) { topMin = 0; }
-                var leftPct = ((d2 + 1) / 8 * 100);
-                var widthPct = (1 / 8 * 100);
-                var bgColor = ev.color || "#725AEA";
+                const leftPct = ((d2 + 1) / 8 * 100);
+                const widthPct = (1 / 8 * 100);
+                const bgColor = ev.color || "#725AEA";
                 // Lighter background with colored left border
                 html += '<div class="absolute rounded-lg px-2 py-1 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftPct + '%;width:calc(' + widthPct + '% - 4px);height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
                 html += '<div class="text-[10px] montserrat-regular leading-tight" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
@@ -526,10 +558,10 @@ $(function () {
         $c.html(html);
 
         // Scroll to current time or first hour
-        var $scroll = $("#week-scroll");
+        const $scroll = $("#week-scroll");
         if ($scroll.length) {
-            var now = new Date();
-            var scrollTo = (now.getHours() - hours[0]) * 60 + now.getMinutes() - 60;
+            const now = new Date();
+            const scrollTo = (now.getHours() - hours[0]) * 60 + now.getMinutes() - 60;
             $scroll.scrollTop(Math.max(0, scrollTo));
         }
         drawCurrentTimeLine();
@@ -537,13 +569,13 @@ $(function () {
 
     // -- Day view --
     function renderDay($c) {
-        var today = new Date(); today.setHours(0,0,0,0);
-        var isToday = sameDay(currentDate, today);
-        var dayEvents = getEventsForDate(currentDate);
-        var hours = [];
-        for (var h = 0; h < 24; h++) hours.push(h);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const isToday = sameDay(currentDate, today);
+        const dayEvents = getEventsForDate(currentDate);
+        const hours = [];
+        for (let h = 0; h < 24; h++) hours.push(h);
 
-        var html = '<div class="flex flex-col h-full">';
+        let html = '<div class="flex flex-col h-full">';
         // Day header
         html += '<div class="px-4 py-3 border-b border-gray-200 shrink-0">';
         html += '<div class="text-sm pl-[10px] roboto-semi-bold ' + (isToday ? 'text-tertiary_blu' : 'text-text_dark_gray') + '">' + DAYS_SHORT[currentDate.getDay()] + '</div>';
@@ -555,27 +587,27 @@ $(function () {
         html += '</div>';
 
         // Time grid
-        var firstHour = hours[0];
+        const firstHour = hours[0];
         html += '<div class="flex-1 overflow-y-auto" id="day-scroll">';
         html += '<div class="relative" style="height:' + (hours.length * 60) + 'px">';
-        for (var hi = 0; hi < hours.length; hi++) {
-            var hour = hours[hi];
-            var topPx = hi * 60;
-            var label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
+        for (let hi = 0; hi < hours.length; hi++) {
+            const hour = hours[hi];
+            const topPx = hi * 60;
+            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
             html += '<div class="absolute pt-2 left-0 text-xs text-text_dark_gray roboto-regular w-20 text-right pr-3" style="top:' + (topPx - 8) + 'px">' + label + '</div>';
             html += '<div class="absolute border-t border-gray-100" style="top:' + topPx + 'px;left:5rem;right:0"></div>';
             html += '<div class="absolute cursor-pointer hover:bg-tertiary_blu/10 transition-colors cal-hour-cell" style="top:' + topPx + 'px;left:5rem;right:0;height:60px" data-hour="' + hour + '"></div>';
         }
 
         // Events
-        for (var ei = 0; ei < dayEvents.length; ei++) {
-            var ev = dayEvents[ei];
-            var evDate = new Date(ev.start);
-            var evEnd = getEndTime(ev);
-            var topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-            var height = (ev.type === "session" ? (ev.duration || 60) : 30) - 15;
+        for (let ei = 0; ei < dayEvents.length; ei++) {
+            const ev = dayEvents[ei];
+            const evDate = new Date(ev.start);
+            const evEnd = getEndTime(ev);
+            let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
+            const height = (ev.type === "session" ? (ev.duration || 60) : 30) - 15;
             if (topMin < 0) { topMin = 0; }
-            var bgColor = ev.color || "#6366f1";
+            const bgColor = ev.color || "#6366f1";
             html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:5.5rem;right:0.5rem;height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
             html += '<div class="text-xs montserrat-regular" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
             html += '<div class="text-sm montserrat-semi-bold" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
@@ -586,10 +618,10 @@ $(function () {
         $c.html(html);
 
         // Scroll to current time or first hour
-        var $scroll = $("#day-scroll");
+        const $scroll = $("#day-scroll");
         if ($scroll.length) {
-            var now = new Date();
-            var scrollTo = (now.getHours() - hours[0]) * 60 + now.getMinutes() - 60;
+            const now = new Date();
+            const scrollTo = (now.getHours() - hours[0]) * 60 + now.getMinutes() - 60;
             $scroll.scrollTop(Math.max(0, scrollTo));
         }
         drawCurrentTimeLine();
@@ -598,21 +630,21 @@ $(function () {
     // ============ Current time indicator ============
     function drawCurrentTimeLine() {
         $(".current-time-line").remove();
-        var now = new Date();
-        var firstHour = 0;
-        var topMin = (now.getHours() - firstHour) * 60 + now.getMinutes();
+        const now = new Date();
+        const firstHour = 0;
+        const topMin = (now.getHours() - firstHour) * 60 + now.getMinutes();
 
         if (currentView === "week") {
-            var $grid = $("#week-scroll .grid");
+            const $grid = $("#week-scroll .grid");
             if (!$grid.length) return;
-            var line = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:4rem;right:0;pointer-events:none">';
+            let line = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:4rem;right:0;pointer-events:none">';
             line += '<div class="flex items-center"><div class="w-2 h-2 rounded-full bg-red-500 -ml-1"></div><div class="flex-1 border-t-2 border-red-500"></div></div>';
             line += '</div>';
             $grid.append(line);
         } else if (currentView === "day") {
-            var $rel = $("#day-scroll > .relative");
+            const $rel = $("#day-scroll > .relative");
             if (!$rel.length) return;
-            var line2 = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:5rem;right:0;pointer-events:none">';
+            let line2 = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:5rem;right:0;pointer-events:none">';
             line2 += '<div class="flex items-center"><div class="w-2 h-2 rounded-full bg-red-500 -ml-1"></div><div class="flex-1 border-t-2 border-red-500"></div></div>';
             line2 += '</div>';
             $rel.append(line2);
@@ -626,25 +658,25 @@ $(function () {
     $(document).on("click", "#week-scroll .grid", function(e) {
         if ($(e.target).hasClass("event-pill") || $(e.target).closest(".event-pill").length) return;
         if ($(e.target).hasClass("current-time-line") || $(e.target).closest(".current-time-line").length) return;
-        var $grid = $(this);
-        var rect = $grid[0].getBoundingClientRect();
-        var scrollTop = $("#week-scroll").scrollTop();
-        var y = e.clientY - rect.top + scrollTop;
-        var clickedHour = Math.floor(y / 60);
-        var clickedMin = Math.floor((y % 60) / 15) * 15;
+        const $grid = $(this);
+        const rect = $grid[0].getBoundingClientRect();
+        const scrollTop = $("#week-scroll").scrollTop();
+        const y = e.clientY - rect.top + scrollTop;
+        const clickedHour = Math.floor(y / 60);
+        const clickedMin = Math.floor((y % 60) / 15) * 15;
         // Determine which day column was clicked
-        var x = e.clientX - rect.left;
-        var colWidth = rect.width / 8;
-        var dayCol = Math.floor(x / colWidth) - 1;
+        const x = e.clientX - rect.left;
+        const colWidth = rect.width / 8;
+        const dayCol = Math.floor(x / colWidth) - 1;
         if (dayCol < 0 || dayCol > 6) return;
-        var ws = startOfWeek(currentDate);
-        var clickDate = new Date(ws);
+        const ws = startOfWeek(currentDate);
+        const clickDate = new Date(ws);
         clickDate.setDate(clickDate.getDate() + dayCol);
         openModal(null, dateKey(clickDate), pad(clickedHour) + ":" + pad(clickedMin));
     });
 
     function getEventsForDate(date) {
-        var key = dateKey(date);
+        const key = dateKey(date);
         return events.filter(function (ev) {
             return dateKey(new Date(ev.start)) === key;
         }).sort(function(a, b) {
@@ -685,21 +717,21 @@ $(function () {
     // ============ Click on cell to create event ============
     $(document).on("click", ".cal-cell", function (e) {
         if ($(e.target).hasClass("event-pill") || $(e.target).closest(".event-pill").length) return;
-        var date = $(this).data("date");
+        const date = $(this).data("date");
         openModal(null, date, "09:00");
     });
 
     $(document).on("click", ".cal-hour-cell", function () {
-        var hour = parseInt($(this).data("hour"));
+        const hour = parseInt($(this).data("hour"));
         openModal(null, dateKey(currentDate), pad(hour) + ":00");
     });
 
     // ============ Click on event to edit ============
     $(document).on("click", ".event-pill", function (e) {
         e.stopPropagation();
-        var id = $(this).data("id");
-        var type = $(this).data("type");
-        var ev = events.find(function (x) { return x.id === id && x.type === type; });
+        const id = $(this).data("id");
+        const type = $(this).data("type");
+        const ev = events.find(function (x) { return x.id === id && x.type === type; });
         if (ev) showSummaryModal(ev);
     });
 
@@ -707,10 +739,10 @@ $(function () {
     function openViewModal(ev) {
         $("#event-view-modal").removeClass("hidden");
 
-        var start = new Date(ev.start);
-        var end = getEndTime(ev);
+        const start = new Date(ev.start);
+        const end = getEndTime(ev);
 
-        var html = `
+        let html = `
             <div><strong>${escapeHtml(ev.title)}</strong></div>
             <div>${formatTime12(start)} - ${formatTime12(end)}</div>
             <div>${start.toDateString()}</div>
@@ -743,7 +775,7 @@ $(function () {
             $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
             $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
             
-            var evDate = new Date(ev.start);
+            const evDate = new Date(ev.start);
             selectType(ev.type);
             $("#event-title").val(ev.title);
             $("#event-date").val(dateKey(evDate));
@@ -753,6 +785,7 @@ $(function () {
                 $("#event-reminders").val(ev.duration || 60);
                 $("#event-notes").val(ev.notes || "");
                 selectColor(ev.color || "#6366f1");
+                $("#event-unit").val(ev.unit_id || "");
             } else {
                 $("#event-description").val(ev.description || "");
                 $("#event-completed").prop("checked", ev.completed);
@@ -772,6 +805,7 @@ $(function () {
             
             selectType("session");
             selectColor("#6366f1");
+            $("#event-unit").val("");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
             
@@ -846,13 +880,13 @@ $(function () {
     });
 
     $("#view-edit").on("click", function () {
-        var ev = $("#event-view-modal").data("event");
+        const ev = $("#event-view-modal").data("event");
         $("#event-view-modal").addClass("hidden");
         openModal(ev);
     });
 
     $("#view-delete").on("click", function () {
-        var ev = $("#event-view-modal").data("event");
+        const ev = $("#event-view-modal").data("event");
         if (!ev) return;
 
         if (!confirm("Delete this event?")) return;
@@ -872,7 +906,7 @@ $(function () {
 
     // ============ Add event button ============
     $("#add-event-btn, #add-event-btn-mobile").on("click", function () {
-        var todayStr = dateKey(new Date());
+        const todayStr = dateKey(new Date());
         openModal(null, todayStr, "09:00");
     });
 
@@ -880,18 +914,18 @@ $(function () {
     $("#event-form").on("submit", function (e) {
         e.preventDefault();
         
-        var id = $("#event-id").val();
-        var title = $("#event-title").val().trim();
-        var date = $("#event-date").val();
-        var time = $("#event-time").val();
+        const id = $("#event-id").val();
+        const title = $("#event-title").val().trim();
+        const date = $("#event-date").val();
+        const time = $("#event-time").val();
 
         if (!title || !date || !time) {
             showAlert("Please fill in all required fields.", "danger");
             return;
         }
 
-        var startISO = date + "T" + time;
-        var payload = {
+        const startISO = date + "T" + time;
+        const payload = {
             type: selectedType,
             title: title,
             start: startISO
@@ -901,18 +935,19 @@ $(function () {
             payload.duration = parseInt($("#event-reminders").val()) || 60;
             payload.notes = $("#event-notes").val();
             payload.color = selectedColor;
+            payload.unit_id = $("#event-unit").val() || null;
         } else {
             payload.description = $("#event-description").val();
             payload.completed = $("#event-completed").is(":checked");
         }
 
-        var $btn = $("#event-save-btn");
-        var $spinner = $("#event-spinner");
+        const $btn = $("#event-save-btn");
+        const $spinner = $("#event-spinner");
         $btn.prop("disabled", true);
         $spinner.removeClass("hidden");
 
-        var method = id ? "PUT" : "POST";
-        var url = id ? "/api/events/" + id : "/api/events";
+        const method = id ? "PUT" : "POST";
+        const url = id ? "/api/events/" + id : "/api/events";
 
         $.ajax({
             url: url,
@@ -926,7 +961,7 @@ $(function () {
                 $spinner.addClass("hidden");
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Save failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Save failed.";
                 showAlert(msg, "danger");
                 $btn.prop("disabled", false);
                 $spinner.addClass("hidden");
@@ -947,7 +982,7 @@ $(function () {
                 loadEvents();
             },
             error: function (xhr) {
-                var msg = xhr.responseJSON ? xhr.responseJSON.message : "Delete failed.";
+                const msg = xhr.responseJSON ? xhr.responseJSON.message : "Delete failed.";
                 showAlert(msg, "danger");
             }
         });
@@ -956,82 +991,289 @@ $(function () {
     // ============ Initial load ============
     loadEvents();
 
-    //==Load iCal events from external .ics source and merge into current calendar==
-    
-    function loadICalEvents(icalUrl) {
-        if (!icalUrl) {
-            alert("Please enter a valid iCal link");
-            return;
-        }
-        fetch(`/get_ical?url=${encodeURIComponent(icalUrl)}`)
-        .then(res => res.text())
-        .then(data => {
-            const parsedEvents = [];
-
-            const blocks = data.split("BEGIN:VEVENT");
-
-            blocks.forEach(block => {
-                if (block.includes("SUMMARY")) {
-
-                    const summaryMatch = block.match(/SUMMARY:(.*)/);
-                    const dtstartMatch = block.match(/DTSTART.*:(\d{8}T\d{6})/);
-
-                    if (summaryMatch && dtstartMatch) {
-
-                        const title = summaryMatch[1];
-                        const dt = dtstartMatch[1];
-
-                        const formatted = formatDateTime(dt);
-
-                        parsedEvents.push({
-                            title: title,
-                            start: formatted,
-                            type: "task",
-                            color: "#3b82f6"
-                        });
-                    }
-                }
+    // Load units for event modal (current semester only)
+    $.getJSON("/api/semesters/current", function (sem) {
+        let url = "/api/units?archived=false";
+        if (sem && sem.id) url += "&semester_id=" + sem.id;
+        $.getJSON(url, function (data) {
+            const $sel = $("#event-unit");
+            $sel.html('<option value="">None</option>');
+            data.forEach(function (u) {
+                $sel.append('<option value="' + u.id + '">' + $("<span>").text((u.code ? u.code + " — " : "") + u.name).html() + '</option>');
             });
-            
-            fetch("/api/events/bulk", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(parsedEvents)
-            })
-            .then(() => {
-                loadEvents();
-            });
-
-            events = events.concat(parsedEvents);
-            allEvents = allEvents.concat(parsedEvents);
-
-            render();
-            renderAgenda();
-
-            alert("iCal imported successfully!");
         });
-   }
+    });
 
-    // Convert ICS datetime format (YYYYMMDDTHHMMSS) to ISO format (YYYY-MM-DDTHH:mm)
-    function formatDateTime(dt) {
+    // ============ iCal Calendar Integration ============
+    let icalEvents = [];  // parsed iCal events (read-only, not in DB)
+    let icalRefreshTimer = null;
+    const ICAL_REFRESH_INTERVAL = 5 * 60 * 1000; // refresh every 5 minutes
+
+    function loadICalCalendars(silent) {
+        $.getJSON("/api/ical-calendars", function (calendars) {
+            let newIcalEvents = [];
+            let pending = 0;
+            const visibleCals = calendars.filter(function (c) { return c.visible; });
+
+            if (visibleCals.length === 0) {
+                icalEvents = [];
+                mergeICalEvents();
+                return;
+            }
+
+            visibleCals.forEach(function (cal) {
+                pending++;
+                $.get("/get_ical", { url: cal.url }, function (data) {
+                    const parsed = parseICalData(data, cal.color, cal.name);
+                    newIcalEvents = newIcalEvents.concat(parsed);
+                }).always(function () {
+                    pending--;
+                    if (pending === 0) {
+                        icalEvents = newIcalEvents;
+                        mergeICalEvents();
+                    }
+                });
+            });
+        });
+    }
+
+    // Unfold iCal lines (RFC 5545: lines starting with space/tab are continuations)
+    function unfoldICalLines(raw) {
+        return raw.replace(/\r\n[ \t]/g, "").replace(/\n[ \t]/g, "");
+    }
+
+    function parseICalDate(dt) {
+        // Parse iCal date or datetime string into a JS Date
+        // Formats: 20260415, 20260415T103000, 20260415T103000Z
+        if (!dt) return null;
+        dt = dt.replace(/Z$/, "");
+        const year  = parseInt(dt.slice(0, 4), 10);
+        const month = parseInt(dt.slice(4, 6), 10) - 1;
+        const day   = parseInt(dt.slice(6, 8), 10);
+        let hour = 0, minute = 0, second = 0;
+        if (dt.length >= 13) {
+            hour   = parseInt(dt.slice(9, 11), 10);
+            minute = parseInt(dt.slice(11, 13), 10);
+            second = dt.length >= 15 ? parseInt(dt.slice(13, 15), 10) : 0;
+        }
+        return new Date(year, month, day, hour, minute, second);
+    }
+
+    function parseICalDuration(dur) {
+        // Parse iCal DURATION like PT1H30M, P1DT2H, PT45M, P7D
+        if (!dur) return 0;
+        let totalMin = 0;
+        const dMatch = dur.match(/(\d+)D/);
+        const hMatch = dur.match(/(\d+)H/);
+        const mMatch = dur.match(/(\d+)M/);
+        if (dMatch) totalMin += parseInt(dMatch[1], 10) * 1440;
+        if (hMatch) totalMin += parseInt(hMatch[1], 10) * 60;
+        if (mMatch) totalMin += parseInt(mMatch[1], 10);
+        return totalMin || 60; // default 60min if unparseable
+    }
+
+    function expandRRule(rrule, dtstart, limitYears) {
+        // Basic RRULE expansion for DAILY, WEEKLY, MONTHLY, YEARLY
+        // Returns array of Date objects for occurrences
+        const dates = [];
+        if (!rrule) return dates;
+
+        const parts = {};
+        rrule.replace(/^RRULE:/i, "").split(";").forEach(function (p) {
+            const kv = p.split("=");
+            if (kv.length === 2) parts[kv[0].toUpperCase()] = kv[1];
+        });
+
+        const freq = parts.FREQ;
+        if (!freq) return dates;
+
+        const count = parts.COUNT ? parseInt(parts.COUNT, 10) : null;
+        const until = parts.UNTIL ? parseICalDate(parts.UNTIL) : null;
+        const interval = parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : 1;
+        const byDay = parts.BYDAY ? parts.BYDAY.split(",") : null;
+
+        // Limit to prevent infinite loops
+        const maxDate = new Date(dtstart);
+        maxDate.setFullYear(maxDate.getFullYear() + (limitYears || 2));
+        if (until && until < maxDate) maxDate = until;
+
+        const maxOccurrences = count || 520; // ~10 years weekly
+        const current = new Date(dtstart);
+        const dayMap = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+
+        if (freq === "DAILY") {
+            for (let i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setDate(current.getDate() + interval);
+            }
+        } else if (freq === "WEEKLY") {
+            if (byDay) {
+                // Expand for specific days of week
+                const targetDays = byDay.map(function (d) { return dayMap[d.replace(/[^A-Z]/g, "")] || 0; });
+                const weekStart = new Date(current);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                let occ = 0;
+                while (occ < maxOccurrences && weekStart <= maxDate) {
+                    for (let di = 0; di < 7 && occ < maxOccurrences; di++) {
+                        const candidate = new Date(weekStart);
+                        candidate.setDate(candidate.getDate() + di);
+                        candidate.setHours(dtstart.getHours(), dtstart.getMinutes(), 0, 0);
+                        if (candidate >= dtstart && candidate <= maxDate && targetDays.indexOf(candidate.getDay()) !== -1) {
+                            dates.push(new Date(candidate));
+                            occ++;
+                        }
+                    }
+                    weekStart.setDate(weekStart.getDate() + 7 * interval);
+                }
+            } else {
+                for (let i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                    dates.push(new Date(current));
+                    current.setDate(current.getDate() + 7 * interval);
+                }
+            }
+        } else if (freq === "MONTHLY") {
+            for (let i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setMonth(current.getMonth() + interval);
+            }
+        } else if (freq === "YEARLY") {
+            for (let i = 0; i < maxOccurrences && current <= maxDate; i++) {
+                dates.push(new Date(current));
+                current.setFullYear(current.getFullYear() + interval);
+            }
+        }
+
+        return dates;
+    }
+
+    function parseICalData(data, color, calName) {
+        const parsed = [];
+        const unfolded = unfoldICalLines(data);
+        const blocks = unfolded.split("BEGIN:VEVENT");
+
+        blocks.forEach(function (block) {
+            if (block.indexOf("SUMMARY") === -1) return;
+
+            const summaryMatch = block.match(/SUMMARY:(.*)/);
+            const dtstartMatch = block.match(/DTSTART[^:]*:(\d{8}T?\d{0,6}Z?)/);
+            if (!summaryMatch || !dtstartMatch) return;
+
+            let title = summaryMatch[1].replace(/\r/g, "").trim();
+            // Unescape iCal special chars
+            title = title.replace(/\\n/g, " ").replace(/\\,/g, ",").replace(/\\\\/g, "\\");
+
+            const dtRaw = dtstartMatch[1];
+            const dtstart = parseICalDate(dtRaw);
+            if (!dtstart) return;
+
+            const isAllDay = dtRaw.length === 8; // YYYYMMDD = all-day
+
+            // Parse end time or duration
+            const dtendMatch = block.match(/DTEND[^:]*:(\d{8}T?\d{0,6}Z?)/);
+            const durationMatch = block.match(/DURATION:(.*?)\r?\n/);
+            let durationMinutes = 60;
+            if (dtendMatch) {
+                const dtend = parseICalDate(dtendMatch[1]);
+                if (dtend) durationMinutes = Math.round((dtend - dtstart) / 60000);
+            } else if (durationMatch) {
+                durationMinutes = parseICalDuration(durationMatch[1].trim());
+            } else if (isAllDay) {
+                durationMinutes = 1440;
+            }
+
+            // Parse description & location
+            const descMatch = block.match(/DESCRIPTION:(.*)/);
+            const locMatch = block.match(/LOCATION:(.*)/);
+            const description = descMatch ? descMatch[1].replace(/\r/g, "").replace(/\\n/g, "\n").replace(/\\,/g, ",").trim() : "";
+            const location = locMatch ? locMatch[1].replace(/\r/g, "").replace(/\\,/g, ",").trim() : "";
+
+            // Check for RRULE
+            const rruleMatch = block.match(/(RRULE:.*)/);
+            const rrule = rruleMatch ? rruleMatch[1].replace(/\r/g, "").trim() : null;
+
+            // Parse EXDATE (excluded dates)
+            const exdates = [];
+            const exdateMatches = block.match(/EXDATE[^:]*:[^\n]*/g);
+            if (exdateMatches) {
+                exdateMatches.forEach(function (line) {
+                    const vals = line.replace(/EXDATE[^:]*:/, "").replace(/\r/g, "").split(",");
+                    vals.forEach(function (v) {
+                        const d = parseICalDate(v.trim());
+                        if (d) exdates.push(dateKey(d));
+                    });
+                });
+            }
+
+            if (rrule) {
+                // Expand recurring events
+                const occurrences = expandRRule(rrule, dtstart, 2);
+                occurrences.forEach(function (occ) {
+                    // Skip excluded dates
+                    if (exdates.indexOf(dateKey(occ)) !== -1) return;
+
+                    const formatted = toLocalISO(occ);
+                    parsed.push({
+                        id: "ical-" + calName + "-" + formatted + "-" + title,
+                        title: title,
+                        start: formatted,
+                        duration: durationMinutes,
+                        type: "ical",
+                        color: color,
+                        calendarName: calName,
+                        description: description,
+                        location: location,
+                        allDay: isAllDay,
+                        readonly: true
+                    });
+                });
+            } else {
+                const formatted = toLocalISO(dtstart);
+                parsed.push({
+                    id: "ical-" + calName + "-" + formatted + "-" + title,
+                    title: title,
+                    start: formatted,
+                    duration: durationMinutes,
+                    type: "ical",
+                    color: color,
+                    calendarName: calName,
+                    description: description,
+                    location: location,
+                    allDay: isAllDay,
+                    readonly: true
+                });
+            }
+        });
+        return parsed;
+    }
+
+    function formatICalDateTime(dt) {
         const year = dt.slice(0, 4);
         const month = dt.slice(4, 6);
         const day = dt.slice(6, 8);
-        const hour = dt.slice(9, 11);
-        const minute = dt.slice(11, 13);
-
-        return `${year}-${month}-${day}T${hour}:${minute}`;
+        const hour = dt.length >= 13 ? dt.slice(9, 11) : "00";
+        const minute = dt.length >= 13 ? dt.slice(11, 13) : "00";
+        return year + "-" + month + "-" + day + "T" + hour + ":" + minute;
     }
 
-    function importICal() {
-        console.log("clicked");
-        const url = document.getElementById("ical-input-popup").value;
-        console.log("input:", url);
-        loadICalEvents(url);
+    function mergeICalEvents() {
+        // Rebuild events and allEvents with DB events + iCal events
+        events = dbEvents.concat(icalEvents);
+        allEvents = events;
+        render();
+        renderMiniCalendar();
+        renderAgenda();
     }
 
-    window.importICal = importICal;
-}
-)
+    // Start auto-refresh for iCal calendars
+    function startICalAutoRefresh() {
+        if (icalRefreshTimer) clearInterval(icalRefreshTimer);
+        icalRefreshTimer = setInterval(function () {
+            loadICalCalendars(true);
+        }, ICAL_REFRESH_INTERVAL);
+    }
+
+    // Load iCal calendars after DB events are loaded
+    loadICalCalendars();
+    startICalAutoRefresh();
+});
+
