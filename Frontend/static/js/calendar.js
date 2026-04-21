@@ -23,7 +23,7 @@ $(function () {
     }
 
     function toLocalISO(d) {
-        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":00";
     }
 
     function dateKey(d) {
@@ -203,7 +203,7 @@ $(function () {
             } else if (isSelected) {
                 cls += "bg-tertiary_blu/50 text-white roboto-semi-bold ";
             } else if (isCurrentMonth) {
-                cls += "text-text_dark_gray hover:bg-gray-100 ";3
+                cls += "text-text_dark_gray hover:bg-gray-100 ";
             } else {
                 cls += "text-text_unactive_day hover:bg-gray-50 ";
             }
@@ -924,7 +924,7 @@ $(function () {
             return;
         }
 
-        const startISO = date + "T" + time;
+        const startISO = date + "T" + time + ":00";
         const payload = {
             type: selectedType,
             title: title,

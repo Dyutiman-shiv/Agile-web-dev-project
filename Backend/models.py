@@ -222,3 +222,13 @@ class Unit(db.Model):  # type: ignore[name-defined]
             "semester_id": self.semester_id,
             "semester_name": self.semester.name if self.semester else None,
         }
+    
+class Assessment(db.Model):
+    __tablename__ = "assessments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    score = db.Column(db.Float)
+    weight = db.Column(db.Float)
+
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)

@@ -74,4 +74,7 @@ def create_app():
     from calendar_api import calendar_api
     app.register_blueprint(calendar_api)
 
+    from scores_route import scores_bp
+    app.register_blueprint(scores_bp)
+    
     return app

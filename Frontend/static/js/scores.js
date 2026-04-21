@@ -1,184 +1,303 @@
-let units = {
-  unit1: [],
-  unit2: [],
-  unit3: [],
-  unit4: []
-};
+let units = {};
+let unitNames = {};
+let currentSemesterId = "";
 
-let unitNames = {
-  unit1: "",
-  unit2: "",
-  unit3: "",
-  unit4: ""
-};
+function loadSemesters() {
+  $.getJSON("/api/semesters", function (data) {
+    const select = $("#semester-select");
+    select.html("");
 
-function updateUnitName(unitId, value) {
-  unitNames[unitId] = value;
-}
+    data.forEach(s => {
+      select.append(`<option value="${s.id}">${s.name}</option>`);
+    });
 
-function addAssessment(unitID) {
-  const id = Date.now();
-  units[unitID].push({
-    id: id,
-    name: "",
-    score: 0,
-    weight: 0
+    if (data.length > 0) {
+      currentSemesterId = data[0].id;
+      select.val(currentSemesterId);
+      loadUnits();
+    }
   });
-  render();
 }
 
-function deleteAssessment(unitId, assessmentId) {
-  units[unitId] = units[unitId].filter(a => a.id !== assessmentId);
-  render();           
-  updateTotal(unitId); 
+$("#semester-select").on("change", function () {
+  currentSemesterId = $(this).val();
+  loadUnits();
+});
+
+
+function loadUnits() {
+  $.getJSON("/api/units", {
+    semester_id: currentSemesterId || null,
+    archived: false
+  }, function (unitData) {
+
+    units = {};
+    unitNames = {};
+
+    unitData.forEach(u => {
+      const key = "unit_" + u.id;
+      units[key] = [];
+      unitNames[key] = u.name;
+    });
+
+    $.getJSON(`/api/scores/${currentSemesterId}`, function (assessments) {
+
+      assessments.forEach(a => {
+        const key = "unit_" + a.unit_id;
+        if (units[key]) {
+          units[key].push({
+            id: a.id,
+            name: a.name,
+            score: a.score,
+            weight: a.weight
+          });
+        }
+      });
+
+      render();
+    }).fail(function () {
+      render();
+    });
+
+  }).fail(function () {
+    const container = document.getElementById("units-container");
+    container.innerHTML = `
+      <div class="col-span-full text-red-500 text-sm">
+        Failed to load units.
+      </div>
+    `;
+  });
 }
 
-function updateValue(unitId, assessmentId, field, value) {
-  const unit = units[unitId];
-  const item = unit.find(a => a.id === assessmentId);
+function addAssessment(unitId) {
+  const realUnitId = unitId.split("_")[1];
+
+  $.ajax({
+    url: "/api/scores",
+    method: "POST",
+    contentType: "application/json",
+    dataType: "json",
+    data: JSON.stringify({
+      unit_id: Number(realUnitId),
+      name: "",
+      score: 0,
+      weight: 0
+    }),
+    success: function (res) {
+      units[unitId].push({
+        id: res.id,
+        name: res.name || "",
+        score: res.score || 0,
+        weight: res.weight || 0
+      });
+
+      render();
+      saveToLocal();
+    },
+    error: function (xhr) {
+      console.error(xhr.responseText);
+      alert("Add assessment failed: " + (xhr.responseText || xhr.status));
+    }
+  });
+}
+
+function deleteAssessment(unitId, id) {
+  $.ajax({
+    url: `/api/scores/${id}`,
+    method: "DELETE",
+    success: function () {
+      units[unitId] = units[unitId].filter(a => a.id !== id);
+      render();
+      saveToLocal();
+    },
+    error: function (xhr) {
+      console.error(xhr.responseText);
+      alert("Delete assessment failed: " + (xhr.responseText || xhr.status));
+    }
+  });
+}
+
+function updateValue(unitId, id, field, value) {
+  const item = units[unitId].find(a => a.id === id);
+  if (!item) return;
+
   if (field === "name") {
     item.name = value;
-    return;
-  }
-  let newValue = Number(value);
-  if (newValue < 0) {
-    newValue = 0;
-  }
-  if (field === "weight") {
-    let totalWeight = 0;
-    unit.forEach(a => {
-      if (a.id === assessmentId) {
-        totalWeight += newValue;
-      } else {
-        totalWeight += a.weight;
-      }
-    });
-    const warning = document.getElementById(`${unitId}-warning`);
-    if (totalWeight > 100) {
-      warning.classList.remove("hidden");
-      return;
-    } else {
-      warning.classList.add("hidden");
-    }
-  }
-  item[field] = newValue;
-  updateTotal(unitId);
+    $.ajax({
+      url: `/api/scores/${id}`,
+      method: "PUT",
+      contentType: "application/json",
+      data: JSON.stringify({
+      name: item.name,
+      score: item.score,
+      weight: item.weight
+    })
+  });
+
+  saveToLocal();
+  return;
 }
 
+  let val = Number(value);
+  if (isNaN(val)) {
+    showError(unitId,"Please enter a valid number for score and weight.");
+    return;
+  }
+  if (val < 0 || val > 100) {
+    showError(unitId,"Value must be between 0 and 100.");
+    return;
+  } 
+  if (field === "weight") {
+    let total = 0;
 
-function calculateTotal() {
-  let total = 0;
-  assessments.forEach(a => {
-    total += (a.score * a.weight) / 100;
+    units[unitId].forEach(a => {
+      if (a.id === id) total += Number(val || 0);
+      else total += Number(a.weight || 0);
+    });
+
+    const warn = document.getElementById(`${unitId}-warning`);
+
+    if (total > 100) {
+      warn.classList.remove("hidden");
+      return;
+    } else {
+      warn.classList.add("hidden");
+    }
+  }
+
+  clearError(unitId);
+
+  item[field] = val;
+  
+  $.ajax({
+    url: `/api/scores/${id}`,
+    method: "PUT",
+    contentType: "application/json",
+    data: JSON.stringify({
+      name: item.name,
+      score: item.score,
+      weight: item.weight
+    })
   });
-  document.getElementById("total").innerText = total.toFixed(2);
+
+  updateTotal(unitId);
+  saveToLocal();
+}
+
+function showError(unitId, message) {
+  const container = document.getElementById(`${unitId}-warning`);
+
+  container.classList.remove("hidden");
+  container.innerText = message;
+}
+
+function clearError(unitId) {
+  const container = document.getElementById(`${unitId}-warning`);
+  container.classList.add("hidden");
+}
+
+function updateTotal(unitId) {
+  let total = 0;
+
+  units[unitId].forEach(a => {
+    total += (Number(a.score || 0) * Number(a.weight || 0)) / 100;
+  });
+
+  document.getElementById(`${unitId}-total`).innerText = total.toFixed(2);
+
+  updateOverallWAM();
 }
 
 function updateOverallWAM() {
   let sum = 0;
   let count = 0;
+
   Object.keys(units).forEach(unitId => {
     let total = 0;
+
     units[unitId].forEach(a => {
-      total += (a.score * a.weight) / 100;
+      total += (Number(a.score || 0) * Number(a.weight || 0)) / 100;
     });
+
     if (units[unitId].length > 0) {
       sum += total;
       count++;
     }
   });
-  let overall = count > 0 ? sum / count : 0;
-  document.getElementById("overall-wam").innerText = overall.toFixed(2);
-}
 
-function updateTotal(unitId) {
-  let total = 0;
-  units[unitId].forEach(a => {
-    total += (a.score * a.weight) / 100;
-  });
-  document.getElementById(`${unitId}-total`).innerText = total.toFixed(2);
-  updateOverallWAM();
+  document.getElementById("overall-wam").innerText =
+    count ? (sum / count).toFixed(2) : "0";
 }
 
 function render() {
+  const container = document.getElementById("units-container");
+  container.innerHTML = "";
+
   Object.keys(units).forEach(unitId => {
-    const container = document.getElementById(unitId);
 
-    let html = `
-      <div class="bg-white p-6 rounded-xl shadow">
+    container.innerHTML += `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
 
-        <input 
-          type="text"
-          placeholder="Unit name"
-          value="${unitNames[unitId] || ''}"
-          class="w-full mb-2 px-3 py-2 border rounded"
-          oninput="updateUnitName('${unitId}', this.value)"
-        >
+        <div class="flex justify-between items-center">
+          <h4 class="text-lg font-semibold text-gray-800">
+            ${unitNames[unitId]}
+          </h4>
 
-        <div id="${unitId}-list"></div>
-
-        <button 
-          onclick="addAssessment('${unitId}')"
-          class="mt-3 w-full bg-indigo-600 text-white py-2 rounded"
-        >
-          Add Assessment
-        </button>
-
-        <div class="mt-4 font-semibold">
-          Total: <span id="${unitId}-total">0</span>
+          <button onclick="addAssessment('${unitId}')"
+            class="px-3 py-1 text-sm rounded-lg bg-indigo-50 text-primary_purp hover:bg-indigo-100 transition">
+            + Add Assessment
+          </button>
         </div>
 
-        <p id="${unitId}-warning" class="text-red-500 text-sm mt-2 hidden">
+        <div id="${unitId}-list" class="space-y-3"></div>
+
+        <div class="text-sm text-gray-600">
+          Total:
+          <span id="${unitId}-total" class="font-semibold text-gray-800">0</span>
+        </div>
+
+        <p id="${unitId}-warning"
+          class="text-red-500 text-xs hidden">
           Total weight cannot exceed 100%
         </p>
 
       </div>
     `;
+  });
 
-    container.innerHTML = html;
-
+  Object.keys(units).forEach(unitId => {
     const list = document.getElementById(`${unitId}-list`);
 
     units[unitId].forEach(a => {
       list.innerHTML += `
-        <div class="mb-2">
+        <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 flex items-center gap-3">
 
-          <div class="flex items-center gap-2 mb-1">
-            <input 
-              type="text"
-              placeholder="Assessment name"
-              value="${a.name || ''}"
-              class="w-full px-2 py-1 border rounded"
-              oninput="updateValue('${unitId}', ${a.id}, 'name', this.value)"
-            >
+          <input type="text"
+            placeholder="Assessment Name"
+            value="${a.name || ''}"
+            class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-primary_purp"
+            oninput="updateValue('${unitId}', ${a.id}, 'name', this.value)">
 
-            <button 
-              onclick="deleteAssessment('${unitId}', ${a.id})"
-              class="text-red-500 font-bold"
-            >
-              ×
-            </button>
-          </div>
+          <input type="number"
+            placeholder="Score"
+            min = "0"
+            max = "100"
+            value="${a.score || ''}"
+            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm"
+            oninput="updateValue('${unitId}', ${a.id}, 'score', this.value)">
 
-          <div class="flex gap-2">
-            <input 
-              type="number"
-              min="0"
-              value="${a.score || ''}"
-              placeholder="Score"
-              class="w-1/2 px-2 py-1 border rounded"
-              oninput="updateValue('${unitId}', ${a.id}, 'score', this.value)"
-            >
+          <input type="number"
+            min = "0"
+            max = "100"
+            placeholder="%"
+            value="${a.weight || ''}"
+            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm"
+            oninput="updateValue('${unitId}', ${a.id}, 'weight', this.value)">
 
-            <input 
-              type="number"
-              min="0"
-              value="${a.weight || ''}"
-              placeholder="Weight"
-              class="w-1/2 px-2 py-1 border rounded"
-              oninput="updateValue('${unitId}', ${a.id}, 'weight', this.value)"
-            >
-          </div>
+          <button onclick="deleteAssessment('${unitId}', ${a.id})"
+            class="text-gray-300 hover:text-red-500 text-lg transition">
+            ✕
+          </button>
 
         </div>
       `;
@@ -188,4 +307,10 @@ function render() {
   });
 }
 
-render();
+$(function () {
+  loadSemesters();
+});
+
+function saveToLocal() {
+  localStorage.setItem("scoresData", JSON.stringify(units));
+}
