@@ -9,7 +9,7 @@ login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-def create_app():
+def create_app(testing=False):
     app = Flask(
         __name__,
         template_folder=os.path.join(base_dir, "..", "Frontend", "templates"),
@@ -18,6 +18,11 @@ def create_app():
 
     from config import Config
     app.config.from_object(Config)
+
+    if testing:
+        app.config["TESTING"] = True
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["WTF_CSRF_ENABLED"] = False
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -59,8 +64,13 @@ def create_app():
     from stats_routes import stats_bp
     app.register_blueprint(stats_bp)
 
+
     from dashboard_routes import dashboard_bp
     app.register_blueprint(dashboard_bp)
+
+    from notification_routes import notif_bp
+    app.register_blueprint(notif_bp)
+
 
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
@@ -76,5 +86,12 @@ def create_app():
     
     from calendar_api import calendar_api
     app.register_blueprint(calendar_api)
+
+    # Start background scheduler (guard against double-start in debug reloader)
+    scheduler_enabled = os.environ.get("SCHEDULER_ENABLED", "1") != "0"
+    if scheduler_enabled and not app.config.get("TESTING"):
+        if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+            from scheduler import init_scheduler
+            init_scheduler(app)
 
     return app
