@@ -59,6 +59,9 @@ def create_app():
     from stats_routes import stats_bp
     app.register_blueprint(stats_bp)
 
+    from dashboard_routes import dashboard_bp
+    app.register_blueprint(dashboard_bp)
+
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 

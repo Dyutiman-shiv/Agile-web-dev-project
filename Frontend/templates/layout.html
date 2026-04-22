@@ -6,7 +6,7 @@
     <header class="bg-primary_purp text-white shrink-0 z-30 shadow-md">
         <div class="flex items-center justify-between px-4 sm:px-6 h-14">
             <!-- Left: Brand logo -->
-            <a href="{{ url_for('auth.home') }}" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">
+            <a href="{{ url_for('auth.dashboard') }}" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">
                 <div class="grid grid-cols-2 gap-0.5">
                     <div class="w-3.5 h-3.5 rounded-sm border-[0.5px] border-white bg-primary_purp"></div>
                     <div class="w-3.5 h-3.5 rounded-sm border-[0.5px] border-white bg-secondary_blu"></div>
@@ -19,7 +19,7 @@
             <!-- Center: Nav links (hidden on small screens, shown via hamburger) -->
             <nav id="nav-links" class="hidden md:flex items-center gap-1 ml-auto mr-[20px] border-r-[0.5px] border-white pr-[20px]">
                 {% set nav_items = [
-                    ('auth.home', 'Dashboard'),
+                    ('auth.dashboard', 'Dashboard'),
                     ('cal.calendar_view', 'Calendar'),
                     ('auth.sessions_view', 'Sessions'),
                     ('auth.stats_view', 'Stats'),
