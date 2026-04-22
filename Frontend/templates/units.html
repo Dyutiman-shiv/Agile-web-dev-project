@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block title %}Units{% endblock %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto animate-fade-in">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl montserrat-bold text-gray-800 flex items-center gap-2">
+            <svg class="w-6 h-6 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
+            </svg>
+            Units
+        </h2>
+        <div class="flex items-center gap-3">
+            <!-- Semester filter -->
+            <select id="filter-semester" class="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
+                <option value="">All Semesters</option>
+            </select>
+            <!-- Archived toggle -->
+            <label class="flex items-center gap-2 text-sm text-gray-500 roboto-regular cursor-pointer">
+                <input type="checkbox" id="show-archived" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                Archived
+            </label>
+            <!-- Add button -->
+            <button id="add-unit-btn" class="px-4 py-2 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                New Unit
+            </button>
+        </div>
+    </div>
+
+    <!-- Units Grid -->
+    <div id="units-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered by JS -->
+    </div>
+
+    <div id="units-empty" class="hidden py-16 text-center">
+        <svg class="w-14 h-14 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
+        </svg>
+        <p class="text-sm text-gray-400 roboto-regular mb-3">No units yet. Create one to start tracking study time.</p>
+        <button class="open-create-unit px-4 py-2 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+            Create Your First Unit
+        </button>
+    </div>
+</div>
+
+<!-- Create/Edit Unit Modal -->
+<div id="unit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="unit-modal-title" class="text-lg font-bold text-gray-800">New Unit</h3>
+            <button id="unit-modal-close" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="unit-alert"></div>
+
+        <input type="hidden" id="unit-edit-id" value="">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Unit Name</label>
+                <input type="text" id="unit-name" maxlength="120" placeholder="e.g. Agile Web Development"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Code</label>
+                    <input type="text" id="unit-code" maxlength="20" placeholder="e.g. CITS3403"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+                </div>
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Semester</label>
+                    <select id="unit-semester" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
+                        <option value="">None</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Color</label>
+                <div class="flex gap-2" id="unit-color-picker">
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#3b82f6" style="background:#3b82f6"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button id="unit-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button id="unit-save-btn" class="flex-1 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Unit Modal -->
+<div id="delete-unit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Unit</h3>
+        <p class="text-sm text-gray-500 mb-5">Sessions and tasks assigned to this unit will become uncategorized.</p>
+        <div class="flex gap-3">
+            <button id="delete-unit-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button id="delete-unit-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm montserrat-semi-bold hover:bg-red-600 transition-colors">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/units.js') }}"></script>
+{% endblock %}

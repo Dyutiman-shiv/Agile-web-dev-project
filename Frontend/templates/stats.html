@@ -2,11 +2,106 @@
 {% block title %}Stats{% endblock %}
 
 {% block page_content %}
-<div class="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
-    <svg class="w-16 h-16 text-indigo-300 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
-    </svg>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">Stats</h2>
-    <p class="text-gray-400 text-sm">Coming Soon</p>
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 animate-fade-in">
+
+    <!-- Filter Bar -->
+    <div class="flex flex-wrap items-center gap-3">
+        <div class="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 gap-1" id="period-tabs">
+            <button data-period="week"     class="period-btn px-4 py-2 text-sm rounded-lg montserrat-medium transition-all">This Week</button>
+            <button data-period="month"    class="period-btn px-4 py-2 text-sm rounded-lg montserrat-medium transition-all">This Month</button>
+            <button data-period="semester" class="period-btn px-4 py-2 text-sm rounded-lg montserrat-medium transition-all">Semester</button>
+            <button data-period="all"      class="period-btn px-4 py-2 text-sm rounded-lg montserrat-medium transition-all bg-indigo-600 text-white shadow">All Time</button>
+        </div>
+        <select id="semester-filter" class="hidden px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all">
+        </select>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4" id="summary-cards">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <span class="text-xs text-gray-400 montserrat-medium uppercase tracking-wider">Total Hours</span>
+            </div>
+            <p class="text-2xl montserrat-bold text-gray-800" id="stat-total-hours">—</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
+                </div>
+                <span class="text-xs text-gray-400 montserrat-medium uppercase tracking-wider">Sessions</span>
+            </div>
+            <p class="text-2xl montserrat-bold text-gray-800" id="stat-sessions">—</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z"/></svg>
+                </div>
+                <span class="text-xs text-gray-400 montserrat-medium uppercase tracking-wider">Avg Length</span>
+            </div>
+            <p class="text-2xl montserrat-bold text-gray-800" id="stat-avg">—</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z"/></svg>
+                </div>
+                <span class="text-xs text-gray-400 montserrat-medium uppercase tracking-wider">Streak</span>
+            </div>
+            <p class="text-2xl montserrat-bold text-gray-800" id="stat-streak">—</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.003 6.003 0 01-5.54 0"/></svg>
+                </div>
+                <span class="text-xs text-gray-400 montserrat-medium uppercase tracking-wider">Best Streak</span>
+            </div>
+            <p class="text-2xl montserrat-bold text-gray-800" id="stat-best-streak">—</p>
+        </div>
+    </div>
+
+    <!-- Hours by Unit Bar Chart -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="montserrat-medium text-gray-700 mb-4">Hours by Unit</h3>
+        <div id="chart-hours-by-unit" class="min-h-[280px]"></div>
+        <p class="text-center text-sm text-gray-400 hidden" id="hours-empty">No unit data yet. Tag sessions with a unit to see this chart.</p>
+    </div>
+
+    <!-- Donut + Daily Trend side by side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 class="montserrat-medium text-gray-700 mb-4">Time Distribution</h3>
+            <div id="chart-donut" class="min-h-[300px]"></div>
+            <p class="text-center text-sm text-gray-400 hidden" id="donut-empty">No unit data yet.</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 class="montserrat-medium text-gray-700 mb-4">Daily Study Trend</h3>
+            <div id="chart-daily-trend" class="min-h-[300px]"></div>
+            <p class="text-center text-sm text-gray-400 hidden" id="trend-empty">No sessions yet.</p>
+        </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="montserrat-medium text-gray-700 mb-4">Peak Study Hours</h3>
+        <div id="chart-heatmap" class="min-h-[220px]"></div>
+    </div>
+
+    <!-- Task Completion -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="montserrat-medium text-gray-700 mb-4">Task Completion by Unit</h3>
+        <div id="chart-task-completion" class="min-h-[260px]"></div>
+        <p class="text-center text-sm text-gray-400 hidden" id="tasks-empty">No task data yet.</p>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="{{ url_for('static', filename='js/stats.js') }}"></script>
 {% endblock %}

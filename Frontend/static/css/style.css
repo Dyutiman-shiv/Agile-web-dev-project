@@ -177,3 +177,41 @@ font-family: "Roboto", sans-serif;
 
 }
 
+/* ---------- Analog Clock ---------- */
+.analog-clock-wrapper {
+    width: clamp(180px, 28vw, 260px);
+    height: clamp(180px, 28vw, 260px);
+}
+
+.analog-clock {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
+}
+
+#clock-second {
+    transition: none;
+}
+
+#clock-minute {
+    transition: transform 0.3s ease;
+}
+
+#clock-hour {
+    transition: transform 0.3s ease;
+}
+
+/* Tabular numbers for digital timer */
+.tabular-nums {
+    font-variant-numeric: tabular-nums;
+}
+
+/* History panel scrollbar */
+#history-list::-webkit-scrollbar {
+    width: 4px;
+}
+#history-list::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 9999px;
+}
+

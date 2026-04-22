@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+{% block title %}Academic Settings{% endblock %}
+
+{% block page_content %}
+<div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
+
+    <!-- Add Semester -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342"/>
+            </svg>
+            Add Semester
+        </h3>
+
+        <div id="add-alert"></div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Semester Name</label>
+                <input type="text" id="sem-name" maxlength="80" placeholder="e.g. Semester 1 2026"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                              transition-all duration-200 text-sm roboto-regular">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Start Date</label>
+                    <input type="date" id="sem-start"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                                  transition-all duration-200 text-sm roboto-regular">
+                </div>
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">End Date</label>
+                    <input type="date" id="sem-end"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
+                                  transition-all duration-200 text-sm roboto-regular">
+                </div>
+            </div>
+            <button id="add-sem-btn" class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                Add Semester
+            </button>
+        </div>
+    </div>
+
+    <!-- Semesters List -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg montserrat-semi-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+            </svg>
+            Your Semesters
+        </h3>
+
+        <div id="semesters-list" class="space-y-3">
+            <div class="text-center py-4 text-sm text-gray-400 roboto-regular">Loading...</div>
+        </div>
+
+        <div id="semesters-empty" class="hidden py-10 text-center">
+            <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347"/>
+            </svg>
+            <p class="text-sm text-gray-400 roboto-regular">No semesters yet. Add one above.</p>
+        </div>
+    </div>
+
+    <!-- ===== Units Section ===== -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg montserrat-semi-bold text-gray-800 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
+                </svg>
+                Units
+            </h3>
+            <div class="flex items-center gap-3">
+                <select id="filter-semester" class="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
+                    <option value="">All Semesters</option>
+                </select>
+                <label class="flex items-center gap-2 text-sm text-gray-500 roboto-regular cursor-pointer">
+                    <input type="checkbox" id="show-archived" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
+                    Archived
+                </label>
+                <button id="add-unit-btn" class="px-4 py-2 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                    New Unit
+                </button>
+            </div>
+        </div>
+
+        <div id="units-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        </div>
+
+        <div id="units-empty" class="hidden py-10 text-center">
+            <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
+            </svg>
+            <p class="text-sm text-gray-400 roboto-regular">No units yet. Create one to start tracking study time.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Semester Modal -->
+<div id="edit-sem-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-800">Edit Semester</h3>
+            <button id="edit-sem-close" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="edit-sem-alert"></div>
+        <input type="hidden" id="edit-sem-id">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Name</label>
+                <input type="text" id="edit-sem-name" maxlength="80"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Start Date</label>
+                    <input type="date" id="edit-sem-start"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+                </div>
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">End Date</label>
+                    <input type="date" id="edit-sem-end"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button id="edit-sem-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button id="edit-sem-save" class="flex-1 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Semester Modal -->
+<div id="delete-sem-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Semester</h3>
+        <p class="text-sm text-gray-500 mb-5">This will also delete all units within this semester. Study sessions and tasks will keep their data but lose their unit association.</p>
+        <div class="flex gap-3">
+            <button id="delete-sem-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button id="delete-sem-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm montserrat-semi-bold hover:bg-red-600 transition-colors">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Unit Modal -->
+<div id="unit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
+        <div class="flex items-center justify-between mb-4">
+            <h3 id="unit-modal-title" class="text-lg font-bold text-gray-800">New Unit</h3>
+            <button id="unit-modal-close" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="unit-alert"></div>
+        <input type="hidden" id="unit-edit-id" value="">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Unit Name</label>
+                <input type="text" id="unit-name" maxlength="120" placeholder="e.g. Agile Web Development"
+                       class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                              focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Code</label>
+                    <input type="text" id="unit-code" maxlength="20" placeholder="e.g. CITS3403"
+                           class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
+                                  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all roboto-regular">
+                </div>
+                <div>
+                    <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Semester</label>
+                    <select id="unit-semester" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
+                        <option value="">None</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Color</label>
+                <div class="flex gap-2" id="unit-color-picker">
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#3b82f6" style="background:#3b82f6"></button>
+                    <button type="button" class="unit-color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+                </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button id="unit-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button id="unit-save-btn" class="flex-1 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Unit Modal -->
+<div id="delete-unit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 animate-slide-up">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Delete Unit</h3>
+        <p class="text-sm text-gray-500 mb-5">Sessions and tasks assigned to this unit will become uncategorized.</p>
+        <div class="flex gap-3">
+            <button id="delete-unit-cancel" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm montserrat-medium text-gray-600 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button id="delete-unit-confirm" class="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm montserrat-semi-bold hover:bg-red-600 transition-colors">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/academic_settings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/units.js') }}"></script>
+{% endblock %}

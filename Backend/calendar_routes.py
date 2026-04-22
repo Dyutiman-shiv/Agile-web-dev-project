@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task
+from models import StudySession, Task, ICalCalendar
 from app import db
 
 cal_bp = Blueprint("cal", __name__)
@@ -50,6 +50,7 @@ def create_event():
     if event_type == "session":
         if not data.get("title") or not data.get("start"):
             return jsonify({"success": False, "message": "Subject and start time required."}), 400
+        unit_id = data.get("unit_id")
         event = StudySession(
             user_id=current_user.id,
             subject=data["title"],
@@ -57,6 +58,7 @@ def create_event():
             duration_minutes=int(data.get("duration", 60)),
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
+            unit_id=int(unit_id) if unit_id else None,
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -96,6 +98,8 @@ def update_event(event_id):
             event.notes = data["notes"]
         if "color" in data:
             event.color = data["color"]
+        if "unit_id" in data:
+            event.unit_id = int(data["unit_id"]) if data["unit_id"] else None
     elif event_type == "task":
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
@@ -173,3 +177,76 @@ def bulk_add_events():
         "success": True,
         "count": len(created)
     })
+
+
+# ---------- Calendar Settings Page ----------
+@cal_bp.route("/calendar/settings")
+@login_required
+def calendar_settings_view():
+    return render_template("calendar_settings.html")
+
+
+# ---------- iCal Calendar CRUD ----------
+@cal_bp.route("/api/ical-calendars")
+@login_required
+def list_ical_calendars():
+    cals = ICalCalendar.query.filter_by(user_id=current_user.id).all()
+    return jsonify([c.to_dict() for c in cals])
+
+
+@cal_bp.route("/api/ical-calendars", methods=["POST"])
+@login_required
+def create_ical_calendar():
+    data = request.get_json()
+    name = (data.get("name") or "").strip()
+    url = (data.get("url") or "").strip()
+    color = (data.get("color") or "#3b82f6").strip()
+
+    if not name or not url:
+        return jsonify({"success": False, "message": "Name and URL are required."}), 400
+    if len(name) > 120 or len(url) > 512:
+        return jsonify({"success": False, "message": "Name or URL too long."}), 400
+
+    cal = ICalCalendar(user_id=current_user.id, name=name, url=url, color=color)
+    db.session.add(cal)
+    db.session.commit()
+    return jsonify({"success": True, "calendar": cal.to_dict()}), 201
+
+
+@cal_bp.route("/api/ical-calendars/<int:cal_id>", methods=["PUT"])
+@login_required
+def update_ical_calendar(cal_id):
+    cal = db.session.get(ICalCalendar, cal_id)
+    if not cal or cal.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    data = request.get_json()
+    if "name" in data:
+        name = (data["name"] or "").strip()
+        if not name:
+            return jsonify({"success": False, "message": "Name cannot be empty."}), 400
+        cal.name = name
+    if "url" in data:
+        url = (data["url"] or "").strip()
+        if not url:
+            return jsonify({"success": False, "message": "URL cannot be empty."}), 400
+        cal.url = url
+    if "color" in data:
+        cal.color = (data["color"] or "#3b82f6").strip()
+    if "visible" in data:
+        cal.visible = bool(data["visible"])
+
+    db.session.commit()
+    return jsonify({"success": True, "calendar": cal.to_dict()})
+
+
+@cal_bp.route("/api/ical-calendars/<int:cal_id>", methods=["DELETE"])
+@login_required
+def delete_ical_calendar(cal_id):
+    cal = db.session.get(ICalCalendar, cal_id)
+    if not cal or cal.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    db.session.delete(cal)
+    db.session.commit()
+    return jsonify({"success": True, "message": "Calendar deleted."})

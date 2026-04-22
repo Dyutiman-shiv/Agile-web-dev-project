@@ -3,14 +3,14 @@ $(function () {
 
     // ===================== Helpers =====================
     function showAlert(containerId, message, type) {
-        var colorMap = {
+        const colorMap = {
             danger:  "bg-red-500/90 text-white",
             warning: "bg-amber-500/90 text-white",
             info:    "bg-blue-500/90 text-white",
             success: "bg-emerald-500/90 text-white"
         };
-        var cls = colorMap[type] || colorMap.danger;
-        var $c = $("#" + containerId);
+        const cls = colorMap[type] || colorMap.danger;
+        const $c = $("#" + containerId);
         $c.removeClass("hidden")
           .html(
               '<div class="animate-slide-down flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm shadow-md mb-2 ' + cls + '">' +
@@ -26,8 +26,8 @@ $(function () {
     }
 
     function setLoading(btnId, spinnerId, loading) {
-        var $btn = $("#" + btnId);
-        var $spinner = $("#" + spinnerId);
+        const $btn = $("#" + btnId);
+        const $spinner = $("#" + spinnerId);
         if (loading) {
             $btn.prop("disabled", true).addClass("opacity-70 cursor-not-allowed");
             $spinner.removeClass("hidden");
@@ -39,8 +39,8 @@ $(function () {
 
     // ===================== Toggle password visibility =====================
     $("#toggle-password").on("click", function () {
-        var $input = $(this).closest(".relative").find("input");
-        var isPassword = $input.attr("type") === "password";
+        const $input = $(this).closest(".relative").find("input");
+        const isPassword = $input.attr("type") === "password";
         $input.attr("type", isPassword ? "text" : "password");
         $(this).find(".eye-open").toggleClass("hidden", !isPassword);
         $(this).find(".eye-closed").toggleClass("hidden", isPassword);
@@ -48,23 +48,23 @@ $(function () {
 
     // ===================== Password strength =====================
     $("#signup-form #password").on("input", function () {
-        var pw = $(this).val();
-        var $el = $("#password-strength");
+        const pw = $(this).val();
+        const $el = $("#password-strength");
         if (pw.length === 0) {
             $el.html("");
             return;
         }
-        var score = 0;
+        let score = 0;
         if (pw.length >= 8)  score++;
         if (/[A-Z]/.test(pw)) score++;
         if (/[0-9]/.test(pw)) score++;
         if (/[^A-Za-z0-9]/.test(pw)) score++;
 
-        var labels = ["Weak", "Fair", "Good", "Strong"];
-        var colors = ["#ef4444", "#f59e0b", "#3b82f6", "#10b981"];
-        var textCls = ["text-red-400", "text-amber-400", "text-blue-400", "text-emerald-400"];
-        var widths = ["25%", "50%", "75%", "100%"];
-        var idx = Math.max(0, score - 1);
+        const labels = ["Weak", "Fair", "Good", "Strong"];
+        const colors = ["#ef4444", "#f59e0b", "#3b82f6", "#10b981"];
+        const textCls = ["text-red-400", "text-amber-400", "text-blue-400", "text-emerald-400"];
+        const widths = ["25%", "50%", "75%", "100%"];
+        const idx = Math.max(0, score - 1);
 
         $el.html(
             '<div class="w-full bg-white/10 rounded-full h-1 mt-2">' +
@@ -77,9 +77,9 @@ $(function () {
     // ===================== Login form (AJAX) =====================
     $("#login-form").on("submit", function (e) {
         e.preventDefault();
-        var email = $("#login-form #email").val().trim();
-        var password = $("#login-form #password").val();
-        var remember = $("#login-form #remember").is(":checked");
+        const email = $("#login-form #email").val().trim();
+        const password = $("#login-form #password").val();
+        const remember = $("#login-form #remember").is(":checked");
 
         if (!email || !password) {
             showAlert("login-alert", "Please fill in all fields.", "warning");
@@ -101,7 +101,7 @@ $(function () {
                 window.location.href = resp.redirect;
             },
             error: function (xhr) {
-                var msg = "Login failed.";
+                let msg = "Login failed.";
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     msg = xhr.responseJSON.message;
                 }
@@ -114,10 +114,10 @@ $(function () {
     // ===================== Signup form (AJAX) =====================
     $("#signup-form").on("submit", function (e) {
         e.preventDefault();
-        var username = $("#signup-form #username").val().trim();
-        var email    = $("#signup-form #email").val().trim();
-        var password = $("#signup-form #password").val();
-        var confirm  = $("#signup-form #confirm_password").val();
+        const username = $("#signup-form #username").val().trim();
+        const email    = $("#signup-form #email").val().trim();
+        const password = $("#signup-form #password").val();
+        const confirm  = $("#signup-form #confirm_password").val();
 
         if (!username || !email || !password || !confirm) {
             showAlert("signup-alert", "Please fill in all fields.", "warning");
@@ -148,7 +148,7 @@ $(function () {
                 window.location.href = resp.redirect;
             },
             error: function (xhr) {
-                var msg = "Signup failed.";
+                let msg = "Signup failed.";
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     msg = xhr.responseJSON.message;
                 }

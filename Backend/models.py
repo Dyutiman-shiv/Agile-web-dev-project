@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, date
 from app import db
 
 
@@ -17,6 +17,9 @@ class User(db.Model):  # type: ignore[name-defined]
     # Relationships
     study_sessions = db.relationship("StudySession", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     tasks = db.relationship("Task", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    ical_calendars = db.relationship("ICalCalendar", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    semesters = db.relationship("Semester", backref="user", lazy="dynamic", cascade="all, delete-orphan")
+    units = db.relationship("Unit", backref="user", lazy="dynamic", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -59,6 +62,12 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     duration_minutes = db.Column(db.Integer, nullable=False, default=60)
     notes = db.Column(db.Text, nullable=True)
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
+    timer_mode = db.Column(db.String(20), nullable=True)  # "stopwatch" or "countdown"
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
+
+    # Relationship to checklist items
+    checklist_items = db.relationship("ChecklistItem", backref="session", lazy="select", cascade="all, delete-orphan")
+    unit = db.relationship("Unit", foreign_keys=[unit_id])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -72,6 +81,11 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "duration": self.duration_minutes,
             "notes": self.notes or "",
             "color": self.color,
+            "timer_mode": self.timer_mode,
+            "checklist": [ci.to_dict() for ci in self.checklist_items],
+            "unit_id": self.unit_id,
+            "unit_name": self.unit.name if self.unit else None,
+            "unit_code": self.unit.code if self.unit else None,
         }
 
 
@@ -84,6 +98,9 @@ class Task(db.Model):  # type: ignore[name-defined]
     description = db.Column(db.Text, nullable=True)
     due_date = db.Column(db.DateTime, nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
+
+    unit = db.relationship("Unit", foreign_keys=[unit_id])
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -97,4 +114,111 @@ class Task(db.Model):  # type: ignore[name-defined]
             "description": self.description or "",
             "completed": self.completed,
             "color": "#10b981" if self.completed else "#f59e0b",
+            "unit_id": self.unit_id,
+            "unit_name": self.unit.name if self.unit else None,
+            "unit_code": self.unit.code if self.unit else None,
+        }
+
+
+class ChecklistItem(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "checklist_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey("study_sessions.id"), nullable=False, index=True)
+    title = db.Column(db.String(200), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "completed": self.completed,
+        }
+
+
+class ICalCalendar(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "ical_calendars"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    name = db.Column(db.String(120), nullable=False)
+    url = db.Column(db.String(512), nullable=False)
+    color = db.Column(db.String(20), nullable=False, default="#3b82f6")
+    visible = db.Column(db.Boolean, nullable=False, default=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "url": self.url,
+            "color": self.color,
+            "visible": self.visible,
+        }
+
+
+class Semester(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "semesters"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    name = db.Column(db.String(80), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+
+    units = db.relationship("Unit", backref="semester", lazy="select", cascade="all, delete-orphan")
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def is_current(self):
+        today = date.today()
+        return self.start_date <= today <= self.end_date
+
+    def week_number(self, d=None):
+        d = d or date.today()
+        if d < self.start_date or d > self.end_date:
+            return None
+        return (d - self.start_date).days // 7 + 1
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "is_current": self.is_current,
+            "week_number": self.week_number(),
+        }
+
+
+class Unit(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "units"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    semester_id = db.Column(db.Integer, db.ForeignKey("semesters.id"), nullable=True)
+    name = db.Column(db.String(120), nullable=False)
+    code = db.Column(db.String(20), nullable=True)
+    color = db.Column(db.String(20), nullable=False, default="#6366f1")
+    archived = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code or "",
+            "color": self.color,
+            "archived": self.archived,
+            "semester_id": self.semester_id,
+            "semester_name": self.semester.name if self.semester else None,
         }
