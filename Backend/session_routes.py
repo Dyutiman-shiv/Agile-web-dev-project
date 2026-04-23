@@ -111,3 +111,24 @@ def update_session(session_id):
 
     db.session.commit()
     return jsonify({"success": True, "session": session.to_dict()})
+
+# NEW ENDPOINT: Update checklist item completion status
+@session_bp.route("/api/sessions/<int:session_id>/checklist/<int:item_id>", methods=["PUT"])
+@login_required
+def update_checklist_item(session_id, item_id):
+    """Update a single checklist item's completed status (tick/untick)."""
+    session = db.session.get(StudySession, session_id)
+    if not session or session.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Session not found."}), 404
+    
+    checklist_item = db.session.get(ChecklistItem, item_id)
+    if not checklist_item or checklist_item.session_id != session_id:
+        return jsonify({"success": False, "message": "Checklist item not found."}), 404
+    
+    data = request.get_json()
+    if "completed" in data:
+        checklist_item.completed = bool(data["completed"])
+        db.session.commit()
+        return jsonify({"success": True, "completed": checklist_item.completed})
+    
+    return jsonify({"success": False, "message": "No valid fields to update."}), 400
