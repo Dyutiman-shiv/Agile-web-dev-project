@@ -277,6 +277,16 @@ $(function () {
             displaySeconds = Math.max(0, countdownTotalSeconds - elapsedSeconds);
             if (displaySeconds === 0 && elapsedSeconds > 0) {
                 $("#countdown-done-badge").removeClass("hidden");
+                // Browser push notification for timer done
+                if ("Notification" in window && Notification.permission === "granted") {
+                    try {
+                        var n = new Notification("Time's up!", {
+                            body: sessionName || "Your countdown timer has finished.",
+                            tag: "planify-timer-done"
+                        });
+                        n.onclick = function () { window.focus(); };
+                    } catch (e) { /* ignore */ }
+                }
             }
         }
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from models import User, Semester
+from models import User, Semester, NotificationPreference
 from app import db
 
 def _redirect_destination(user):
@@ -102,6 +102,8 @@ def signup():
         user = User(username=username, email=email)
         user.set_password(password)
         db.session.add(user)
+        db.session.flush()
+        db.session.add(NotificationPreference(user_id=user.id))
         db.session.commit()
 
         login_user(user, remember=False)
@@ -171,6 +173,8 @@ def google_callback():
                 profile_picture=picture,
             )
             db.session.add(user)
+            db.session.flush()
+            db.session.add(NotificationPreference(user_id=user.id))
         else:
             # Link existing email account to Google
             user.google_id = google_id

@@ -90,10 +90,10 @@ def delete_unit(unit_id):
         return jsonify({"success": False, "message": "Not found."}), 404
 
     # Nullify references instead of cascading
-    StudySession.query.filter_by(unit_id=unit_id).update({"unit_id": None})
+    StudySession.query.filter_by(user_id=current_user.id, unit_id=unit_id).update({"unit_id": None})
 
     from models import Task
-    Task.query.filter_by(unit_id=unit_id).update({"unit_id": None})
+    Task.query.filter_by(user_id=current_user.id, unit_id=unit_id).update({"unit_id": None})
 
     db.session.delete(unit)
     db.session.commit()
