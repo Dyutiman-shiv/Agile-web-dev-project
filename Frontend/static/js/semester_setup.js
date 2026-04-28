@@ -93,7 +93,7 @@ $(function () {
                 window.location.href = "/home";
             },
             error: function (xhr) {
-                const msg = "Something went wrong.";
+                let msg = "Something went wrong.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert(msg, "danger");
                 $("#save-spinner").addClass("hidden");
