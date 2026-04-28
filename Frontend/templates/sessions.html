@@ -132,8 +132,15 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <!-- Session header -->
+                    <!-- Session header -->
                     <div class="flex items-center justify-between mb-6">
                         <div>
+                            <!-- ADDED: In Progress Indicator moved above session name -->
+                            <div class="mb-2">
+                                <span id="active-badge" class="px-3 py-1 rounded-full text-xs montserrat-semi-bold bg-emerald-100 text-emerald-700 animate-pulse">
+                                    In Progress
+                                </span>
+                            </div>
                             <h3 id="active-session-name" class="text-lg montserrat-semi-bold text-gray-800"></h3>
                             <p id="active-timer-mode" class="text-xs text-gray-400 roboto-regular mt-0.5"></p>
                         </div>
@@ -144,9 +151,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"/>
                                 </svg>
                             </button>
-                            <span id="active-badge" class="px-3 py-1 rounded-full text-xs montserrat-semi-bold bg-emerald-100 text-emerald-700 animate-pulse">
-                                In Progress
-                            </span>
+                            <!-- REMOVED: active-badge from here -->
                         </div>
                     </div>
 
@@ -359,3 +364,6 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/session.js') }}"></script>
 {% endblock %}
+
+
+

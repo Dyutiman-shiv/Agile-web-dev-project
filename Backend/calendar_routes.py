@@ -12,7 +12,6 @@ cal_bp = Blueprint("cal", __name__)
 def calendar_view():
     return render_template("calendar.html")
 
-
 @cal_bp.route("/api/events")
 @login_required
 def get_events():
