@@ -26,6 +26,14 @@ def get_today_tasks(today):
 @login_required
 def get_current_semester():
 
-    semesters = Semester.query.filter(Semester.user_id == current_user.id).all()
-    print(semesters[0].to_dict())
-    return jsonify([semester.to_dict() for semester in semesters])
+    semesters = Semester.query.filter(Semester.user_id == current_user.id).order_by(Semester.start_date.desc()).all()
+    
+    for semester in semesters:
+        if semester.is_current:
+            return jsonify(semester.to_dict(), 200)
+        
+    if len(semesters) > 0:
+        return jsonify(semesters[0].to_dict(), 200)
+    
+    else:
+        return jsonify([], 200)

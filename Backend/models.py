@@ -174,6 +174,7 @@ class Semester(db.Model):  # type: ignore[name-defined]
     name = db.Column(db.String(80), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
+    wam = db.Column(db.Float, nullable=True)
 
     units = db.relationship("Unit", backref="semester", lazy="select", cascade="all, delete-orphan")
 

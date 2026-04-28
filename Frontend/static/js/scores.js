@@ -230,6 +230,15 @@ function updateOverallWAM() {
 
   document.getElementById("overall-wam").innerText =
     count ? (sum / count).toFixed(2) : "0";
+
+    $.ajax({
+      url: `/api/semesters/${currentSemesterId}`,
+      method: "PUT",
+      contentType: "application/json",
+      data: JSON.stringify({
+        wam: count ? (sum / count) : null
+      })
+    });
 }
 
 function render() {
