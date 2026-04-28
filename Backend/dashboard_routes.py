@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task
+from models import StudySession, Task, Semester
 from app import db
 import re
 
@@ -21,3 +21,11 @@ def get_today_tasks(today):
                               Task.due_date < today + timedelta(days=1),
                                Task.user_id == current_user.id).all()
     return jsonify([task.to_dict() for task in tasks])
+
+@dashboard_bp.route("/api/dashboard/get_current_semester", methods=["GET"])
+@login_required
+def get_current_semester():
+
+    semesters = Semester.query.filter(Semester.user_id == current_user.id).all()
+    print(semesters[0].to_dict())
+    return jsonify([semester.to_dict() for semester in semesters])

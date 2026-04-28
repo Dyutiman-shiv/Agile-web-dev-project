@@ -3,6 +3,7 @@ $(document).ready(function () {
 
   function loadPage() {
     loadTodaysTasks();
+    loadCurrentSemester();
   }
 
   function loadTodaysTasks() {
@@ -81,6 +82,18 @@ $(document).ready(function () {
       bar.className = "h-2 rounded-full bg-task_green transition-all duration-500";
     }
     
+  }
+
+  // Loading Curent Semester
+  function loadCurrentSemester() {
+    $.getJSON("/api/dashboard/get_current_semester", function (semesters) {
+      console.log("Current Semester:", semesters);
+      // if (!semesters || semesters.length === 0) {
+      //   const semesterDiv = document.getElementById("current-semester");
+      //   semesterDiv.textContent = "No active semester found.";
+      //   return;
+      // }
+    });
   }
 
   loadPage();

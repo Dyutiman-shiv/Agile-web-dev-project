@@ -211,6 +211,7 @@ class Unit(db.Model):  # type: ignore[name-defined]
     name = db.Column(db.String(120), nullable=False)
     code = db.Column(db.String(20), nullable=True)
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
+    number_credits = db.Column(db.Integer, nullable=True, default=6)
     archived = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, **kwargs):
@@ -222,6 +223,7 @@ class Unit(db.Model):  # type: ignore[name-defined]
             "name": self.name,
             "code": self.code or "",
             "color": self.color,
+            "number_credits": self.number_credits,
             "archived": self.archived,
             "semester_id": self.semester_id,
             "semester_name": self.semester.name if self.semester else None,
