@@ -549,6 +549,23 @@ $(function () {
         $("#end-session-btn").prop("disabled", false).text("End Session");
     }
 
+    // ============ Update Checklist Item Completion (Tick) ============
+    function updateChecklistItemCompletion(sessionId, itemId, completed) {
+        $.ajax({
+            url: "/api/sessions/" + sessionId + "/checklist/" + itemId,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({ completed: completed }),
+            success: function () {
+                loadHistory(); // Refresh history to show updated state
+            },
+            error: function (xhr) {
+                console.error("Failed to update checklist item:", xhr);
+                showSetupAlert("Failed to update task status.", "danger");
+            }
+        });
+    }
+
     // ============ Load History ============
     function loadHistory() {
         $.getJSON("/api/sessions", function (data) {
@@ -593,7 +610,7 @@ $(function () {
                     '    </div>' +
                     '  </div>' +
                     '  <div class="history-details hidden mt-3 ml-14 space-y-1">' +
-                    renderHistoryChecklist(checklist) +
+                    renderHistoryChecklist(s.id, checklist) +
                     '  </div>' +
                     '</div>'
                 );
@@ -601,25 +618,43 @@ $(function () {
         });
     }
 
-    function renderHistoryChecklist(checklist) {
+    // ============ Handle Tick/Complete in History ============
+    $(document).on("click", ".tick-checklist-item", function (e) {
+        e.stopPropagation();
+        const $btn = $(this);
+        const sessionId = $btn.data("session-id");
+        const itemId = $btn.data("item-id");
+        const currentCompleted = $btn.data("completed") === true;
+        const newCompleted = !currentCompleted;
+        
+        updateChecklistItemCompletion(sessionId, itemId, newCompleted);
+    });
+
+    function renderHistoryChecklist(sessionId, checklist) {
         if (!checklist || checklist.length === 0) return '<p class="text-xs text-gray-400 roboto-regular">No checklist items.</p>';
-        let html = "";
-        checklist.forEach(function (c) {
-            html += '<div class="flex items-center gap-2">' +
-                '<svg class="w-3.5 h-3.5 shrink-0 ' + (c.completed ? 'text-emerald-500' : 'text-gray-300') + '" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
-                (c.completed
-                    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
-                    : '<circle cx="12" cy="12" r="9"/>') +
+        let html = '<div class="space-y-2">';
+        checklist.forEach(function (item) {
+            html += '<div class="flex items-center gap-2 group hover:bg-gray-50 rounded-lg p-1 transition-colors">' +
+                // ADDED: Tick button to mark complete/incomplete
+                '<button class="tick-checklist-item p-1 rounded-md transition-colors ' + (item.completed ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-400 hover:text-emerald-500') + '" ' +
+                'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + item.completed + '">' +
+                '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
+                (item.completed 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' 
+                    : '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>') +
                 '</svg>' +
-                '<span class="text-xs roboto-regular ' + (c.completed ? 'text-gray-400 line-through' : 'text-gray-600') + '">' + $("<span>").text(c.title).html() + '</span>' +
+                '</button>' +
+                '<span class="flex-1 text-xs roboto-regular ' + (item.completed ? 'text-gray-400 line-through' : 'text-gray-600') + '">' + 
+                $("<span>").text(item.title).html() + '</span>' +
                 '</div>';
         });
+        html += '</div>';
         return html;
     }
 
     // ============ Toggle History Details ============
     $(document).on("click", ".history-item", function (e) {
-        if ($(e.target).closest(".delete-history-btn").length) return;
+        if ($(e.target).closest(".delete-history-btn, .tick-checklist-item").length) return;
         $(this).find(".history-details").toggleClass("hidden");
     });
 
@@ -681,3 +716,8 @@ $(function () {
         });
     });
 });
+
+
+
+
+
