@@ -1,5 +1,6 @@
 let units = {};
 let unitNames = {};
+let unitCredits = {};
 let currentSemesterId = "";
 
 function loadSemesters() {
@@ -38,6 +39,7 @@ function loadUnits() {
       const key = "unit_" + u.id;
       units[key] = [];
       unitNames[key] = u.name;
+      unitCredits[key] = u.number_credits;
     });
 
     $.getJSON(`/api/scores/${currentSemesterId}`, function (assessments) {
@@ -214,14 +216,15 @@ function updateOverallWAM() {
 
   Object.keys(units).forEach(unitId => {
     let total = 0;
+    let credit = unitCredits[unitId];
 
     units[unitId].forEach(a => {
       total += (Number(a.score || 0) * Number(a.weight || 0)) / 100;
     });
 
     if (units[unitId].length > 0) {
-      sum += total;
-      count++;
+      sum += total * credit;
+      count += credit;
     }
   });
 
@@ -239,25 +242,29 @@ function render() {
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
 
         <div class="flex justify-between items-center">
-          <h4 class="text-lg font-semibold text-gray-800">
+          <h4 class="text-lg montserrat-bold text-gray-800">
             ${unitNames[unitId]}
           </h4>
 
           <button onclick="addAssessment('${unitId}')"
-            class="px-3 py-1 text-sm rounded-lg bg-indigo-50 text-primary_purp hover:bg-indigo-100 transition">
+            class="px-3 py-1 montserrat-regular text-sm rounded-lg bg-indigo-50 text-primary_purp hover:bg-indigo-100 transition">
             + Add Assessment
           </button>
         </div>
 
+        <p class="text-xs roboto-regular text-gray-500">
+          ${unitCredits[unitId] ? unitCredits[unitId] + ' credits' : ''}
+        </p>
+
         <div id="${unitId}-list" class="space-y-3"></div>
 
-        <div class="text-sm text-gray-600">
+        <div class="text-sm roboto-regular text-gray-600">
           Total:
-          <span id="${unitId}-total" class="font-semibold text-gray-800">0</span>
+          <span id="${unitId}-total" class="roboto-medium text-gray-800">0</span>
         </div>
 
         <p id="${unitId}-warning"
-          class="text-red-500 text-xs hidden">
+          class="text-red-500 roboto-regular text-xs hidden">
           Total weight cannot exceed 100%
         </p>
 
@@ -275,7 +282,7 @@ function render() {
           <input type="text"
             placeholder="Assessment Name"
             value="${a.name || ''}"
-            class="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-primary_purp"
+            class="flex-1 px-3 py-2 rounded-lg  roboto-regular border border-gray-200 text-sm focus:ring-1 focus:ring-primary_purp"
             oninput="updateValue('${unitId}', ${a.id}, 'name', this.value)">
 
           <input type="number"
@@ -283,7 +290,7 @@ function render() {
             min = "0"
             max = "100"
             value="${a.score || ''}"
-            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm"
+            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
             oninput="updateValue('${unitId}', ${a.id}, 'score', this.value)">
 
           <input type="number"
@@ -291,11 +298,11 @@ function render() {
             max = "100"
             placeholder="%"
             value="${a.weight || ''}"
-            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm"
+            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
             oninput="updateValue('${unitId}', ${a.id}, 'weight', this.value)">
 
           <button onclick="deleteAssessment('${unitId}', ${a.id})"
-            class="text-gray-300 hover:text-red-500 text-lg transition">
+            class="text-gray-300 hover:text-red-500 text-lg roboto-regular transition">
             ✕
           </button>
 
