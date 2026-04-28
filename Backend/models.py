@@ -226,7 +226,7 @@ class Unit(db.Model):  # type: ignore[name-defined]
             "semester_id": self.semester_id,
             "semester_name": self.semester.name if self.semester else None,
         }
-<<<<<<< HEAD
+
     
 class Assessment(db.Model):
     __tablename__ = "assessments"
@@ -237,7 +237,7 @@ class Assessment(db.Model):
     weight = db.Column(db.Float)
 
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
-=======
+
 
 
 class Notification(db.Model):  # type: ignore[name-defined]
@@ -291,4 +291,3 @@ class NotificationPreference(db.Model):  # type: ignore[name-defined]
             "timer_done_push": self.timer_done_push,
             "browser_push_enabled": self.browser_push_enabled,
         }
->>>>>>> main
