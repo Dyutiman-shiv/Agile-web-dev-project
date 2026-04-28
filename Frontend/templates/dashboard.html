@@ -1,8 +1,6 @@
-{% extends "layout.html" %} 
-{% block title %}Calendar{% endblock %} 
-{% block main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} 
-
-{% block page_content %}
+{% extends "layout.html" %} {% block title %}Calendar{% endblock %} {% block
+main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} {% block
+page_content %}
 <!-- SCROLLABLE CONTAINER -->
 <div class="h-full overflow-y-auto">
   <div class="max-w-7xl mx-auto p-6 space-y-6">
@@ -23,14 +21,12 @@
           </h1>
         </div>
       </div>
-
     </div>
 
     <!-- MAIN GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- FEED -->
       <div class="lg:col-span-2 space-y-4">
-
         <!-- Card -->
         <div class="w-[80%] mx-auto">
           <div
@@ -115,7 +111,9 @@
         </div>
 
         <!-- Urgent -->
-        <div class="w-[80%] mx-auto bg-task_pink text-white p-5 rounded-2xl shadow">
+        <div
+          class="w-[80%] mx-auto bg-task_pink text-white p-5 rounded-2xl shadow"
+        >
           <p class="montserrat-semi-bold">📅 Exam in 5 days!</p>
           <p class="roboto-light text-sm">Get ready to study</p>
         </div>
@@ -178,12 +176,76 @@
         </div>
 
         <!-- WAM -->
-        <div class="bg-white p-5 rounded-2xl shadow">
-          <h3 class="montserrat-semi-bold mb-3">WAM Snapshot</h3>
-          <p class="roboto-regular">Current: <b>74</b></p>
-          <p class="roboto-regular">Best: Physics ⭐</p>
-          <p class="roboto-regular text-task_pink">Needs Work: History</p>
+        <div
+          id="wam-card"
+          class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-md border border-gray-100"
+        >
+          <!-- Header -->
+          <div class="flex justify-between items-center mb-5">
+            <h3 class="text-sm montserrat-semi-bold text-gray-600">
+              Current WAM
+            </h3>
+            <span
+              id="semester-name"
+              class="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600"
+            >
+              In Semester
+            </span>
+          </div>
+
+          <!-- Circular WAM -->
+          <div class="flex items-center gap-5">
+            <!-- Circle -->
+            <div class="relative w-20 h-20">
+              <svg class="w-full h-full transform -rotate-90">
+                <circle
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  stroke="#e5e7eb"
+                  stroke-width="6"
+                  fill="none"
+                />
+                <circle
+                  id="wam-ring"
+                  cx="40"
+                  cy="40"
+                  r="34"
+                  stroke="#6366f1"
+                  stroke-width="6"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-dasharray="213"
+                  stroke-dashoffset="53"
+                />
+              </svg>
+
+              <!-- Center value -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span id="wam-current" class="text-lg font-bold text-gray-800"
+                  >74</span
+                >
+              </div>
+            </div>
+
+            <!-- Insights -->
+            <div class="flex-1 text-xs space-y-1">
+              <p class="text-gray-500">
+                Best:
+                <span id="wam-best" class="text-gray-700 font-medium"
+                  >Physics ⭐</span
+                >
+              </p>
+              <p class="text-gray-500">
+                Needs Work:
+                <span id="wam-worst" class="text-task_pink font-medium"
+                  >History</span
+                >
+              </p>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </div>

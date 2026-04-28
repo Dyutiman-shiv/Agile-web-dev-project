@@ -86,13 +86,35 @@ $(document).ready(function () {
 
   // Loading Curent Semester
   function loadCurrentSemester() {
-    $.getJSON("/api/dashboard/get_current_semester", function (semesters) {
-      console.log("Current Semester:", semesters);
-      // if (!semesters || semesters.length === 0) {
-      //   const semesterDiv = document.getElementById("current-semester");
-      //   semesterDiv.textContent = "No active semester found.";
-      //   return;
-      // }
+    $.getJSON("/api/semesters/current", function (semester) {
+
+      console.log(semester)
+      const wamContainer = document.getElementById("wam-card");
+
+      if (!semester) {    
+        wamContainer.textContent = "No active semester found.";
+        return;
+      }
+      else {
+        document.getElementById("semester-name").textContent = semester.name;
+
+        // Update the Wam Ring
+
+        const wamValue = parseFloat(semester.wam || 0);
+        const ring = document.getElementById("wam-ring");
+        const text = document.getElementById("current-wam");
+
+        let radius = parseFloat(ring.getAttribute("r"))
+        const circumference = 2 * Math.PI * radius
+        let wam = parseFloat(semester.wam);
+
+        const offset = circumference - (semester.wam === null ? 0 : parseFloat(wam) /100) * circumference
+        ring.style.strokeDashoffset = offset;
+
+
+        document.getElementById("wam-current").textContent = wam.toFixed(1);
+        
+      }
     });
   }
 

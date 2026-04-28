@@ -22,6 +22,7 @@ class User(db.Model):  # type: ignore[name-defined]
     units = db.relationship("Unit", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
+    groups = db.relationship("GroupMembership", back_populates="user")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -199,6 +200,7 @@ class Semester(db.Model):  # type: ignore[name-defined]
             "start_date": self.start_date.isoformat(),
             "end_date": self.end_date.isoformat(),
             "is_current": self.is_current,
+            "wam": self.wam,
             "week_number": self.week_number(),
         }
 
@@ -293,4 +295,106 @@ class NotificationPreference(db.Model):  # type: ignore[name-defined]
             "semester_alerts": self.semester_alerts,
             "timer_done_push": self.timer_done_push,
             "browser_push_enabled": self.browser_push_enabled,
+        }
+    
+class Group(db.Model):
+    __tablename__ = "groups"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Relationships
+    owner = db.relationship("User", backref="owned_groups")
+    members = db.relationship("GroupMembership", back_populates="group", cascade="all, delete-orphan")
+    posts = db.relationship("Post", backref="group", cascade="all, delete-orphan")
+
+    def to_dict(self, include_members=False):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "owner_id": self.owner_id,
+            "created_at": self.created_at.isoformat(),
+            "posts": [p.id for p in self.posts]
+        }
+
+        if include_members:
+            data["members"] = [m.user_id for m in self.members]
+    
+
+class GroupMembership(db.Model):
+    __tablename__ = "group_memberships"
+
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), primary_key=True)
+
+    role = db.Column(db.String(20), default="member")  # (admin/member) ?
+    joined_at = db.Column(db.DateTime, default=db.func.now())
+
+    user = db.relationship("User", backref="group_memberships")
+    group = db.relationship("Group", back_populates="members")
+
+    def to_dict(self):
+
+        return{
+            "user_id": self.user_id,
+            "group_id": self.group_id,
+            "role": self.role,
+            "joined_at": self.joined_at.isoformat(),
+        }
+
+
+class Post(db.Model):
+    __tablename__ = "posts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
+
+    # Relationships
+    author = db.relationship("User", backref="posts")
+    comments = db.relationship("Comment", backref="post", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return  {
+            "id": self.id,
+            "tittle": self.title,
+            "content": self.content,
+            "created_at": self.created_at.isoformat(),
+            "author_name": self.author.username,
+            "author_picture": self.author.profile_picture,
+            "comments": [c.id for c in self.comments]
+        }
+
+
+class Comment(db.Model):
+    __tablename__ = "comments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Foreign keys
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False)
+
+    # Relationships
+    author = db.relationship("User", backref="comments")
+
+    def to_dict(self):
+        
+        return {
+            "id": self.id,
+            "content": self.content,
+            "created_at": self.created_at.isoformat(),
+            "author_name": self.author.username,
+            "author_picture": self.author.profile_picture 
         }
