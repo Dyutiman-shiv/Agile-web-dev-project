@@ -82,11 +82,11 @@ def create_app(testing=False):
     from calendar_api import calendar_api
     app.register_blueprint(calendar_api)
 
-<<<<<<< HEAD
+
     from scores_route import scores_bp
     app.register_blueprint(scores_bp)
     
-=======
+
     # Start background scheduler (guard against double-start in debug reloader)
     scheduler_enabled = os.environ.get("SCHEDULER_ENABLED", "1") != "0"
     if scheduler_enabled and not app.config.get("TESTING"):
@@ -94,5 +94,4 @@ def create_app(testing=False):
             from scheduler import init_scheduler
             init_scheduler(app)
 
->>>>>>> main
     return app
