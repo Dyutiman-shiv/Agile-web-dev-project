@@ -113,9 +113,58 @@ $(document).ready(function () {
 
 
         document.getElementById("wam-current").textContent = wam.toFixed(1);
+
+        loadUnits(semester.id);
         
       }
     });
+  }
+
+  function loadUnits(semester_id){
+
+    $.getJSON("/api/units", {semester_id: semester_id},function (units) {
+
+      let max_score = 0;
+      let min_score = Infinity;
+      let bestUnit = units[0];
+      let lowestUnit = units[0];
+
+      units.forEach((unit)=>{
+
+        if(unit.score > max_score){
+
+          max_score = parseFloat(unit.score);
+          bestUnit = unit;
+
+        }
+
+        if(unit.score < min_score){
+
+          min_score = parseFloat(unit.score);
+          lowestUnit = unit;
+
+        }
+
+
+
+      });
+
+      document.getElementById("wam-best").textContent = bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
+
+      if (parseFloat(lowestUnit.score) < 60){
+        
+        document.getElementById("wam-worst").textContent = lowestUnit.name + " - " + parseFloat(lowestUnit.score).toFixed(2);
+
+      }
+      else{
+
+        document.getElementById("wam-worst").textContent = "";
+
+      }
+    
+      
+    });
+
   }
 
   loadPage();

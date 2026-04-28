@@ -217,11 +217,15 @@ class Unit(db.Model):  # type: ignore[name-defined]
     number_credits = db.Column(db.Integer, nullable=True, default=6)
     archived = db.Column(db.Boolean, nullable=False, default=False)
 
+    # Relationships
+
+    assessments = db.relationship("Assessment", backref="unit_assessments")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_assessments=False):
+        data = {
             "id": self.id,
             "name": self.name,
             "code": self.code or "",
@@ -231,6 +235,25 @@ class Unit(db.Model):  # type: ignore[name-defined]
             "semester_id": self.semester_id,
             "semester_name": self.semester.name if self.semester else None,
         }
+
+        # Calculate Unit Score
+
+        score = 0
+
+        for assessment in self.assessments:
+
+            assess_score = assessment.score if assessment.score else 0
+            assess_weight = assessment.weight if assessment.weight else 0
+
+            score += (assess_score * assess_weight)/ 100
+
+        data["score"] = score
+
+        if include_assessments:
+
+            data["assessments"] = [a.id for a in self.assessments]
+
+        return data
 
     
 class Assessment(db.Model):
