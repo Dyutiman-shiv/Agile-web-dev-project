@@ -58,6 +58,7 @@ def create_event():
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
             unit_id=int(unit_id) if unit_id else None,
+            repeat_type=data.get("repeat_type", "none"),
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -70,6 +71,7 @@ def create_event():
             duration_minutes=int(data.get("duration", 30)),
             color=data.get("color", "#f59e0b"),
             completed=bool(data.get("completed", False)),
+            repeat_type=data.get("repeat_type", "none"),
         )
     else:
         return jsonify({"success": False, "message": "Invalid event type."}), 400
@@ -101,6 +103,8 @@ def update_event(event_id):
             event.color = data["color"]
         if "unit_id" in data:
             event.unit_id = int(data["unit_id"]) if data["unit_id"] else None
+        if "repeat_type" in data:
+            event.repeat_type = data["repeat_type"]
     elif event_type == "task":
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
@@ -117,6 +121,8 @@ def update_event(event_id):
             event.duration_minutes = int(data["duration"])
         if "color" in data:
             event.color = data["color"]
+        if "repeat_type" in data:
+            event.repeat_type = data["repeat_type"]
     else:
         return jsonify({"success": False, "message": "Invalid type."}), 400
 
