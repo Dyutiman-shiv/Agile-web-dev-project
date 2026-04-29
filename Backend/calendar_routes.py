@@ -67,7 +67,7 @@ def create_event():
             title=data["title"],
             due_date=datetime.fromisoformat(data["start"]),
             description=data.get("description", ""),
-            reminder_minutes=int(data.get("reminder", 60)),
+            duration_minutes=int(data.get("duration", 30)),
             color=data.get("color", "#f59e0b"),
             completed=bool(data.get("completed", False)),
         )
@@ -113,8 +113,8 @@ def update_event(event_id):
             event.description = data["description"]
         if "completed" in data:
             event.completed = bool(data["completed"])
-        if "reminder" in data:
-            event.reminder_minutes = int(data["reminder"])
+        if "duration" in data:
+            event.duration_minutes = int(data["duration"])
         if "color" in data:
             event.color = data["color"]
     else:
