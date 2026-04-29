@@ -102,30 +102,43 @@
                 </div>
             </div>
 
-            <!-- Session-specific: reminder + color -->
-            <div id="session-fields">
-                <!-- Unit dropdown -->
+            <!-- Repeat -->
+            <div>
+                <label for="event-repeat" class="block text-sm font-medium text-gray-700 mb-1.5">Repeat</label>
+                <select id="event-repeat"
+                        class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all">
+                    <option value="none">Does not repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+
+            <!-- Duration + color -->
+            <div id="shared-fields" class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="event-reminders" class="block text-sm font-medium text-gray-700 mb-1.5">Duration (min)</label>
+                    <input type="number" id="event-reminders" value="60" min="5" max="480" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all">
+                </div>
+                <div>
+                    <label for="event-color" class="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
+                    <div class="flex gap-2 mt-1" id="color-picker">
+                        <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
+                        <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
+                        <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
+                        <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
+                        <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session-specific fields: UNIT + note-->
+            <div id="session-fields" class="hidden">
                 <div class="mb-3">
                     <label for="event-unit" class="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
                     <select id="event-unit" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all">
                         <option value="">None</option>
                     </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label for="event-reminders" class="block text-sm font-medium text-gray-700 mb-1.5">Reminder (min)</label>
-                        <input type="number" id="event-reminders" value="60" min="5" max="480" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all">
-                    </div>
-                    <div>
-                        <label for="event-color" class="block text-sm font-medium text-gray-700 mb-1.5">Color</label>
-                        <div class="flex gap-2 mt-1" id="color-picker">
-                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#6366f1" style="background:#6366f1"></button>
-                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ec4899" style="background:#ec4899"></button>
-                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#10b981" style="background:#10b981"></button>
-                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#f59e0b" style="background:#f59e0b"></button>
-                            <button type="button" class="color-dot w-8 h-8 rounded-full border-2 border-transparent hover:scale-110 transition-transform" data-color="#ef4444" style="background:#ef4444"></button>
-                        </div>
-                    </div>
                 </div>
                 <div class="mt-3">
                     <label for="event-notes" class="block text-sm font-medium text-gray-700 mb-1.5">Comments</label>
@@ -207,7 +220,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                    <p class="text-sm text-gray-500">Reminder</p>
+                    <p class="text-sm text-gray-500">Duration</p>
                     <p id="summary-duration" class="text-sm font-medium text-gray-800"></p>
                 </div>
             </div>
