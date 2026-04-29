@@ -100,7 +100,7 @@ class Task(db.Model):  # type: ignore[name-defined]
     description = db.Column(db.Text, nullable=True)
     due_date = db.Column(db.DateTime, nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
-    reminder = db.Column(db.Integer, nullable=True, default=60) 
+    duration_minutes = db.Column(db.Integer, nullable=True, default=30)
     color = db.Column(db.String(20), nullable=False, default="#f59e0b")
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
     notified_due = db.Column(db.Boolean, nullable=False, default=False)
@@ -119,7 +119,7 @@ class Task(db.Model):  # type: ignore[name-defined]
             "start": self.due_date.isoformat(),
             "description": self.description or "",
             "completed": self.completed,
-            "reminder": self.reminder,
+            "duration": self.duration_minutes,
             "color": self.color,
             "unit_id": self.unit_id,
             "unit_name": self.unit.name if self.unit else None,
