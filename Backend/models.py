@@ -421,3 +421,20 @@ class Comment(db.Model):
             "author_name": self.author.username,
             "author_picture": self.author.profile_picture 
         }
+    
+class GroupInvitation(db.Model):
+    __tablename__ = "group_invitations"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    status = db.Column(db.String(20), default="pending")  # pending / accepted / declined
+    created_at = db.Column(db.DateTime, default=db.func.now())
+
+    # Relationships
+    group = db.relationship("Group")
+    sender = db.relationship("User", foreign_keys=[sender_id])
+    receiver = db.relationship("User", foreign_keys=[receiver_id])
