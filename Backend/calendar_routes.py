@@ -21,11 +21,19 @@ def parse_repeat_until(value):
         return date.fromisoformat(value)
     except (ValueError, TypeError):
         return None
+
+def validate_repeat_dates(repeat_type, repeat_until, start_dt):
+    if repeat_type != "none":
+        if not repeat_until:
+            return "Please choose a repeat until date."
+        if repeat_until < start_dt.date():
+            return "Repeat until date cannot be before the start date."
+    return None
     
 def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
     repeat_type = getattr(event, "repeat_type", "none") or "none"
     original_dt = getattr(event, date_attr)
-    repeat_until = parse_repeat_until(getattr(event, "repeat_until", None))
+    repeat_until = getattr(event, "repeat_until", None)
 
     if repeat_type == "none":
         if start_dt <= original_dt < end_dt:
@@ -127,6 +135,14 @@ def get_events():
 def create_event():
     data = request.get_json()
     event_type = data.get("type", "session")
+    repeat_type = data.get("repeat_type", "none")
+    repeat_until = parse_repeat_until(data.get("repeat_until"))
+
+    if data.get("start"):
+        start_dt = datetime.fromisoformat(data["start"])
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, start_dt)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
 
     if event_type == "session":
         if not data.get("title") or not data.get("start"):
@@ -140,8 +156,8 @@ def create_event():
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
             unit_id=int(unit_id) if unit_id else None,
-            repeat_type=data.get("repeat_type", "none"),
-            repeat_until=parse_repeat_until(data.get("repeat_until")),
+            repeat_type=repeat_type,
+            repeat_until=repeat_until,
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -154,8 +170,8 @@ def create_event():
             duration_minutes=int(data.get("duration", 30)),
             color=data.get("color", "#f59e0b"),
             completed=bool(data.get("completed", False)),
-            repeat_type=data.get("repeat_type", "none"),
-            repeat_until=parse_repeat_until(data.get("repeat_until")),
+            repeat_type=repeat_type,
+            repeat_until=repeat_until,
         )
     else:
         return jsonify({"success": False, "message": "Invalid event type."}), 400
@@ -170,11 +186,17 @@ def create_event():
 def update_event(event_id):
     data = request.get_json()
     event_type = data.get("type", "session")
+    repeat_type = data.get("repeat_type", "none")
+    repeat_until = parse_repeat_until(data.get("repeat_until"))
 
     if event_type == "session":
         event = db.session.get(StudySession, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
+        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.start_time
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.subject = data["title"]
         if data.get("start"):
@@ -195,6 +217,10 @@ def update_event(event_id):
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
+        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.due_date
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.title = data["title"]
         if data.get("start"):

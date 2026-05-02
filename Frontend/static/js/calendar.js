@@ -324,7 +324,7 @@ $(function () {
         const timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
         
         $("#summary-datetime").text(dateStr + " at " + timeStr);
-        
+
         // Set repeat info
         const repeatLabels = {
             none: "Does not repeat",
@@ -794,6 +794,8 @@ $(function () {
             $("#event-date").val(dateKey(evDate));
             $("#event-time").val(pad(evDate.getHours()) + ":" + pad(evDate.getMinutes()));
             $("#event-repeat").val(ev.repeat_type || "none");
+            $("#event-repeat-until").val(ev.repeat_until || "");
+            updateRepeatUntilVisibility();
 
             if (ev.type === "session") {
                 $("#event-reminders").val(ev.duration || 60);
@@ -822,6 +824,8 @@ $(function () {
             selectType("session");
             selectColor("#6366f1");
             $("#event-repeat").val("none");
+            $("#event-repeat-until").val("");
+            updateRepeatUntilVisibility();
             $("#event-unit").val("");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
@@ -876,6 +880,19 @@ $(function () {
     $(".event-type-btn").on("click", function () {
         selectType($(this).data("type"));
     });
+    
+    function updateRepeatUntilVisibility() {
+        const repeatType = $("#event-repeat").val() || "none";
+
+        if (repeatType === "none") {
+            $("#repeat-until-row").addClass("hidden");
+            $("#event-repeat-until").val("");
+        } else {
+            $("#repeat-until-row").removeClass("hidden");
+        }
+    }
+
+    $("#event-repeat").on("change", updateRepeatUntilVisibility);
 
     function selectColor(color) {
         selectedColor = color;
@@ -937,9 +954,20 @@ $(function () {
         const date = $("#event-date").val();
         const time = $("#event-time").val();
         const repeatType = $("#event-repeat").val() || "none";
-
+        const repeatUntil = $("#event-repeat-until").val() || "";
+         
         if (!title || !date || !time) {
             showAlert("Please fill in all required fields.", "danger");
+            return;
+        }
+        
+        if (repeatType !== "none" && !repeatUntil) {
+            showAlert("Please choose a repeat until date.", "danger");
+            return;
+        }
+
+        if (repeatType !== "none" && repeatUntil < date) {
+            showAlert("Repeat until date cannot be before the start date.", "danger");
             return;
         }
 
@@ -948,7 +976,8 @@ $(function () {
             type: selectedType,
             title: title,
             start: startISO,
-            repeat_type: repeatType
+            repeat_type: repeatType,
+            repeat_until: repeatType === "none" ? "" : repeatUntil
         };
 
         if (selectedType === "session") {
