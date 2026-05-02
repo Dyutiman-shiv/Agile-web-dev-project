@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+import calendar 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from models import StudySession, Task, ICalCalendar
@@ -11,6 +12,70 @@ cal_bp = Blueprint("cal", __name__)
 @login_required
 def calendar_view():
     return render_template("calendar.html")
+
+
+def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
+    repeat_type = getattr(event, "repeat_type", "none") or "none"
+    original_dt = getattr(event, date_attr)
+
+    if repeat_type == "none":
+        if start_dt <= original_dt < end_dt:
+            return [event.to_dict()]
+        return []
+
+    occurrences = []
+    current_dt = original_dt
+
+    while current_dt < start_dt:
+        if repeat_type == "daily":
+            current_dt = current_dt + timedelta(days=1)
+        elif repeat_type == "weekly":
+            current_dt = current_dt + timedelta(weeks=1)
+        elif repeat_type == "monthly":
+            month = current_dt.month + 1
+            year = current_dt.year
+            if month > 12:
+                month = 1
+                year += 1
+
+            last_day = calendar.monthrange(year, month)[1]
+            day = min(original_dt.day, last_day)
+            current_dt = current_dt.replace(year=year, month=month, day=day)
+        else:
+            break
+
+    while current_dt < end_dt:
+        item = event.to_dict()
+
+        if item["type"] == "session":
+            item["start"] = current_dt.isoformat()
+        else:
+            item["start"] = current_dt.isoformat()
+
+        item["id"] = f"{item['id']}-{current_dt.date().isoformat()}"
+        item["original_id"] = event.id
+        item["is_repeated_occurrence"] = True
+
+        occurrences.append(item)
+
+        if repeat_type == "daily":
+            current_dt = current_dt + timedelta(days=1)
+        elif repeat_type == "weekly":
+            current_dt = current_dt + timedelta(weeks=1)
+        elif repeat_type == "monthly":
+            month = current_dt.month + 1
+            year = current_dt.year
+            if month > 12:
+                month = 1
+                year += 1
+
+            last_day = calendar.monthrange(year, month)[1]
+            day = min(original_dt.day, last_day)
+            current_dt = current_dt.replace(year=year, month=month, day=day)
+        else:
+            break
+
+    return occurrences
 
 @cal_bp.route("/api/events")
 @login_required
@@ -26,17 +91,21 @@ def get_events():
 
     sessions = StudySession.query.filter(
         StudySession.user_id == current_user.id,
-        StudySession.start_time >= start_dt,
         StudySession.start_time < end_dt,
     ).all()
 
     tasks = Task.query.filter(
         Task.user_id == current_user.id,
-        Task.due_date >= start_dt,
         Task.due_date < end_dt,
     ).all()
 
-    events = [s.to_dict() for s in sessions] + [t.to_dict() for t in tasks]
+    events = []
+    for session in sessions:
+        events.extend(add_repeat_occurrences(session, start_dt, end_dt, "start_time"))
+
+    for task in tasks:
+        events.extend(add_repeat_occurrences(task, start_dt, end_dt, "due_date"))
+    
     return jsonify(events)
 
 
