@@ -54,6 +54,7 @@ def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
 
         item["id"] = f"{item['id']}-{current_dt.date().isoformat()}"
         item["original_id"] = event.id
+        item["original_start"] = original_dt.isoformat()
         item["is_repeated_occurrence"] = True
 
         occurrences.append(item)

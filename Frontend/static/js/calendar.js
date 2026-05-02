@@ -417,8 +417,9 @@ $(function () {
         if (!confirm("Delete this event?")) return;
         
         const eventToDelete = currentSummaryEvent;
+        const deleteId = eventToDelete.original_id || eventToDelete.id;
         $.ajax({
-            url: "/api/events/" + eventToDelete.id + "?type=" + eventToDelete.type,
+            url: "/api/events/" + deleteId + "?type=" + eventToDelete.type,
             method: "DELETE",
             success: function () {
                 $("#event-summary-modal").addClass("hidden");
@@ -775,8 +776,10 @@ $(function () {
             $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
             $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
             
-            const evDate = new Date(ev.start);
+            const editStart = ev.is_repeated_occurrence && ev.original_start ? ev.original_start : ev.start;
+            const evDate = new Date(editStart);
             selectType(ev.type);
+            $("#event-id").val(ev.original_id || ev.id);
             $("#event-title").val(ev.title);
             $("#event-date").val(dateKey(evDate));
             $("#event-time").val(pad(evDate.getHours()) + ":" + pad(evDate.getMinutes()));
@@ -984,7 +987,7 @@ $(function () {
         if (!confirm("Delete this event?")) return;
 
         $.ajax({
-            url: "/api/events/" + editingEvent.id + "?type=" + editingEvent.type,
+            url: "/api/events/" + (editingEvent.original_id || editingEvent.id) + "?type=" + editingEvent.type,
             method: "DELETE",
             success: function () {
                 closeModal();
