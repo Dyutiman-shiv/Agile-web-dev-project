@@ -60,7 +60,7 @@ $(function () {
                     '</div>' +
                     '<div class="flex items-center gap-0.5">' +
                     '<button class="edit-unit-btn p-1.5 rounded-lg text-gray-400 hover:text-primary_purp hover:bg-indigo-50 transition-colors" ' +
-                    'data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '" data-code="' + escapeHtml(u.code) + '" data-color="' + u.color + '" data-semester="' + (u.semester_id || '') + '" data-archived="' + u.archived + '">' +
+                    'data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '" data-code="' + escapeHtml(u.code) + '" data-color="' + u.color + '" data-semester="' + (u.semester_id || '') + '" data-archived="' + u.archived + '" data-number_credits="' + u.number_credits + '">' +
                     '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg></button>' +
                     '<button class="archive-unit-btn p-1.5 rounded-lg text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors" data-id="' + u.id + '" data-archived="' + u.archived + '" title="' + (u.archived ? 'Unarchive' : 'Archive') + '">' +
                     '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg></button>' +
@@ -68,6 +68,10 @@ $(function () {
                     '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg></button>' +
                     '</div></div>' +
                     (u.code ? '<p class="text-xs text-gray-400 roboto-regular mb-2">' + escapeHtml(u.code) + '</p>' : '') +
+                    (u.number_credits ? 
+                        '<span class="inline-block px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 text-[10px] montserrat-medium mr-1">' 
+                        + u.number_credits + ' credits</span>' 
+                        : '') +
                     (u.semester_name ? '<span class="inline-block px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] montserrat-medium">' + escapeHtml(u.semester_name) + '</span>' : '') +
                     (u.archived ? ' <span class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] montserrat-medium">Archived</span>' : '') +
                     '</div>';
@@ -102,6 +106,7 @@ $(function () {
         $("#unit-name").val("");
         $("#unit-code").val("");
         $("#unit-semester").val("");
+        $("#unit-credits").val("");
         selectedColor = "#6366f1";
         $(".unit-color-dot").removeClass("ring-2 ring-offset-2 ring-indigo-400");
         $(".unit-color-dot[data-color='#6366f1']").addClass("ring-2 ring-offset-2 ring-indigo-400");
@@ -119,6 +124,7 @@ $(function () {
         $("#unit-name").val($btn.data("name"));
         $("#unit-code").val($btn.data("code"));
         $("#unit-semester").val($btn.data("semester") || "");
+        $("#unit-credits").val($btn.data("number_credits") || ""); 
         selectedColor = $btn.data("color");
         $(".unit-color-dot").removeClass("ring-2 ring-offset-2 ring-indigo-400");
         $(".unit-color-dot[data-color='" + selectedColor + "']").addClass("ring-2 ring-offset-2 ring-indigo-400");
@@ -136,13 +142,18 @@ $(function () {
         const name = $("#unit-name").val().trim();
         const code = $("#unit-code").val().trim();
         const semesterId = $("#unit-semester").val() || null;
-
+        const credits = $("#unit-credits").val().trim();
         if (!name) {
             showAlert("unit-alert", "Unit name is required.", "danger");
             return;
         }
 
-        const payload = { name: name, code: code, color: selectedColor, semester_id: semesterId ? parseInt(semesterId) : null };
+        if (!credits || isNaN(credits) || parseInt(credits) < 0) {
+            showAlert("unit-alert", "Number of credits must be a non-negative integer.", "danger");
+            return;
+        }
+
+        const payload = { name: name, code: code, color: selectedColor, semester_id: semesterId ? parseInt(semesterId) : null, credits: parseInt(credits) };
         const url = id ? "/api/units/" + id : "/api/units";
         const method = id ? "PUT" : "POST";
 

@@ -29,6 +29,7 @@ def list_units():
         q = q.filter_by(archived=True)
 
     units = q.order_by(Unit.name).all()
+    print([u.to_dict() for u in units])
     return jsonify([u.to_dict() for u in units])
 
 
@@ -43,13 +44,26 @@ def create_unit():
     code = (data.get("code") or "").strip() or None
     color = (data.get("color") or "#6366f1").strip()
     semester_id = data.get("semester_id")
+    
+    if data.get("credits") is not None:
+        try:
+            unit_credits = int(data["credits"])
+            if unit_credits < 0:
+                raise ValueError
+        except (ValueError, TypeError):
+            return jsonify({"success": False, "message": "Number of credits must be a non-negative integer."}), 400
+    else:
+        unit_credits = 6
+
+    print(unit_credits)
 
     unit = Unit(
         user_id=current_user.id,
         name=name,
         code=code,
         color=color,
-        semester_id=semester_id if semester_id else None,
+        number_credits=unit_credits,
+        semester_id=semester_id if semester_id else None
     )
     db.session.add(unit)
     db.session.commit()
@@ -71,13 +85,15 @@ def update_unit(unit_id):
         unit.name = name
     if "code" in data:
         unit.code = (data["code"] or "").strip() or None
+    if "credits" in data:
+        unit.number_credits = data["credits"] if isinstance(data["credits"], int) and data["credits"] >= 0 else unit.number_credits
     if "color" in data:
         unit.color = (data["color"] or "#6366f1").strip()
     if "semester_id" in data:
         unit.semester_id = data["semester_id"] if data["semester_id"] else None
     if "archived" in data:
         unit.archived = bool(data["archived"])
-
+    print(unit.to_dict())
     db.session.commit()
     return jsonify({"success": True, "unit": unit.to_dict()})
 
