@@ -325,6 +325,16 @@ $(function () {
         
         $("#summary-datetime").text(dateStr + " at " + timeStr);
         
+        // Set repeat info
+        const repeatLabels = {
+            none: "Does not repeat",
+            daily: "Daily",
+            weekly: "Weekly",
+            monthly: "Monthly"
+        };
+
+        $("#summary-repeat").text(repeatLabels[ev.repeat_type || "none"] || "Does not repeat");
+        
         // Show/hide fields based on event type
         if (ev.type === "session") {
             $("#summary-duration-container").show();
