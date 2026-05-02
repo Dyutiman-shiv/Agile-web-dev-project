@@ -67,6 +67,7 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     timer_mode = db.Column(db.String(20), nullable=True)  # "stopwatch" or "countdown"
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
     repeat_type = db.Column(db.String(20), nullable=False, default="none")
+    repeat_until = db.Column(db.Date, nullable=True)
 
     # Relationship to checklist items
     checklist_items = db.relationship("ChecklistItem", backref="session", lazy="select", cascade="all, delete-orphan")
@@ -90,6 +91,7 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "unit_name": self.unit.name if self.unit else None,
             "unit_code": self.unit.code if self.unit else None,
             "repeat_type": self.repeat_type,
+            "repeat_until": self.repeat_until.isoformat() if self.repeat_until else "",
         }
 
 
@@ -106,6 +108,7 @@ class Task(db.Model):  # type: ignore[name-defined]
     color = db.Column(db.String(20), nullable=False, default="#f59e0b")
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
     repeat_type = db.Column(db.String(20), nullable=False, default="none")
+    repeat_until = db.Column(db.Date, nullable=True)
     notified_due = db.Column(db.Boolean, nullable=False, default=False)
     notified_overdue = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -128,6 +131,7 @@ class Task(db.Model):  # type: ignore[name-defined]
             "unit_name": self.unit.name if self.unit else None,
             "unit_code": self.unit.code if self.unit else None,
             "repeat_type": self.repeat_type,
+            "repeat_until": self.repeat_until.isoformat() if self.repeat_until else "",
         }
 
 
