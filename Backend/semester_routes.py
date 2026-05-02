@@ -94,6 +94,12 @@ def update_semester(sem_id):
 
     if sem.end_date <= sem.start_date:
         return jsonify({"success": False, "message": "End date must be after start date."}), 400
+    
+    if "wam" in data:
+        try:
+            sem.wam = float(data["wam"]) if data["wam"] is not None else None
+        except (ValueError, TypeError):
+            return jsonify({"success": False, "message": "Invalid WAM value."}), 400
 
     db.session.commit()
     return jsonify({"success": True, "semester": sem.to_dict()})
