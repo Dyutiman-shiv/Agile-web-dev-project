@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import calendar 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
@@ -14,9 +14,18 @@ def calendar_view():
     return render_template("calendar.html")
 
 
+def parse_repeat_until(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+    
 def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
     repeat_type = getattr(event, "repeat_type", "none") or "none"
     original_dt = getattr(event, date_attr)
+    repeat_until = parse_repeat_until(getattr(event, "repeat_until", None))
 
     if repeat_type == "none":
         if start_dt <= original_dt < end_dt:
@@ -45,6 +54,9 @@ def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
             break
 
     while current_dt < end_dt:
+        if repeat_until and current_dt.date() > repeat_until:
+             break
+        
         item = event.to_dict()
 
         if item["type"] == "session":
@@ -129,6 +141,7 @@ def create_event():
             color=data.get("color", "#6366f1"),
             unit_id=int(unit_id) if unit_id else None,
             repeat_type=data.get("repeat_type", "none"),
+            repeat_until=parse_repeat_until(data.get("repeat_until")),
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -142,6 +155,7 @@ def create_event():
             color=data.get("color", "#f59e0b"),
             completed=bool(data.get("completed", False)),
             repeat_type=data.get("repeat_type", "none"),
+            repeat_until=parse_repeat_until(data.get("repeat_until")),
         )
     else:
         return jsonify({"success": False, "message": "Invalid event type."}), 400
@@ -175,6 +189,8 @@ def update_event(event_id):
             event.unit_id = int(data["unit_id"]) if data["unit_id"] else None
         if "repeat_type" in data:
             event.repeat_type = data["repeat_type"]
+        if "repeat_until" in data:
+            event.repeat_until = parse_repeat_until(data["repeat_until"])
     elif event_type == "task":
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
@@ -193,6 +209,8 @@ def update_event(event_id):
             event.color = data["color"]
         if "repeat_type" in data:
             event.repeat_type = data["repeat_type"]
+        if "repeat_until" in data:
+            event.repeat_until = parse_repeat_until(data["repeat_until"])
     else:
         return jsonify({"success": False, "message": "Invalid type."}), 400
 
@@ -231,7 +249,7 @@ def bulk_add_events():
             continue
 
         start_time = datetime.fromisoformat(item["start"])
-        
+        repeat_until = parse_repeat_until(item.get("repeat_until"))
         existing = Task.query.filter_by(
             user_id=current_user.id,
             title=item["title"],
