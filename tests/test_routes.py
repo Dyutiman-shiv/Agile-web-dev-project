@@ -22,7 +22,7 @@ def test_root_redirects(client):
 
 def test_unauth_redirects_to_login(client):
     """Protected pages should redirect unauthenticated users."""
-    protected = ["/home", "/calendar", "/sessions", "/stats", "/profile",
+    protected = ["/dashboard", "/calendar", "/sessions", "/stats", "/profile",
                  "/notifications", "/notifications/settings"]
     for url in protected:
         resp = client.get(url, follow_redirects=False)
