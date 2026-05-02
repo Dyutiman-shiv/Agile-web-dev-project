@@ -90,7 +90,7 @@ $(function () {
             contentType: "application/json",
             data: JSON.stringify(valid),
             success: function () {
-                window.location.href = "/home";
+                window.location.href = "/dashboard";
             },
             error: function (xhr) {
                 let msg = "Something went wrong.";
