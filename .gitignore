@@ -210,4 +210,4 @@ __marimo__/
 .DS_Store
 
 #App.db
-*.db
+Backend/app.db

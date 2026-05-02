@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task, Semester
-from app import db
+from models import Task, Semester
 import re
 
 dashboard_bp = Blueprint("dashboard", __name__)
