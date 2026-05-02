@@ -32,7 +32,7 @@ def test_unauth_redirects_to_login(client):
 # ── Authenticated page routes ───────────────────────────────────────────
 
 def test_home_page(auth_client):
-    resp = auth_client.get("/home")
+    resp = auth_client.get("/dashboard")
     assert resp.status_code == 200
 
 
