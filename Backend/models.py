@@ -23,6 +23,16 @@ class User(db.Model):  # type: ignore[name-defined]
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
     groups = db.relationship("GroupMembership", back_populates="user")
+    sent_group_invitations = db.relationship(
+        "GroupInvitation",
+        foreign_keys="GroupInvitation.sender_id",
+        back_populates="sender",
+    )
+    received_group_invitations = db.relationship(
+        "GroupInvitation",
+        foreign_keys="GroupInvitation.receiver_id",
+        back_populates="receiver",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -447,5 +457,13 @@ class GroupInvitation(db.Model):
 
     # Relationships
     group = db.relationship("Group")
-    sender = db.relationship("User", foreign_keys=[sender_id])
-    receiver = db.relationship("User", foreign_keys=[receiver_id])
+    sender = db.relationship(
+        "User",
+        foreign_keys=[sender_id],
+        back_populates="sent_group_invitations",
+    )
+    receiver = db.relationship(
+        "User",
+        foreign_keys=[receiver_id],
+        back_populates="received_group_invitations",
+    )
