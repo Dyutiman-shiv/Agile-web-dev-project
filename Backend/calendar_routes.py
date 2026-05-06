@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta, date
+import calendar 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from models import StudySession, Task, ICalCalendar
@@ -11,6 +12,91 @@ cal_bp = Blueprint("cal", __name__)
 @login_required
 def calendar_view():
     return render_template("calendar.html")
+
+
+def parse_repeat_until(value):
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+
+def validate_repeat_dates(repeat_type, repeat_until, start_dt):
+    if repeat_type != "none":
+        if not repeat_until:
+            return "Please choose a repeat until date."
+        if repeat_until < start_dt.date():
+            return "Repeat until date cannot be before the start date."
+    return None
+    
+def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
+    repeat_type = getattr(event, "repeat_type", "none") or "none"
+    original_dt = getattr(event, date_attr)
+    repeat_until = getattr(event, "repeat_until", None)
+
+    if repeat_type == "none":
+        if start_dt <= original_dt < end_dt:
+            return [event.to_dict()]
+        return []
+
+    occurrences = []
+    current_dt = original_dt
+
+    while current_dt < start_dt:
+        if repeat_type == "daily":
+            current_dt = current_dt + timedelta(days=1)
+        elif repeat_type == "weekly":
+            current_dt = current_dt + timedelta(weeks=1)
+        elif repeat_type == "monthly":
+            month = current_dt.month + 1
+            year = current_dt.year
+            if month > 12:
+                month = 1
+                year += 1
+
+            last_day = calendar.monthrange(year, month)[1]
+            day = min(original_dt.day, last_day)
+            current_dt = current_dt.replace(year=year, month=month, day=day)
+        else:
+            break
+
+    while current_dt < end_dt:
+        if repeat_until and current_dt.date() > repeat_until:
+             break
+        
+        item = event.to_dict()
+
+        if item["type"] == "session":
+            item["start"] = current_dt.isoformat()
+        else:
+            item["start"] = current_dt.isoformat()
+
+        item["id"] = f"{item['id']}-{current_dt.date().isoformat()}"
+        item["original_id"] = event.id
+        item["original_start"] = original_dt.isoformat()
+        item["is_repeated_occurrence"] = True
+
+        occurrences.append(item)
+
+        if repeat_type == "daily":
+            current_dt = current_dt + timedelta(days=1)
+        elif repeat_type == "weekly":
+            current_dt = current_dt + timedelta(weeks=1)
+        elif repeat_type == "monthly":
+            month = current_dt.month + 1
+            year = current_dt.year
+            if month > 12:
+                month = 1
+                year += 1
+
+            last_day = calendar.monthrange(year, month)[1]
+            day = min(original_dt.day, last_day)
+            current_dt = current_dt.replace(year=year, month=month, day=day)
+        else:
+            break
+
+    return occurrences
 
 @cal_bp.route("/api/events")
 @login_required
@@ -26,17 +112,21 @@ def get_events():
 
     sessions = StudySession.query.filter(
         StudySession.user_id == current_user.id,
-        StudySession.start_time >= start_dt,
         StudySession.start_time < end_dt,
     ).all()
 
     tasks = Task.query.filter(
         Task.user_id == current_user.id,
-        Task.due_date >= start_dt,
         Task.due_date < end_dt,
     ).all()
 
-    events = [s.to_dict() for s in sessions] + [t.to_dict() for t in tasks]
+    events = []
+    for session in sessions:
+        events.extend(add_repeat_occurrences(session, start_dt, end_dt, "start_time"))
+
+    for task in tasks:
+        events.extend(add_repeat_occurrences(task, start_dt, end_dt, "due_date"))
+    
     return jsonify(events)
 
 
@@ -45,6 +135,14 @@ def get_events():
 def create_event():
     data = request.get_json()
     event_type = data.get("type", "session")
+    repeat_type = data.get("repeat_type", "none")
+    repeat_until = parse_repeat_until(data.get("repeat_until"))
+
+    if data.get("start"):
+        start_dt = datetime.fromisoformat(data["start"])
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, start_dt)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
 
     if event_type == "session":
         if not data.get("title") or not data.get("start"):
@@ -58,6 +156,8 @@ def create_event():
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
             unit_id=int(unit_id) if unit_id else None,
+            repeat_type=repeat_type,
+            repeat_until=repeat_until,
         )
     elif event_type == "task":
         if not data.get("title") or not data.get("start"):
@@ -67,7 +167,11 @@ def create_event():
             title=data["title"],
             due_date=datetime.fromisoformat(data["start"]),
             description=data.get("description", ""),
+            duration_minutes=int(data.get("duration", 30)),
+            color=data.get("color", "#f59e0b"),
             completed=bool(data.get("completed", False)),
+            repeat_type=repeat_type,
+            repeat_until=repeat_until,
         )
     else:
         return jsonify({"success": False, "message": "Invalid event type."}), 400
@@ -82,11 +186,17 @@ def create_event():
 def update_event(event_id):
     data = request.get_json()
     event_type = data.get("type", "session")
+    repeat_type = data.get("repeat_type", "none")
+    repeat_until = parse_repeat_until(data.get("repeat_until"))
 
     if event_type == "session":
         event = db.session.get(StudySession, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
+        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.start_time
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.subject = data["title"]
         if data.get("start"):
@@ -99,10 +209,18 @@ def update_event(event_id):
             event.color = data["color"]
         if "unit_id" in data:
             event.unit_id = int(data["unit_id"]) if data["unit_id"] else None
+        if "repeat_type" in data:
+            event.repeat_type = data["repeat_type"]
+        if "repeat_until" in data:
+            event.repeat_until = parse_repeat_until(data["repeat_until"])
     elif event_type == "task":
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
+        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.due_date
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        if repeat_error:
+            return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.title = data["title"]
         if data.get("start"):
@@ -111,6 +229,14 @@ def update_event(event_id):
             event.description = data["description"]
         if "completed" in data:
             event.completed = bool(data["completed"])
+        if "duration" in data:
+            event.duration_minutes = int(data["duration"])
+        if "color" in data:
+            event.color = data["color"]
+        if "repeat_type" in data:
+            event.repeat_type = data["repeat_type"]
+        if "repeat_until" in data:
+            event.repeat_until = parse_repeat_until(data["repeat_until"])
     else:
         return jsonify({"success": False, "message": "Invalid type."}), 400
 
@@ -149,7 +275,7 @@ def bulk_add_events():
             continue
 
         start_time = datetime.fromisoformat(item["start"])
-        
+        repeat_until = parse_repeat_until(item.get("repeat_until"))
         existing = Task.query.filter_by(
             user_id=current_user.id,
             title=item["title"],

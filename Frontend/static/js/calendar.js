@@ -324,6 +324,16 @@ $(function () {
         const timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
         
         $("#summary-datetime").text(dateStr + " at " + timeStr);
+
+        // Set repeat info
+        const repeatLabels = {
+            none: "Does not repeat",
+            daily: "Daily",
+            weekly: "Weekly",
+            monthly: "Monthly"
+        };
+
+        $("#summary-repeat").text(repeatLabels[ev.repeat_type || "none"] || "Does not repeat");
         
         // Show/hide fields based on event type
         if (ev.type === "session") {
@@ -417,8 +427,9 @@ $(function () {
         if (!confirm("Delete this event?")) return;
         
         const eventToDelete = currentSummaryEvent;
+        const deleteId = eventToDelete.original_id || eventToDelete.id;
         $.ajax({
-            url: "/api/events/" + eventToDelete.id + "?type=" + eventToDelete.type,
+            url: "/api/events/" + deleteId + "?type=" + eventToDelete.type,
             method: "DELETE",
             success: function () {
                 $("#event-summary-modal").addClass("hidden");
@@ -541,7 +552,7 @@ $(function () {
                 const evDate = new Date(ev.start);
                 const evEnd = getEndTime(ev);
                 let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-                const height = ev.type === "session" ? (ev.duration || 60) : 30;
+                const height = ev.duration || (ev.type === "session" ? 60 : 30);
                 if (topMin < 0) { topMin = 0; }
                 const leftPct = ((d2 + 1) / 8 * 100);
                 const widthPct = (1 / 8 * 100);
@@ -605,7 +616,7 @@ $(function () {
             const evDate = new Date(ev.start);
             const evEnd = getEndTime(ev);
             let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-            const height = (ev.type === "session" ? (ev.duration || 60) : 30) - 15;
+            const height = (ev.duration || (ev.type === "session" ? 60 : 30)) - 15;
             if (topMin < 0) { topMin = 0; }
             const bgColor = ev.color || "#6366f1";
             html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:5.5rem;right:0.5rem;height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
@@ -775,18 +786,25 @@ $(function () {
             $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
             $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
             
-            const evDate = new Date(ev.start);
+            const editStart = ev.is_repeated_occurrence && ev.original_start ? ev.original_start : ev.start;
+            const evDate = new Date(editStart);
             selectType(ev.type);
+            $("#event-id").val(ev.original_id || ev.id);
             $("#event-title").val(ev.title);
             $("#event-date").val(dateKey(evDate));
             $("#event-time").val(pad(evDate.getHours()) + ":" + pad(evDate.getMinutes()));
-            
+            $("#event-repeat").val(ev.repeat_type || "none");
+            $("#event-repeat-until").val(ev.repeat_until || "");
+            updateRepeatUntilVisibility();
+
             if (ev.type === "session") {
                 $("#event-reminders").val(ev.duration || 60);
                 $("#event-notes").val(ev.notes || "");
                 selectColor(ev.color || "#6366f1");
                 $("#event-unit").val(ev.unit_id || "");
             } else {
+                $("#event-reminders").val(ev.duration || 60);
+                selectColor(ev.color || "#f59e0b");
                 $("#event-description").val(ev.description || "");
                 $("#event-completed").prop("checked", ev.completed);
             }
@@ -805,6 +823,9 @@ $(function () {
             
             selectType("session");
             selectColor("#6366f1");
+            $("#event-repeat").val("none");
+            $("#event-repeat-until").val("");
+            updateRepeatUntilVisibility();
             $("#event-unit").val("");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
@@ -842,6 +863,7 @@ $(function () {
                 $(this).removeClass("border-indigo-500 bg-indigo-50 text-indigo-700").addClass("border-gray-200 text-gray-600");
             }
         });
+        $("#shared-event-fields").removeClass("hidden");
         if (type === "session") {
             $("#session-fields").removeClass("hidden");
             $("#task-fields").addClass("hidden");
@@ -858,6 +880,19 @@ $(function () {
     $(".event-type-btn").on("click", function () {
         selectType($(this).data("type"));
     });
+    
+    function updateRepeatUntilVisibility() {
+        const repeatType = $("#event-repeat").val() || "none";
+
+        if (repeatType === "none") {
+            $("#repeat-until-row").addClass("hidden");
+            $("#event-repeat-until").val("");
+        } else {
+            $("#repeat-until-row").removeClass("hidden");
+        }
+    }
+
+    $("#event-repeat").on("change", updateRepeatUntilVisibility);
 
     function selectColor(color) {
         selectedColor = color;
@@ -918,9 +953,21 @@ $(function () {
         const title = $("#event-title").val().trim();
         const date = $("#event-date").val();
         const time = $("#event-time").val();
-
+        const repeatType = $("#event-repeat").val() || "none";
+        const repeatUntil = $("#event-repeat-until").val() || "";
+         
         if (!title || !date || !time) {
             showAlert("Please fill in all required fields.", "danger");
+            return;
+        }
+        
+        if (repeatType !== "none" && !repeatUntil) {
+            showAlert("Please choose a repeat until date.", "danger");
+            return;
+        }
+
+        if (repeatType !== "none" && repeatUntil < date) {
+            showAlert("Repeat until date cannot be before the start date.", "danger");
             return;
         }
 
@@ -928,7 +975,9 @@ $(function () {
         const payload = {
             type: selectedType,
             title: title,
-            start: startISO
+            start: startISO,
+            repeat_type: repeatType,
+            repeat_until: repeatType === "none" ? "" : repeatUntil
         };
 
         if (selectedType === "session") {
@@ -937,6 +986,8 @@ $(function () {
             payload.color = selectedColor;
             payload.unit_id = $("#event-unit").val() || null;
         } else {
+            payload.duration = parseInt($("#event-reminders").val()) || 30;
+            payload.color = selectedColor;
             payload.description = $("#event-description").val();
             payload.completed = $("#event-completed").is(":checked");
         }
@@ -975,7 +1026,7 @@ $(function () {
         if (!confirm("Delete this event?")) return;
 
         $.ajax({
-            url: "/api/events/" + editingEvent.id + "?type=" + editingEvent.type,
+            url: "/api/events/" + (editingEvent.original_id || editingEvent.id) + "?type=" + editingEvent.type,
             method: "DELETE",
             success: function () {
                 closeModal();
