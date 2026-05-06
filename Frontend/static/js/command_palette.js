@@ -38,6 +38,10 @@
         loadedAt: 0
     };
 
+    var commandPaletteHeader = document.getElementById("command-palette-header");
+    var actionPanelOpen = false;
+    var pendingActionRestore = null;
+
     function jsonFetch(url, options) {
         var opts = options || {};
         opts.credentials = "same-origin";
@@ -58,27 +62,16 @@
         });
     }
 
-    function scoreQuery(query, item) {
-        if (!query) return item._boost || 1;
-        var q = query.replace(/^\//, "").trim().toLowerCase();
-        if (!q) return item._boost || 1;
-        var slashMode = query.trim().startsWith("/");
-        var text = ((item.label || "") + " " + (item.keywords || "") + " " + (item.category || "")).toLowerCase();
-        var score = item._boost || 0;
+    function blobMatch(blob, filterText) {
+        if (!filterText) return true;
+        return String(blob).toLowerCase().indexOf(String(filterText).toLowerCase()) >= 0;
+    }
 
-        if (slashMode && item.slash) {
-            var s = item.slash.toLowerCase();
-            if (s.startsWith(q) || q.startsWith(s)) score += 120;
-            else if (s.indexOf(q) >= 0) score += 40;
-        } else if (!slashMode) {
-            if (text.indexOf(q) >= 0) score += 80;
-            var parts = text.split(/\s+/);
-            for (var i = 0; i < parts.length; i++) {
-                if (parts[i].startsWith(q)) score += 50;
-            }
-            if (item.label && item.label.toLowerCase().startsWith(q)) score += 30;
-        }
-        return score;
+    function sortItems(items) {
+        items.sort(function (a, b) {
+            return (a.label || "").localeCompare(b.label || "");
+        });
+        return items;
     }
 
     function dedupeCalendarEvents(events) {
@@ -121,15 +114,18 @@
     }
 
     function buildResultItems(query) {
-        var items = [];
+        var raw = (query || "").trim();
+        if (raw === "") return [];
+
         var nav = CONFIG.nav || [];
 
-        for (var i = 0; i < nav.length; i++) {
-            var n = nav[i];
-            var sc = scoreQuery(query, n);
-            if (query && sc < 20) continue;
-            items.push({
-                score: sc,
+        // /help — handled in renderResults (no list rows)
+        if (/^\/help$/i.test(raw) || raw.toLowerCase().startsWith("/help ")) {
+            return [];
+        }
+
+        function itemFromConfig(n) {
+            return {
                 label: n.label,
                 category: n.category || "More",
                 url: n.url,
@@ -138,78 +134,138 @@
                 id: n.id,
                 slash: n.slash,
                 keywords: n.keywords
-            });
+            };
         }
 
-        var qs = query.replace(/^\//, "").trim().toLowerCase();
-        // Avoid flooding the list when the input is empty: only show typed search for entities.
-        if (!qs) {
-            items.sort(function (a, b) {
-                if (b.score !== a.score) return b.score - a.score;
-                return (a.label || "").localeCompare(b.label || "");
-            });
-            return items;
+        var nm = raw.match(/^\/n\s*(.*)$/i);
+        if (nm) {
+            var nFilter = (nm[1] || "").trim();
+            var nItems = [];
+            for (var ni = 0; ni < nav.length; ni++) {
+                var cn = nav[ni];
+                if (!cn.url) continue;
+                var nblob = cn.label + " " + (cn.keywords || "");
+                if (!blobMatch(nblob, nFilter)) continue;
+                nItems.push(itemFromConfig(cn));
+            }
+            for (var s = 0; s < cache.sessions.length; s++) {
+                var sess = cache.sessions[s];
+                var title = sess.title || "Session";
+                var sblob = "Open session: " + title + " session";
+                if (!blobMatch(sblob, nFilter)) continue;
+                nItems.push({
+                    label: "Open session: " + title,
+                    category: "Sessions",
+                    kind: "session-open",
+                    sessionId: sess.id
+                });
+            }
+            for (var u = 0; u < cache.units.length; u++) {
+                var unit = cache.units[u];
+                var uname = (unit.code ? unit.code + " " : "") + unit.name;
+                var ublob = "Unit: " + uname;
+                if (!blobMatch(ublob, nFilter)) continue;
+                nItems.push({
+                    label: "Unit: " + uname,
+                    category: "Units",
+                    kind: "goto-units"
+                });
+            }
+            for (var m = 0; m < cache.semesters.length; m++) {
+                var sem = cache.semesters[m];
+                var sb = "Semester: " + sem.name;
+                if (!blobMatch(sb, nFilter)) continue;
+                nItems.push({
+                    label: "Semester: " + sem.name,
+                    category: "Semesters",
+                    kind: "goto-academic"
+                });
+            }
+            for (var e = 0; e < cache.events.length; e++) {
+                var ev = cache.events[e];
+                var elabel = "Calendar: " + ev.title + " (" + (ev.type || "session") + ")";
+                var eblob = elabel + " " + (ev.title || "");
+                if (!blobMatch(eblob, nFilter)) continue;
+                var oid = ev.original_id != null ? ev.original_id : ev.id;
+                nItems.push({
+                    label: elabel,
+                    category: "Calendar",
+                    kind: "goto-calendar",
+                    eventId: oid,
+                    eventType: ev.type || "session"
+                });
+            }
+            return sortItems(nItems);
         }
 
-        for (var s = 0; s < cache.sessions.length; s++) {
-            var sess = cache.sessions[s];
-            var title = sess.title || "Session";
-            var blob = (title + " session").toLowerCase();
-            if (qs && blob.indexOf(qs) < 0) continue;
+        var am = raw.match(/^\/a\s*(.*)$/i);
+        if (am) {
+            var aFilter = (am[1] || "").trim();
+            var aItems = [];
+            for (var ai = 0; ai < nav.length; ai++) {
+                var ca = nav[ai];
+                if (!ca.action) continue;
+                var ablob = ca.label + " " + (ca.keywords || "");
+                if (!blobMatch(ablob, aFilter)) continue;
+                aItems.push(itemFromConfig(ca));
+            }
+            return sortItems(aItems);
+        }
+
+        // Global search: any text, match config + entities
+        var gFilter = raw.replace(/^\/+/, "").trim();
+        if (gFilter === "") return [];
+        var items = [];
+        for (var gi = 0; gi < nav.length; gi++) {
+            var gn = nav[gi];
+            var gblob = gn.label + " " + (gn.keywords || "") + " " + (gn.category || "");
+            if (!blobMatch(gblob, gFilter)) continue;
+            items.push(itemFromConfig(gn));
+        }
+        for (var s2 = 0; s2 < cache.sessions.length; s2++) {
+            var sess2 = cache.sessions[s2];
+            var title2 = sess2.title || "Session";
+            var blob2 = (title2 + " session open").toLowerCase();
+            if (!blobMatch(blob2, gFilter)) continue;
             items.push({
-                score: qs ? 60 : 5,
-                label: "Open session: " + title,
+                label: "Open session: " + title2,
                 category: "Sessions",
                 kind: "session-open",
-                sessionId: sess.id
+                sessionId: sess2.id
             });
         }
-
-        for (var u = 0; u < cache.units.length; u++) {
-            var unit = cache.units[u];
-            var uname = (unit.code ? unit.code + " " : "") + unit.name;
-            var ublob = uname.toLowerCase();
-            if (qs && ublob.indexOf(qs) < 0) continue;
+        for (var u2 = 0; u2 < cache.units.length; u2++) {
+            var unit2 = cache.units[u2];
+            var uname2 = (unit2.code ? unit2.code + " " : "") + unit2.name;
+            if (!blobMatch(uname2 + " unit", gFilter)) continue;
             items.push({
-                score: qs ? 55 : 3,
-                label: "Unit: " + uname,
+                label: "Unit: " + uname2,
                 category: "Units",
                 kind: "goto-units"
             });
         }
-
-        for (var m = 0; m < cache.semesters.length; m++) {
-            var sem = cache.semesters[m];
-            var sn = (sem.name || "").toLowerCase();
-            if (qs && sn.indexOf(qs) < 0) continue;
+        for (var m2 = 0; m2 < cache.semesters.length; m2++) {
+            var sem2 = cache.semesters[m2];
+            if (!blobMatch(sem2.name + " semester", gFilter)) continue;
             items.push({
-                score: qs ? 50 : 2,
-                label: "Semester: " + sem.name,
+                label: "Semester: " + sem2.name,
                 category: "Semesters",
                 kind: "goto-academic"
             });
         }
-
-        for (var e = 0; e < cache.events.length; e++) {
-            var ev = cache.events[e];
-            var et = (ev.title || "").toLowerCase();
-            if (qs && et.indexOf(qs) < 0) continue;
-            var oid = ev.original_id != null ? ev.original_id : ev.id;
+        for (var e2 = 0; e2 < cache.events.length; e2++) {
+            var ev2 = cache.events[e2];
+            if (!blobMatch(ev2.title + " calendar", gFilter)) continue;
+            var oid2 = ev2.original_id != null ? ev2.original_id : ev2.id;
             items.push({
-                score: qs ? 45 : 1,
-                label: "Calendar: " + ev.title + " (" + (ev.type || "session") + ")",
+                label: "Calendar: " + ev2.title + " (" + (ev2.type || "session") + ")",
                 category: "Calendar",
                 kind: "goto-calendar",
-                eventId: oid,
-                eventType: ev.type || "session"
+                eventId: oid2,
+                eventType: ev2.type || "session"
             });
         }
-
-        items.sort(function (a, b) {
-            if (b.score !== a.score) return b.score - a.score;
-            return (a.label || "").localeCompare(b.label || "");
-        });
-        return items;
+        return sortItems(items);
     }
 
     var CHEVRON_SVG =
@@ -241,6 +297,53 @@
         if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
 
+    function renderHelpHtml() {
+        return (
+            '<div class="px-5 py-4 text-sm text-slate-700 roboto-regular space-y-3 leading-relaxed">' +
+            '<p class="font-semibold text-slate-900">Slash commands</p>' +
+            '<ul class="list-disc pl-5 space-y-2 text-slate-700">' +
+            '<li><span class="font-mono text-primary_purp font-medium">/n</span> — Navigation: pages, settings, open sessions, units, semesters, calendar. Narrow after the space, e.g. <span class="font-mono text-slate-600">/n scores</span>, <span class="font-mono text-slate-600">/n calendar settings</span>.</li>' +
+            '<li><span class="font-mono text-primary_purp font-medium">/a</span> — Actions: quick forms. e.g. <span class="font-mono text-slate-600">/a add unit</span></li>' +
+            '<li><span class="font-mono text-primary_purp font-medium">/help</span> — Show this help.</li>' +
+            "<li>Or search without a prefix to match commands and your data together.</li>" +
+            "</ul>" +
+            '<p class="text-xs text-slate-500 pt-1 border-t border-slate-100"><span class="cp-kbd">↑</span> <span class="cp-kbd">↓</span> select a result · <span class="cp-kbd">Enter</span> run · <span class="cp-kbd">Esc</span> close palette</p>' +
+            "</div>"
+        );
+    }
+
+    function enterActionPanelMode() {
+        if (actionPanelOpen) return;
+        pendingActionRestore = { query: input.value, selectedIndex: selectedIndex };
+        actionPanelOpen = true;
+        if (commandPaletteHeader) commandPaletteHeader.classList.add("hidden");
+        resultsEl.classList.add("hidden");
+        modal.classList.add("cp-action-sheet");
+        panelWrap.classList.add("cp-panel-floating");
+    }
+
+    function exitActionPanelMode() {
+        if (!actionPanelOpen) return;
+        actionPanelOpen = false;
+        hidePanel();
+        if (commandPaletteHeader) commandPaletteHeader.classList.remove("hidden");
+        resultsEl.classList.remove("hidden");
+        modal.classList.remove("cp-action-sheet");
+        panelWrap.classList.remove("cp-panel-floating");
+        if (pendingActionRestore) {
+            input.value = pendingActionRestore.query;
+            selectedIndex = pendingActionRestore.selectedIndex;
+            pendingActionRestore = null;
+        }
+        renderResults();
+        if (flatResults.length > 0) {
+            selectedIndex = Math.min(Math.max(0, selectedIndex), flatResults.length - 1);
+            updateSelectionHighlight();
+            scrollActiveIntoView();
+        }
+        input.focus();
+    }
+
     function hidePanel() {
         panelWrap.classList.add("hidden");
         panelInner.innerHTML = "";
@@ -249,25 +352,44 @@
 
     function showPanel(html) {
         panelWrap.classList.remove("hidden");
-        panelInner.innerHTML = html;
+        panelInner.innerHTML =
+            html +
+            '<p class="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100 roboto-regular"><span class="cp-kbd">Esc</span> — back to command palette (restores your search)</p>';
         panelInner.classList.remove("cp-panel-reveal-active");
         void panelInner.offsetWidth;
         panelInner.classList.add("cp-panel-reveal-active");
         bindPanelForms();
+        window.setTimeout(function () {
+            var fe =
+                panelInner.querySelector("input:not([type=hidden]):not(.sr-only), select, textarea");
+            if (!fe) fe = panelInner.querySelector("button[type='submit'], button");
+            if (fe) fe.focus();
+        }, 40);
     }
 
     function renderResults() {
         var q = input.value;
+        var qt = q.trim();
+
+        if (/^\/help$/i.test(qt) || qt.toLowerCase().startsWith("/help ")) {
+            flatResults = [];
+            selectedIndex = 0;
+            resultsEl.innerHTML = renderHelpHtml();
+            return;
+        }
+
         flatResults = buildResultItems(q);
         selectedIndex = Math.min(selectedIndex, Math.max(0, flatResults.length - 1));
+
         if (flatResults.length === 0) {
+            if (qt === "") {
+                resultsEl.innerHTML = "";
+                return;
+            }
             resultsEl.innerHTML =
-                '<div class="px-6 py-16 text-center">' +
-                '<div class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 mb-3 shadow-inner">' +
-                '<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>' +
-                "</div>" +
+                '<div class="px-6 py-12 text-center">' +
                 '<p class="text-sm font-medium text-slate-800">No matches</p>' +
-                '<p class="text-xs text-slate-400 mt-1">Try another keyword or <span class="font-mono text-slate-500">/</span> for commands</p>' +
+                '<p class="text-xs text-slate-500 mt-2 max-w-sm mx-auto">Try <span class="font-mono text-slate-600">/n</span> for navigation, <span class="font-mono text-slate-600">/a</span> for actions, or <span class="font-mono text-slate-600">/help</span>.</p>' +
                 "</div>";
             return;
         }
@@ -366,17 +488,6 @@
             return;
         }
 
-        if (it.action === "nav-session-prefill") {
-            closePalette();
-            var lu = localStorage.getItem(LS_UNIT);
-            var tm = localStorage.getItem(LS_TIMER) || "stopwatch";
-            var prefill = { fromPalette: true, unit_id: lu || "", timer_mode: tm };
-            localStorage.setItem("planify_session_prefill", JSON.stringify(prefill));
-            var navS = (CONFIG.nav || []).filter(function (n) { return n.id === "go-sessions"; })[0];
-            window.location.href = navS ? navS.url : "/sessions";
-            return;
-        }
-
         if (it.action) {
             renderActionPanel(it.action);
             return;
@@ -403,7 +514,7 @@
     }
 
     function renderActionPanel(action) {
-        hidePanel();
+        enterActionPanelMode();
         if (action === "panel-new-session") {
             var unitOpts = '<option value="">None</option>';
             for (var i = 0; i < cache.units.length; i++) {
@@ -786,7 +897,7 @@
             return;
         }
 
-        hidePanel();
+        showPanel('<p class="text-sm text-slate-500">This action is not available.</p>');
     }
 
     function toDatetimeLocal(iso) {
@@ -1116,6 +1227,12 @@
             });
         });
         hidePanel();
+        actionPanelOpen = false;
+        pendingActionRestore = null;
+        if (commandPaletteHeader) commandPaletteHeader.classList.remove("hidden");
+        resultsEl.classList.remove("hidden");
+        modal.classList.remove("cp-action-sheet");
+        panelWrap.classList.remove("cp-panel-floating");
         input.value = "";
         selectedIndex = 0;
         loadContext().then(function () {
@@ -1129,6 +1246,12 @@
     function closePalette() {
         if (!openState) return;
         openState = false;
+        actionPanelOpen = false;
+        pendingActionRestore = null;
+        if (commandPaletteHeader) commandPaletteHeader.classList.remove("hidden");
+        resultsEl.classList.remove("hidden");
+        modal.classList.remove("cp-action-sheet");
+        panelWrap.classList.remove("cp-panel-floating");
         backdrop.classList.remove("cp-palette-visible");
         modal.classList.remove("cp-palette-visible");
         hidePanel();
@@ -1151,7 +1274,10 @@
         });
     }
 
-    backdrop.addEventListener("click", closePalette);
+    backdrop.addEventListener("click", function () {
+        if (actionPanelOpen) exitActionPanelMode();
+        else closePalette();
+    });
 
     resultsEl.addEventListener("mouseover", function (e) {
         if (!openState) return;
@@ -1181,7 +1307,8 @@
         if (!openState) return;
         if (e.key === "Escape") {
             e.preventDefault();
-            closePalette();
+            if (actionPanelOpen) exitActionPanelMode();
+            else closePalette();
             return;
         }
         if (e.key === "ArrowDown") {
@@ -1209,6 +1336,7 @@
     });
 
     input.addEventListener("input", function () {
+        if (actionPanelOpen) return;
         selectedIndex = 0;
         hidePanel();
         renderResults();

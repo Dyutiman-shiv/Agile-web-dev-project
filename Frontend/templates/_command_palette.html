@@ -138,6 +138,26 @@
             animation: none !important;
         }
     }
+
+    /* Action form only: centered card, no list chrome */
+    #command-palette-modal.cp-action-sheet {
+        width: min(520px, calc(100vw - 2rem)) !important;
+        max-height: 90vh;
+    }
+    #command-palette-modal.cp-action-sheet.cp-palette-visible {
+        top: 50%;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    #command-palette-panel.cp-panel-floating {
+        border-top: none;
+        border: 1px solid rgb(226 232 240);
+        border-radius: 1rem;
+        margin: 1rem;
+        max-height: min(85vh, 520px);
+        box-shadow:
+            0 25px 50px -12px rgb(15 23 42 / 0.18),
+            0 0 0 1px rgb(255 255 255) inset;
+    }
 </style>
 
 <div id="command-palette-backdrop"
@@ -148,7 +168,7 @@
      role="dialog"
      aria-modal="true"
      aria-labelledby="command-palette-title">
-    <div class="px-4 pt-4 pb-3 shrink-0 border-b border-slate-200 bg-slate-50">
+    <div id="command-palette-header" class="px-4 pt-4 pb-3 shrink-0 border-b border-slate-200 bg-slate-50">
         <label id="command-palette-title" class="sr-only">Command palette</label>
         <div id="command-palette-search-wrap"
              class="flex items-center gap-3 rounded-xl px-3 py-2.5">
@@ -159,14 +179,18 @@
                    id="command-palette-input"
                    autocomplete="off"
                    spellcheck="false"
-                   placeholder="Search pages, sessions, commands…"
+                   placeholder="Try /n scores · /a add unit · /help"
                    class="flex-1 min-w-0 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 border-0 bg-transparent focus:ring-0 roboto-regular" />
         </div>
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-[11px] text-slate-600 roboto-regular">
-            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Ctrl</span><span class="text-slate-400">/</span><span class="cp-kbd">⌘</span><span class="text-slate-400">+</span><span class="cp-kbd">K</span><span class="text-slate-400">·</span> toggle</span>
-            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">↑</span><span class="cp-kbd">↓</span> select</span>
-            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Enter</span> run</span>
-            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Esc</span> close</span>
+            <span class="inline-flex items-center gap-1"><span class="cp-kbd">/n</span><span class="text-slate-400">nav</span></span>
+            <span class="inline-flex items-center gap-1"><span class="cp-kbd">/a</span><span class="text-slate-400">actions</span></span>
+            <span class="inline-flex items-center gap-1"><span class="cp-kbd">/help</span><span class="text-slate-400">commands</span></span>
+            <span class="text-slate-300">·</span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">↑</span><span class="cp-kbd">↓</span><span class="text-slate-400">select</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Enter</span><span class="text-slate-400">run</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Ctrl</span><span class="text-slate-400">/</span><span class="cp-kbd">⌘</span><span class="cp-kbd">K</span><span class="text-slate-400">·</span><span class="text-slate-400">toggle</span></span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Esc</span><span class="text-slate-400">close · back out of form</span></span>
         </div>
     </div>
     <div id="command-palette-results"
@@ -196,7 +220,6 @@
         {"id": "go-notif-settings", "label": "Go to Notification Settings", "keywords": "preferences", "url": "{{ url_for('notifications.notification_settings_page') }}", "category": "Navigate", "slash": "notifsettings"},
         {"id": "go-semester-setup", "label": "Go to Semester setup (onboarding)", "keywords": "wizard bulk", "url": "{{ url_for('semesters.semester_setup_view') }}", "category": "Navigate", "slash": "setup"},
         {"id": "panel-new-session", "label": "Quick create study session", "keywords": "new session timer add", "category": "Actions", "action": "panel-new-session", "slash": "session"},
-        {"id": "panel-session-prefill", "label": "New session — open setup with defaults", "keywords": "prefill template", "category": "Actions", "action": "nav-session-prefill", "slash": "sessionopen"},
         {"id": "panel-add-unit", "label": "Add unit", "keywords": "create course subject", "category": "Actions", "action": "panel-add-unit", "slash": "unit"},
         {"id": "panel-add-semester", "label": "Add semester", "keywords": "create term", "category": "Actions", "action": "panel-add-semester", "slash": "semester"},
         {"id": "panel-edit-semester", "label": "Edit semester", "keywords": "update term dates", "category": "Actions", "action": "panel-edit-semester", "slash": "semesteredit"},
