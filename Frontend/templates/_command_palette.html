@@ -1,0 +1,211 @@
+{# Global command palette — included from layout.html (authenticated shell only) #}
+<style>
+    /* Command palette — scoped visuals & motion */
+    #command-palette-backdrop {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #command-palette-backdrop.cp-palette-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #command-palette-modal {
+        opacity: 0;
+        transform: translate(-50%, -8px) scale(0.97);
+        pointer-events: none;
+        background-color: rgb(255 255 255);
+        border: 1px solid rgb(226 232 240);
+        transition:
+            opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+            transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 320ms ease;
+        box-shadow: 0 25px 50px -12px rgb(15 23 42 / 0.2);
+    }
+    #command-palette-modal.cp-palette-visible {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+        pointer-events: auto;
+        box-shadow:
+            0 25px 50px -12px rgb(15 23 42 / 0.22),
+            0 0 0 1px rgb(255 255 255) inset;
+    }
+
+    #command-palette-panel-inner.cp-panel-reveal-active {
+        animation: cp-panel-reveal 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes cp-panel-reveal {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .command-palette-row {
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+    }
+    .command-palette-row-active {
+        background-color: rgb(238 242 255);
+        border-left-color: rgb(114 90 234) !important;
+        box-shadow: inset 0 1px 0 rgb(255 255 255);
+    }
+
+    .command-palette-row-in {
+        animation: cp-row-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+    @keyframes cp-row-in {
+        from {
+            opacity: 0;
+            transform: translateX(-6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Search field: soft border only — avoids harsh / “black” edges from rings + transparency */
+    #command-palette-search-wrap {
+        border: 1px solid rgb(226 232 240);
+        background-color: rgb(255 255 255);
+        box-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+    #command-palette-search-wrap:focus-within {
+        border-color: rgb(165 180 252);
+        box-shadow: 0 0 0 3px rgb(199 210 254 / 0.65);
+        background-color: rgb(255 255 255);
+    }
+
+    #command-palette-input:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    /* Solid sheet: list area always reads on white */
+    #command-palette-results {
+        background-color: rgb(255 255 255);
+    }
+
+    .cp-kbd {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        color: #64748b;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+    }
+
+    #command-palette-panel-inner input,
+    #command-palette-panel-inner select,
+    #command-palette-panel-inner textarea {
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    #command-palette-panel-inner input:focus,
+    #command-palette-panel-inner select:focus,
+    #command-palette-panel-inner textarea:focus {
+        border-color: rgba(114, 90, 234, 0.45);
+        box-shadow: 0 0 0 3px rgba(114, 90, 234, 0.12);
+        outline: none;
+    }
+    #command-palette-panel-inner button[type="submit"] {
+        transition: transform 0.15s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    }
+    #command-palette-panel-inner button[type="submit"]:active:not(:disabled) {
+        transform: scale(0.98);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        #command-palette-backdrop,
+        #command-palette-modal {
+            transition-duration: 0.05s;
+        }
+        .command-palette-row,
+        .command-palette-row-in {
+            animation: none !important;
+            transition: none;
+        }
+        #command-palette-panel-inner.cp-panel-reveal-active {
+            animation: none !important;
+        }
+    }
+</style>
+
+<div id="command-palette-backdrop"
+     class="hidden fixed inset-0 z-[200] bg-slate-900/55 backdrop-blur-[2px]"
+     aria-hidden="true"></div>
+<div id="command-palette-modal"
+     class="hidden fixed left-1/2 top-[10vh] z-[201] w-[min(680px,calc(100vw-1.25rem))] max-h-[88vh] flex flex-col rounded-2xl overflow-hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="command-palette-title">
+    <div class="px-4 pt-4 pb-3 shrink-0 border-b border-slate-200 bg-slate-50">
+        <label id="command-palette-title" class="sr-only">Command palette</label>
+        <div id="command-palette-search-wrap"
+             class="flex items-center gap-3 rounded-xl px-3 py-2.5">
+            <svg class="w-5 h-5 text-primary_purp/80 shrink-0 transition-transform duration-300 group-focus-within:scale-105" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+            </svg>
+            <input type="text"
+                   id="command-palette-input"
+                   autocomplete="off"
+                   spellcheck="false"
+                   placeholder="Search pages, sessions, commands…"
+                   class="flex-1 min-w-0 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 border-0 bg-transparent focus:ring-0 roboto-regular" />
+        </div>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-[11px] text-slate-600 roboto-regular">
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Ctrl</span><span class="text-slate-400">/</span><span class="cp-kbd">⌘</span><span class="text-slate-400">+</span><span class="cp-kbd">K</span><span class="text-slate-400">·</span> toggle</span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">↑</span><span class="cp-kbd">↓</span> select</span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Enter</span> run</span>
+            <span class="inline-flex items-center gap-1.5"><span class="cp-kbd">Esc</span> close</span>
+        </div>
+    </div>
+    <div id="command-palette-results"
+         class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden text-sm scroll-smooth cp-results-scroll"
+         style="scrollbar-width: thin; scrollbar-color: rgba(114,90,234,0.35) transparent;"
+         role="listbox"
+         aria-label="Results"></div>
+    <div id="command-palette-panel"
+         class="hidden border-t border-slate-200 bg-white max-h-[46vh] overflow-hidden shrink-0">
+        <div id="command-palette-panel-inner" class="p-4 overflow-y-auto max-h-[46vh] bg-white"></div>
+    </div>
+</div>
+
+<script type="application/json" id="command-palette-config">
+{
+    "nav": [
+        {"id": "go-dashboard", "label": "Go to Dashboard", "keywords": "home start", "url": "{{ url_for('auth.dashboard') }}", "category": "Navigate", "slash": "dashboard"},
+        {"id": "go-calendar", "label": "Go to Calendar", "keywords": "events schedule", "url": "{{ url_for('cal.calendar_view') }}", "category": "Navigate", "slash": "calendar"},
+        {"id": "go-sessions", "label": "Go to Sessions", "keywords": "study timer", "url": "{{ url_for('auth.sessions_view') }}", "category": "Navigate", "slash": "sessions"},
+        {"id": "go-stats", "label": "Go to Stats", "keywords": "statistics analytics", "url": "{{ url_for('auth.stats_view') }}", "category": "Navigate", "slash": "stats"},
+        {"id": "go-scores", "label": "Go to Scores", "keywords": "grades marks", "url": "{{ url_for('auth.scores_view') }}", "category": "Navigate", "slash": "scores"},
+        {"id": "go-units", "label": "Go to Units", "keywords": "courses subjects", "url": "{{ url_for('units.units_view') }}", "category": "Navigate", "slash": "units"},
+        {"id": "go-profile", "label": "Go to Profile", "keywords": "account user", "url": "{{ url_for('profile.profile_view') }}", "category": "Navigate", "slash": "profile"},
+        {"id": "go-notifications", "label": "Go to Notifications", "keywords": "alerts inbox", "url": "{{ url_for('notifications.notifications_page') }}", "category": "Navigate", "slash": "notifications"},
+        {"id": "go-cal-settings", "label": "Go to Calendar Settings", "keywords": "ical subscribe", "url": "{{ url_for('cal.calendar_settings_view') }}", "category": "Navigate", "slash": "calsettings"},
+        {"id": "go-academic", "label": "Go to Academic Settings", "keywords": "semesters wam", "url": "{{ url_for('semesters.academic_settings_view') }}", "category": "Navigate", "slash": "academic"},
+        {"id": "go-notif-settings", "label": "Go to Notification Settings", "keywords": "preferences", "url": "{{ url_for('notifications.notification_settings_page') }}", "category": "Navigate", "slash": "notifsettings"},
+        {"id": "go-semester-setup", "label": "Go to Semester setup (onboarding)", "keywords": "wizard bulk", "url": "{{ url_for('semesters.semester_setup_view') }}", "category": "Navigate", "slash": "setup"},
+        {"id": "panel-new-session", "label": "Quick create study session", "keywords": "new session timer add", "category": "Actions", "action": "panel-new-session", "slash": "session"},
+        {"id": "panel-session-prefill", "label": "New session — open setup with defaults", "keywords": "prefill template", "category": "Actions", "action": "nav-session-prefill", "slash": "sessionopen"},
+        {"id": "panel-add-unit", "label": "Add unit", "keywords": "create course subject", "category": "Actions", "action": "panel-add-unit", "slash": "unit"},
+        {"id": "panel-add-semester", "label": "Add semester", "keywords": "create term", "category": "Actions", "action": "panel-add-semester", "slash": "semester"},
+        {"id": "panel-edit-semester", "label": "Edit semester", "keywords": "update term dates", "category": "Actions", "action": "panel-edit-semester", "slash": "semesteredit"},
+        {"id": "panel-add-ical", "label": "Add iCal calendar URL", "keywords": "subscribe feed outlook google", "category": "Actions", "action": "panel-add-ical", "slash": "ical"},
+        {"id": "panel-edit-ical", "label": "Edit iCal calendar", "keywords": "update feed url", "category": "Actions", "action": "panel-edit-ical", "slash": "icaledit"},
+        {"id": "panel-event-create", "label": "Create calendar event (session or task)", "keywords": "add task due deadline", "category": "Actions", "action": "panel-event-create", "slash": "event"},
+        {"id": "panel-event-edit", "label": "Edit calendar event", "keywords": "change update", "category": "Actions", "action": "panel-event-edit", "slash": "eventedit"},
+        {"id": "panel-event-delete", "label": "Delete calendar event", "keywords": "remove destroy", "category": "Actions", "action": "panel-event-delete", "slash": "eventdelete"}
+    ]
+}
+</script>
+<script src="{{ url_for('static', filename='js/command_palette.js') }}" defer></script>
