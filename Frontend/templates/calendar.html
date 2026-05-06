@@ -3,7 +3,7 @@
 {% block main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %}
 
 {% block page_content %}
-<div class="flex gap-0 h-full animate-fade-in">
+<div class="flex flex-col lg:flex-row gap-0 h-full min-h-0 animate-fade-in">
 
     <!-- ========== LEFT PANEL ========== -->
     <aside id="cal-left-panel" class="hidden lg:flex flex-col shrink-0 border-r border-gray-200 overflow-y-auto p-5" style="width: clamp(280px, 22vw, 400px);">
@@ -24,10 +24,10 @@
     </aside>
 
     <!-- ========== RIGHT PANEL ========== -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="flex-1 flex flex-col min-w-0 min-h-0 w-full">
         <!-- Toolbar -->
-        <div class="flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-b border-gray-200 shrink-0">
-            <div class="flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-3 sm:px-6 py-3 border-b border-gray-200 shrink-0">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
                 <button id="cal-today" class="px-4 py-1.5 text-sm montserrat-medium rounded-lg border border-gray-300 bg-white text-text_dark_gray hover:bg-gray-50 transition-colors">Today</button>
                 <button id="cal-prev" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
@@ -38,14 +38,14 @@
                 <h2 id="cal-title" class="ml-2 text-base montserrat-semi-bold text-text_dark_gray hidden sm:block"></h2>
             </div>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto">
                 <!-- Mobile add button (visible only on small screens) -->
                 <button id="add-event-btn-mobile" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 </button>
 
                 <!-- View switcher -->
-                <div class="inline-flex rounded-xl bg-gray-100 p-1">
+                <div class="inline-flex rounded-xl bg-gray-100 p-1 overflow-x-auto">
                     <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="day">Day</button>
                     <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="week">Week</button>
                     <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all active" data-view="month">Month</button>
@@ -54,7 +54,7 @@
         </div>
 
         <!-- Calendar grid container -->
-        <div id="calendar-container" class="flex-1 bg-white rounded-[30px] overflow-hidden min-h-0 mr-[20px] mb-[20px]">
+        <div id="calendar-container" class="flex-1 bg-white rounded-2xl lg:rounded-[30px] overflow-auto min-h-[520px] lg:min-h-0 mx-3 sm:mx-6 lg:ml-0 lg:mr-[20px] mb-[20px]">
             <!-- Rendered by JS -->
         </div>
     </div>
