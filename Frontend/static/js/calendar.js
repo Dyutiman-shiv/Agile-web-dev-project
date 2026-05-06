@@ -22,6 +22,10 @@ $(function () {
         return num.toString().padStart(2, '0');
     }
 
+    function isMobileView() {
+        return window.innerWidth < 640;
+    }
+
     function toLocalISO(d) {
         return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":00";
     }
@@ -478,10 +482,16 @@ $(function () {
                 const ev = dayEvents[e];
                 const evStart = new Date(ev.start);
                 const timeLabel = formatTimeShort(evStart);
+                const mobile = isMobileView();
+
                 html += '<div class="event-pill flex items-center gap-1 text-xs py-0.5 mb-0.5 truncate cursor-pointer group" data-id="' + ev.id + '" data-type="' + ev.type + '">';
                 html += '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + ev.color + '"></span>';
-                html += '<span class="text-black roboto-regular">' + timeLabel + '</span>';
-                html += '<span class="text-black roboto-semi-bold truncate">' + escapeHtml(ev.title) + '</span>';
+
+                if (!mobile) {
+                    html += '<span class="text-black roboto-regular shrink-0">' + timeLabel + '</span>';
+                }
+
+                html += '<span class="text-[11px] sm:text-xs text-black roboto-semi-bold truncate">' + escapeHtml(ev.title) + '</span>';
                 html += '</div>';
             }
             if (dayEvents.length > 3) {
@@ -558,9 +568,15 @@ $(function () {
                 const widthPct = (1 / 8 * 100);
                 const bgColor = ev.color || "#725AEA";
                 // Lighter background with colored left border
+                const mobile = isMobileView();
+
                 html += '<div class="absolute rounded-lg px-2 py-1 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftPct + '%;width:calc(' + widthPct + '% - 4px);height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
-                html += '<div class="text-[10px] montserrat-regular leading-tight" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
-                html += '<div class="text-xs montserrat-semi-bold truncate" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
+
+                if (!mobile) {
+                    html += '<div class="text-[10px] montserrat-regular leading-tight" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
+                }
+
+                html += '<div class="' + (mobile ? 'text-[11px]' : 'text-xs') + ' montserrat-semi-bold truncate leading-tight" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
                 html += '</div>';
             }
         }
