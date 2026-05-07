@@ -86,7 +86,7 @@ $(document).ready(function () {
 
           <!-- Cover -->
           <div class="h-48 bg-gray-200 relative">
-            <img src="${group.cover_picture || "/static/uploads/group_covers/default-group.jpg"}"
+            <img src="/static/uploads/group_covers/${group.cover_picture.split('/').pop()|| "/static/uploads/group_covers/default-group.jpg"}"
                  class="w-full h-full object-cover">
 
             <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
@@ -109,7 +109,7 @@ $(document).ready(function () {
                 ${group.members.length} members
               </span>
 
-              <a href="/groups/${group.id}"
+              <a href="/api/groups/${group.id}"
                  class="text-xs text-primary_purp hover:underline">
                 View →
               </a>

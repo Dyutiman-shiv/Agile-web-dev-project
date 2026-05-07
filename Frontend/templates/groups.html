@@ -2,7 +2,9 @@
 main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} {% block
 page_content %}
 
-<div class="h-[calc(100vh-100px)] max-w-6xl mx-auto px-4 py-4">
+<div
+  class="h-[calc(100vh-80px)] max-w-6xl mx-auto px-4 py-4 flex flex-col overflow-hidden"
+>
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-2xl mx-auto montserrat-bold text-gray-800">My Groups</h2>
@@ -131,9 +133,9 @@ page_content %}
       </div>
     </div>
   </div>
-
-  {% endblock %} {% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="{{ url_for('static', filename='js/groups.js') }}"></script>
-  {% endblock %}
 </div>
+
+{% endblock %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/groups.js') }}"></script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
 from models import Group, Post, Comment, GroupMembership, GroupInvitation
 from app import db
@@ -71,11 +71,14 @@ def upload_cover_picture(group_id):
         file.save(os.path.join(upload_folder, filename))
 
         file_path = f'File path: {upload_folder}'
-        print(file_path)
+        print(f'New Picture Path: {upload_folder}/{filename}')
+        print(f'Old Picture Path: {old_picture_path}')
 
         #Deleting the old group picture.
-        if os.path.exists(old_picture_path):
-            os.remove(old_picture_path)
+
+        if old_picture_path is not None:
+            if os.path.exists(old_picture_path):
+                os.remove(old_picture_path)
 
         group.cover_picture= f'{upload_folder}/{filename}'
         db.session.commit()
@@ -87,6 +90,13 @@ def upload_cover_picture(group_id):
         return jsonify({"sucess":False, "message": "The picture could not be saved."}), 404
     
 
+@groups_bp.route('/api/groups/<int:group_id>')
+@login_required
+def render_group_detail(group_id):
+
+    group = Group.query.get_or_404(group_id)
+    
+    return render_template('group_detail.html', group=group)
 
 
 @groups_bp.route("/api/groups", methods=["GET"])
