@@ -95,7 +95,7 @@ def upload_cover_picture(group_id):
 def render_group_detail(group_id):
 
     group = Group.query.get_or_404(group_id)
-    
+
     return render_template('group_detail.html', group=group)
 
 
@@ -105,9 +105,18 @@ def get_user_groups():
     memberships = GroupMembership.query.filter_by(user_id=current_user.id).all()
     groups = [m.group.to_dict(include_members=True) for m in memberships]
 
-    print(groups)
-
     return jsonify(groups), 200
+
+
+@groups_bp.route('/api/groups/<int:group_id>/posts', methods=['GET'])
+@login_required
+def get_posts(group_id):
+
+    group = Group.query.filter_by(id=group_id).first()
+    posts = group.posts
+
+    return jsonify(posts), 200
+
 
 @groups_bp.route("/api/groups/<int:group_id>/invite", methods=["POST"])
 @login_required

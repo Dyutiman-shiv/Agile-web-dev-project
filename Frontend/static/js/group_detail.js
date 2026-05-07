@@ -1,58 +1,51 @@
-
 $(document).ready(function () {
-"use strict";
-  loadGroupPosts();
+  "use strict";
+  const group_id = $("#group-data").data("group-id");
+  loadGroupPosts(group_id);
 
+  initSidebar();
 });
 
-async function loadGroupPosts() {
+function initSidebar() {
+  $("#mobile-members-toggle").on("click", function () {
+    $("#members-sidebar").removeClass("-translate-x-full");
 
-  const container = $("#posts-container");
+    $("#sidebar-overlay").removeClass("hidden");
+  });
 
-  container.html(`
-    <div class="text-center py-10 text-gray-400">
-      Loading posts...
-    </div>
-  `);
+  $("#close-members-sidebar, #sidebar-overlay").on("click", function () {
+    $("#members-sidebar").addClass("-translate-x-full");
 
-  try {
+    $("#sidebar-overlay").addClass("hidden");
+  });
+}
 
-    const response = await fetch(
-      `/api/groups/${groupData.group_id}/posts`
-    );
+function loadGroupPosts(group_id) {
+  $.getJSON(
+    '/api/groups/' + group_id + '/posts',
 
-    if (!response.ok) {
-      throw new Error("Failed to load posts");
-    }
-
-    const posts = await response.json();
-
-    renderPosts(posts);
-
-  } catch (error) {
-
-    console.error(error);
-
-    container.html(`
-      <div class="text-center py-10 text-red-500">
-        Failed to load posts.
+    function (posts) {
+      renderPosts(posts);
+    },
+  ).fail(function () {
+    $("#posts-container").html(`
+      <div class="bg-white rounded-2xl p-10 text-center border border-gray-100">
+        <p class="text-red-500">
+          Failed to load posts.
+        </p>
       </div>
     `);
-
-  }
-
+  });
 }
 
 function renderPosts(posts) {
-
   const container = $("#posts-container");
 
   if (!posts.length) {
-
     container.html(`
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center">
+      <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
         <p class="text-gray-500 text-sm">
-          No posts yet. Create the first discussion!
+          No posts yet. Start the conversation!
         </p>
       </div>
     `);
@@ -62,8 +55,7 @@ function renderPosts(posts) {
 
   let html = "";
 
-  posts.forEach(post => {
-
+  posts.forEach((post) => {
     html += `
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
@@ -111,7 +103,7 @@ function renderPosts(posts) {
               : ""
           }
 
-          <p class="text-gray-700 roboto-regular whitespace-pre-wrap">
+          <p class="text-gray-700 whitespace-pre-wrap roboto-regular">
             ${post.content}
           </p>
 
@@ -128,7 +120,9 @@ function renderPosts(posts) {
 
             ${
               post.comments.length
-                ? post.comments.map(comment => renderComment(comment)).join("")
+                ? post.comments
+                    .map((comment) => renderComment(comment))
+                    .join("")
                 : `
                   <p class="text-sm text-gray-400">
                     No comments yet.
@@ -145,11 +139,9 @@ function renderPosts(posts) {
   });
 
   container.html(html);
-
 }
 
 function renderComment(comment) {
-
   return `
     <div class="flex gap-3">
 
@@ -168,7 +160,7 @@ function renderComment(comment) {
           `
       }
 
-      <div class="flex-1 bg-white rounded-xl p-3 border border-gray-100">
+      <div class="flex-1 bg-white rounded-xl border border-gray-100 p-3">
 
         <div class="flex items-center gap-2 mb-1">
 
@@ -193,7 +185,5 @@ function renderComment(comment) {
 }
 
 function formatDate(dateString) {
-
   return new Date(dateString).toLocaleString();
-
 }
