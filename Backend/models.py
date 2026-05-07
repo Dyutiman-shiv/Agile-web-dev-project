@@ -22,7 +22,7 @@ class User(db.Model):  # type: ignore[name-defined]
     units = db.relationship("Unit", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
-    groups = db.relationship("GroupMembership", back_populates="user")
+    group_memberships = db.relationship("GroupMembership", back_populates="user")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -337,6 +337,7 @@ class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    cover_picture = db.Column(db.String(512), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=db.func.now())
 
@@ -350,6 +351,7 @@ class Group(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "cover_picture":self.cover_picture,
             "owner_id": self.owner_id,
             "created_at": self.created_at.isoformat(),
             "posts": [p.id for p in self.posts]
@@ -357,6 +359,8 @@ class Group(db.Model):
 
         if include_members:
             data["members"] = [m.user_id for m in self.members]
+
+        return data
     
 
 class GroupMembership(db.Model):
@@ -368,7 +372,7 @@ class GroupMembership(db.Model):
     role = db.Column(db.String(20), default="member")  # (admin/member) ?
     joined_at = db.Column(db.DateTime, default=db.func.now())
 
-    user = db.relationship("User", backref="group_memberships")
+    user = db.relationship("User", back_populates="group_memberships")
     group = db.relationship("Group", back_populates="members")
 
     def to_dict(self):
