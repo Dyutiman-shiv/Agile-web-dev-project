@@ -222,6 +222,35 @@ def invite_user(group_id):
 
     return jsonify({"message": "Invitation sent"})
 
+
+@groups_bp.route("/api/posts/<int:post_id>/comments", methods=["POST"])
+@login_required
+def add_comment(post_id):
+    content = request.json.get("content")
+    
+    if not content or not content.strip():
+        return jsonify({"success": False, "message": "Comment cannot be empty"}), 400
+
+    try:
+        comment = Comment(
+            content=content.strip(),
+            post_id=post_id,
+            user_id=current_user.id
+        )
+        db.session.add(comment)
+        db.session.commit()
+
+        #To get date in DB
+        db.session.refresh(comment)
+
+        return jsonify({"success": True,
+                        "comment": comment.to_dict()}), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @groups_bp.route("/api/groups/invitations/<int:invite_id>/accept", methods=["POST"])
 @login_required
 def accept_invitation(invite_id):

@@ -2,6 +2,11 @@
 endblock %} {% block main_class %} overflow-hidden bg-backgroud_cal_light {%
 endblock %} {% block page_content %}
 
+<div id="user-data" 
+     data-user-profile-picture="{{ current_user.profile_picture }}" 
+     style="display: none;">
+</div>
+
 <div class="h-full flex overflow-hidden relative">
   <!-- MOBILE MEMBER TOGGLE -->
   <button
@@ -192,8 +197,9 @@ endblock %} {% block page_content %}
 
 {% endblock %} {% block scripts %}
 
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script src="{{ url_for('static', filename='js/group_detail.js') }}?v=1.5"></script>
+<script src="{{ url_for('static', filename='js/group_detail.js') }}?v=1.6"></script>
 
 {% endblock %}

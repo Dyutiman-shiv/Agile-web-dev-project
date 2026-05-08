@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app import db
 
 
@@ -394,7 +394,7 @@ class Post(db.Model):
     media_url = db.Column(db.Text, nullable=True)
     media_type = db.Column(db.String(20), nullable=True)
     article_url = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -415,7 +415,7 @@ class Post(db.Model):
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
             "author_picture": self.author.profile_picture,
-            "comments": [c.id for c in self.comments]
+            "comments": [c.to_dict() for c in self.comments]
         }
 
 
@@ -424,7 +424,7 @@ class Comment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
