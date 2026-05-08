@@ -416,7 +416,8 @@ class Post(db.Model):
             "author_name": self.author.username,
             "author_id": self.author.id,
             "author_picture": self.author.profile_picture,
-            "comments": [c.to_dict() for c in self.comments]
+            "comments": [c.to_dict() for c in self.comments],
+            "likes": [l.user_id for l in self.likes]
         }
 
 
@@ -466,6 +467,13 @@ class PostLike(db.Model):
     user = db.relationship("User", back_populates="liked_posts", foreign_keys=[user_id])
     post = db.relationship("Post", back_populates="likes", foreign_keys=[post_id])
 
+    def to_dict(self):
+        
+        return {
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+            "created_at": self.created_at.isoformat(),
+        }
     
 class GroupInvitation(db.Model):
     __tablename__ = "group_invitations"

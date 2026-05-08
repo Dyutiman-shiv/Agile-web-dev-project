@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
-from models import Group, Post, Comment, GroupMembership, GroupInvitation
+from models import Group, Post, Comment, PostLike, GroupMembership, GroupInvitation
 from app import db
 from werkzeug.utils import secure_filename
 import re, uuid, os
@@ -256,6 +256,33 @@ def add_comment(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
+    
+@groups_bp.route("/api/posts/<int:post_id>/like", methods=["POST"])
+@login_required
+def toggle_like(post_id):
+    # Buscamos si ya existe el like
+    like = PostLike.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+
+    if like:
+        db.session.delete(like)
+        status = "unliked"
+    else:
+        new_like = PostLike(user_id=current_user.id, post_id=post_id)
+        db.session.add(new_like)
+        status = "liked"
+    
+    db.session.commit()
+    
+    # Obtenemos el total actualizado
+    total_likes = PostLike.query.filter_by(post_id=post_id).count()
+    
+    return jsonify({
+        "success": True, 
+        "status": status, 
+        "total_likes": total_likes,
+        "post_id": post_id
+    }), 200
+
     
 @groups_bp.route("/api/groups/<int:group_id>", methods=["DELETE"])
 @login_required

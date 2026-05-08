@@ -40,8 +40,6 @@ $(document).ready(function () {
       processData: false,
       contentType: false,
       success: function (response) {
-
-        
         if (response.success) {
           $("#display-group-name").text(response.group.name);
           $("#display-group-description").text(response.group.description);
@@ -50,12 +48,13 @@ $(document).ready(function () {
             $("#display-group-cover")
               .attr("src", "/static/" + response.group.cover_picture)
               .removeClass("hidden");
-
-
           }
 
           $("#group-data").data("group-name", response.group.name);
-          $("#group-data").data("group-description", response.group.description);
+          $("#group-data").data(
+            "group-description",
+            response.group.description,
+          );
           $("#group-data").data("group-picture", response.group.cover_picture);
 
           closeEditGroupModal();
@@ -74,74 +73,72 @@ $(document).ready(function () {
     });
   });
 
-  $("#confirm-delete-btn").off("click").on("click", function (e) {
-    const { id, type, element } = itemToDelete;
-    e.preventDefault();
-    e.stopImmediatePropagation(); 
+  $("#confirm-delete-btn")
+    .off("click")
+    .on("click", function (e) {
+      const { id, type, element } = itemToDelete;
+      e.preventDefault();
+      e.stopImmediatePropagation();
 
-    const groupId = $("#group-data").data("group-id");
+      const groupId = $("#group-data").data("group-id");
 
-    let url = "";
+      let url = "";
 
-    if(type === "post"){
+      if (type === "post") {
+        url = `/api/posts/${id}`;
+      } else if (type === "comment") {
+        url = `/api/comments/${id}`;
+      } else {
+        url = `/api/groups/${groupId}`;
+      }
 
-      url = `/api/posts/${id}`
-
-    }else if(type === "comment"){
-
-      url = `/api/comments/${id}`
-
-    }else{
-      url = `/api/groups/${groupId}`
-    }
-
-    $.ajax({
-      url: url,
-      type: "DELETE",
-      success: function (response) {
-        if (response.success) {
-          if (type === "post") {
-            $(`#post-card-${id}`).fadeOut(400, function () {
-              $(this).remove();
-            });
-          } else {
-            $(element)
-              .closest(".flex.gap-3")
-              .fadeOut(300, function () {
+      $.ajax({
+        url: url,
+        type: "DELETE",
+        success: function (response) {
+          if (response.success) {
+            if (type === "post") {
+              $(`#post-card-${id}`).fadeOut(400, function () {
                 $(this).remove();
               });
-          }
-          closeDeleteModal();
-
-          if (type === "comment") {
-            $(element).closest(".flex.gap-3").fadeOut(300);
-
-            const postId = response.post_id;
-            const counterSpan = $(`#comment-count-${postId}`);
-            const currentCount = parseInt(counterSpan.text()) || 0;
-            counterSpan.text(Math.max(0, currentCount - 1));
-
-            $(`#comments-card-${id}`).remove();
-            if (parseInt($(`#comment-count-${postId}`).text()) === 0) {
-              $(`#comments-list-${postId}`).html(
-                `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`,
-              );
+            } else {
+              $(element)
+                .closest(".flex.gap-3")
+                .fadeOut(300, function () {
+                  $(this).remove();
+                });
             }
-          } else if (type === "post") {
-            $(`#post-card-${id}`).fadeOut(400, function () {
-              $(this).remove();
-            });
-          } else {
-                window.location.href = "/groups"; 
+            closeDeleteModal();
+
+            if (type === "comment") {
+              $(element).closest(".flex.gap-3").fadeOut(300);
+
+              const postId = response.post_id;
+              const counterSpan = $(`#comment-count-${postId}`);
+              const currentCount = parseInt(counterSpan.text()) || 0;
+              counterSpan.text(Math.max(0, currentCount - 1));
+
+              $(`#comments-card-${id}`).remove();
+              if (parseInt($(`#comment-count-${postId}`).text()) === 0) {
+                $(`#comments-list-${postId}`).html(
+                  `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`,
+                );
+              }
+            } else if (type === "post") {
+              $(`#post-card-${id}`).fadeOut(400, function () {
+                $(this).remove();
+              });
+            } else {
+              window.location.href = "/groups";
+            }
           }
-        }
-      },
-      error: function () {
-        alert("Error trying to delete this content.");
-        closeDeleteModal();
-      },
+        },
+        error: function () {
+          alert("Error trying to delete this content.");
+          closeDeleteModal();
+        },
+      });
     });
-  });
 
   $("#upload-media-btn").on("click", function () {
     $("#post-media-input").click();
@@ -250,6 +247,8 @@ function renderPosts(posts) {
 
   posts.forEach((post) => {
     const formattedDate = formatMyCustomDate(post.created_at);
+    const likes = post.likes;
+    const isLiked = likes.includes(currentUserId);
 
     html += `
       <div id="post-card-${post.id}" class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
@@ -334,18 +333,24 @@ function renderPosts(posts) {
 
         </div>
 
-        <!-- Barra de Interacción -->
+        <!-- Interaction Bar -->
         <div class="flex items-center gap-6 my-3 pt-4 px-4 border-t border-gray-50">
           
-          <!-- Botón de Likes -->
-          <button onclick="showLikes(${post.id})" class="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors">
-            <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-            </svg>
-            <span class="text-xs font-medium">${post.likes_count || 0}</span>
+          <!-- Button Like -->
+          <button onclick="toggleLike(${post.id})" id="like-btn-${post.id}" class="flex items-center gap-2 transition-colors ${isLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"}">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+              id="like-icon-${post.id}"
+              fill="${isLiked ? "currentColor" : "none"}" 
+              viewBox="0 0 24 24" 
+              stroke-width="1.5" 
+              stroke="currentColor" 
+              class="w-5 h-5 transition-transform duration-200">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+          </svg>
+            <span id="like-count-${post.id}" class="text-xs font-medium">${post.likes.length || 0}</span>
           </button>
 
-          <!-- Botón de Comentarios -->
+          <!-- Button Comments -->
           <button onclick="toggleComments(${post.id})" class="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors">
             <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0.5 0.5 0 0 0 .416.791 6 6 0 0 0 4.627-2.323 5.964 5.964 0 0 0 2.02.326Z" />
@@ -506,8 +511,33 @@ function toggleComments(postId) {
   $(`#comments-section-${postId}`).toggleClass("hidden");
 }
 
-function showLikes(postId) {
-  alert("Próximamente: Lista de personas que dieron like al post " + postId);
+function toggleLike(postId) {
+  const btn = $(`#like-btn-${postId}`);
+  const icon = $(`#like-icon-${postId}`);
+  const countSpan = $(`#like-count-${postId}`);
+
+  $.ajax({
+    url: `/api/posts/${postId}/like`,
+    type: "POST",
+    success: function (response) {
+      if (response.success) {
+        // Actualizar el número
+        countSpan.text(response.total_likes);
+
+        // Cambiar estilos visuales
+        if (response.status === "liked") {
+          btn.addClass("text-red-500").removeClass("text-gray-500");
+          icon.attr("fill", "currentColor");
+          // Pequeña animación de "pop"
+          icon.addClass("scale-125");
+          setTimeout(() => icon.removeClass("scale-125"), 200);
+        } else {
+          btn.addClass("text-gray-500").removeClass("text-red-500");
+          icon.attr("fill", "none");
+        }
+      }
+    },
+  });
 }
 
 //Start checking here:
