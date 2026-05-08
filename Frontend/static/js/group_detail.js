@@ -4,6 +4,45 @@ $(document).ready(function () {
   loadGroupPosts(group_id);
 
   initSidebar();
+
+  $("#upload-media-btn").on("click", function () {
+    $("#post-media-input").click();
+  });
+
+  $("#toggle-article-btn").on("click", function () {
+    $("#article-url").toggleClass("hidden");
+  });
+
+  $("#post-media-input").on("change", function (event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+
+    let previewHTML = "";
+
+    if (file.type.startsWith("image")) {
+      previewHTML = `
+      <img
+        src="${url}"
+        class="w-auto h-auto max-h-[300px] object-contain rounded-md"
+      />
+    `;
+    } else if (file.type.startsWith("video")) {
+      previewHTML = `
+      <video
+        controls
+        class="w-full max-h-80 rounded-2xl"
+      >
+        <source src="${url}">
+      </video>
+    `;
+    }
+
+    $("#media-preview-container").html(previewHTML).removeClass("hidden");
+  });
+  $("#submit-post-btn").on("click", createPost);
 });
 
 function initSidebar() {
@@ -22,7 +61,7 @@ function initSidebar() {
 
 function loadGroupPosts(group_id) {
   $.getJSON(
-    '/api/groups/' + group_id + '/posts',
+    "/api/groups/" + group_id + "/posts",
 
     function (posts) {
       renderPosts(posts);
@@ -43,11 +82,9 @@ function renderPosts(posts) {
 
   if (!posts.length) {
     container.html(`
-      <div class="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm">
-        <p class="text-gray-500 text-sm">
+      <p class="text-gray-500 text-center [text-shadow:_2px_2px_4px_rgb(0_0_0_/_0.2)]  montserrat-regular"->
           No posts yet. Start the conversation!
         </p>
-      </div>
     `);
 
     return;
@@ -186,4 +223,40 @@ function renderComment(comment) {
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleString();
+}
+//Start checking here:
+function createPost() {
+  const content = $("#post-content").val().trim();
+
+  if (!content) {
+    return;
+  }
+
+  const formData = new FormData();
+
+  formData.append("content", content);
+
+  formData.append("article_url", $("#article-url").val());
+
+  const mediaFile = $("#post-media-input")[0].files[0];
+
+  if (mediaFile) {
+    formData.append("media", mediaFile);
+  }
+
+  $.ajax({
+    url: "/api/groups/" + groupData.group_id + "/posts",
+    type: "POST",
+    data: formData,
+    processData: false,
+    contentType: false,
+    success: function () {
+      resetPostForm();
+      loadGroupPosts();
+    },
+
+    error: function () {
+      alert("Failed to create post");
+    },
+  });
 }

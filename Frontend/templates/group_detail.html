@@ -17,11 +17,15 @@ endblock %} {% block page_content %}
     class="fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto w-80 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-xl lg:shadow-none"
   >
     <!-- Header -->
-    <div class="p-5 border-b border-gray-200"
-        id="group-data"
-        data-group-id="{{group.id}}">
+    <div
+      class="p-5 border-b border-gray-200"
+      id="group-data"
+      data-group-id="{{group.id}}"
+    >
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl montserrat-bold text-gray-800 mx-auto">{{ group.name }}</h2>
+        <h2 class="text-xl montserrat-bold text-gray-800 mx-auto">
+          {{ group.name }}
+        </h2>
 
         <button id="close-members-sidebar" class="lg:hidden text-gray-500">
           ✕
@@ -89,18 +93,21 @@ endblock %} {% block page_content %}
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-4xl mx-auto p-4 lg:p-6">
       <!-- CREATE POST CARD -->
-      <div class="h-32 bg-white rounded-lg border shadow-sm p-5 mb-6">
+      <div class="h-auto bg-white rounded-lg border shadow-sm p-5 mb-6">
         <textarea
           id="post-content"
-          rows="3"
+          rows="2"
           placeholder="Share your thoughts..."
-          class="w-full h-2/3 p-2 resize-none rounded-md border-[1px] border-gray-200 text-gray-700 roboto-regular placeholder:text-gray-400"
+          class="w-full h-2/3 p-2 resize-none rounded-md border-[1px] border-gray-200 text-gray-700 roboto-regular placeholder:text-gray-400 focus:outline-none"
         ></textarea>
+
+        <div id="media-preview-container" class="hidden w-full h-auto max-h-[300px] my-4 rounded-md flex items-center justify-center"></div>
 
         <div class="flex items-center justify-between gap-4 sm:gap-2 px-2">
           <!-- Actions -->
           <div class="flex items-center gap-5">
             <button
+            id="upload-media-btn"
               class="flex items-center gap-2 text-gray-500 hover:text-primary_purp transition"
             >
               <div
@@ -125,6 +132,7 @@ endblock %} {% block page_content %}
             </button>
 
             <button
+            id="toggle-article-btn"
               class="flex items-center gap-2 text-gray-500 hover:text-teal-600 transition"
             >
               <div
@@ -158,6 +166,19 @@ endblock %} {% block page_content %}
             Post
           </button>
         </div>
+        <input
+          type="file"
+          id="post-media-input"
+          accept="image/*,video/*"
+          class="hidden"
+        />
+
+        <input
+          type="text"
+          id="article-url"
+          placeholder="Paste article URL..."
+          class="hidden w-full mt-3 px-4 py-2 rounded-xl border border-gray-200 text-sm focus:ring-0 focus:outline-none"
+        />
       </div>
 
       <!-- POSTS -->
@@ -170,7 +191,6 @@ endblock %} {% block page_content %}
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<script src="{{ url_for('static', filename='js/group_detail.js') }}?v=1.3"></script>
-
+<script src="{{ url_for('static', filename='js/group_detail.js') }}?v=1.5"></script>
 
 {% endblock %}
