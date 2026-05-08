@@ -46,7 +46,7 @@ $(document).ready(function () {
           formData.append("cover", file);
 
           $.ajax({
-            url: `/api/groups/${group.id}/cover`,
+            url: `/api/groups/${group.id}`,
             method: "PUT",
             data: formData,
             processData: false,

@@ -45,7 +45,7 @@ def create_group():
     return jsonify(group.to_dict()), 201
 
 
-@groups_bp.route("/api/groups/<int:group_id>/cover", methods=["PUT"])
+@groups_bp.route("/api/groups/<int:group_id>", methods=["PUT"])
 @login_required
 def upload_cover_picture(group_id):
 
@@ -54,6 +54,9 @@ def upload_cover_picture(group_id):
 
     if not group or group.owner_id != current_user.id:
         return jsonify({"success": False, "message": "Not found."}), 404
+    
+    group.name = request.form.get("name", group.name) if request.form.get("name", group.name) else group.name
+    group.description = request.form.get("description", group.description) if request.form.get("description", group.description)  else group.description
 
     file = request.files.get('cover')
     
@@ -86,11 +89,13 @@ def upload_cover_picture(group_id):
         group.cover_picture= f'uploads/group_covers/{filename}'
         db.session.commit()
         
-        return jsonify({"sucess":False, "message": "Picture successfully uploaded.", "path": file_path}), 200
+        return jsonify({"success":True, "message": "Picture successfully uploaded.", 
+                        "path": file_path,
+                        "group": group.to_dict()}), 200
     
     else:
 
-        return jsonify({"sucess":False, "message": "The picture could not be saved."}), 404
+        return jsonify({"success":False, "message": "The picture could not be saved."}), 404
     
 
 @groups_bp.route('/api/groups/<int:group_id>')
@@ -251,6 +256,17 @@ def add_comment(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
+    
+@groups_bp.route("/api/groups/<int:group_id>", methods=["DELETE"])
+@login_required
+def delete_group(group_id):
+    group = Group.query.get_or_404(group_id)
+    if group.owner_id != current_user.id:
+        return jsonify({"message": "Unauthorized"}), 403
+    
+    db.session.delete(group)
+    db.session.commit()
+    return jsonify({"success": True})
 
 
 @groups_bp.route("/api/posts/<int:post_id>", methods=["DELETE"])

@@ -1,9 +1,147 @@
+let itemToDelete = { id: null, type: null, element: null };
+
 $(document).ready(function () {
   "use strict";
   const group_id = $("#group-data").data("group-id");
-  let itemToDelete = { id: null, type: null, element: null };
   loadGroupPosts(group_id);
   initSidebar();
+
+  $("#edit-group-cover").on("change", function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        $("#edit-cover-preview").attr("src", e.target.result);
+        $("#edit-cover-preview-container").removeClass("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  $("#group-update-save-btn").on("click", function () {
+    const groupId = $("#group-data").data("group-id");
+    const formData = new FormData();
+
+    formData.append("name", $("#edit-group-name").val().trim());
+    formData.append("description", $("#edit-group-description").val().trim());
+
+    const file = $("#edit-group-cover")[0].files[0];
+    if (file) {
+      formData.append("cover", file);
+    }
+
+    const btn = $(this);
+    btn.prop("disabled", true).text("Saving...");
+
+    $.ajax({
+      url: `/api/groups/${groupId}`,
+      type: "PUT",
+      data: formData,
+      processData: false,
+      contentType: false,
+      success: function (response) {
+
+        
+        if (response.success) {
+          $("#display-group-name").text(response.group.name);
+          $("#display-group-description").text(response.group.description);
+
+          if (response.group.cover_picture) {
+            $("#display-group-cover")
+              .attr("src", "/static/" + response.group.cover_picture)
+              .removeClass("hidden");
+
+
+          }
+
+          $("#group-data").data("group-name", response.group.name);
+          $("#group-data").data("group-description", response.group.description);
+          $("#group-data").data("group-picture", response.group.cover_picture);
+
+          closeEditGroupModal();
+        }
+        btn.prop("disabled", false).text("Save Changes");
+      },
+      error: function (xhr) {
+        const errorMsg = xhr.responseJSON
+          ? xhr.responseJSON.message
+          : "Update failed";
+        $("#edit-group-alert").html(
+          `<p class="text-red-500 text-xs mt-2">${errorMsg}</p>`,
+        );
+        btn.prop("disabled", false).text("Save Changes");
+      },
+    });
+  });
+
+  $("#confirm-delete-btn").off("click").on("click", function (e) {
+    const { id, type, element } = itemToDelete;
+    e.preventDefault();
+    e.stopImmediatePropagation(); 
+
+    const groupId = $("#group-data").data("group-id");
+
+    let url = "";
+
+    if(type === "post"){
+
+      url = `/api/posts/${id}`
+
+    }else if(type === "comment"){
+
+      url = `/api/comments/${id}`
+
+    }else{
+      url = `/api/groups/${groupId}`
+    }
+
+    $.ajax({
+      url: url,
+      type: "DELETE",
+      success: function (response) {
+        if (response.success) {
+          if (type === "post") {
+            $(`#post-card-${id}`).fadeOut(400, function () {
+              $(this).remove();
+            });
+          } else {
+            $(element)
+              .closest(".flex.gap-3")
+              .fadeOut(300, function () {
+                $(this).remove();
+              });
+          }
+          closeDeleteModal();
+
+          if (type === "comment") {
+            $(element).closest(".flex.gap-3").fadeOut(300);
+
+            const postId = response.post_id;
+            const counterSpan = $(`#comment-count-${postId}`);
+            const currentCount = parseInt(counterSpan.text()) || 0;
+            counterSpan.text(Math.max(0, currentCount - 1));
+
+            $(`#comments-card-${id}`).remove();
+            if (parseInt($(`#comment-count-${postId}`).text()) === 0) {
+              $(`#comments-list-${postId}`).html(
+                `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`,
+              );
+            }
+          } else if (type === "post") {
+            $(`#post-card-${id}`).fadeOut(400, function () {
+              $(this).remove();
+            });
+          } else {
+                window.location.href = "/groups"; 
+          }
+        }
+      },
+      error: function () {
+        alert("Error trying to delete this content.");
+        closeDeleteModal();
+      },
+    });
+  });
 
   $("#upload-media-btn").on("click", function () {
     $("#post-media-input").click();
@@ -80,7 +218,7 @@ function loadGroupPosts(group_id) {
 function formatMyCustomDate(isoString) {
   if (!isoString) return "";
 
-  const cleanIsoString = isoString.endsWith('Z') ? isoString : isoString + 'Z';
+  const cleanIsoString = isoString.endsWith("Z") ? isoString : isoString + "Z";
   const date = new Date(cleanIsoString);
 
   return date.toLocaleString("en-AU", {
@@ -91,7 +229,7 @@ function formatMyCustomDate(isoString) {
     minute: "2-digit",
     hour12: true,
   });
-};
+}
 
 function renderPosts(posts) {
   const container = $("#posts-container");
@@ -111,9 +249,8 @@ function renderPosts(posts) {
   const currentUserId = $("#user-data").data("user-id");
 
   posts.forEach((post) => {
-
     const formattedDate = formatMyCustomDate(post.created_at);
-    
+
     html += `
       <div id="post-card-${post.id}" class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
 
@@ -149,13 +286,17 @@ function renderPosts(posts) {
 
             </div>
 
-            ${post.author_id === currentUserId ? `
+            ${
+              post.author_id === currentUserId
+                ? `
             <button onclick="openDeleteModal(${post.id}, 'post')" class="text-gray-400 ml-auto hover:text-red-500 p-1">
               <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
               </svg>
             </button>
-          ` : ''}
+          `
+                : ""
+            }
 
           </div>
 
@@ -220,7 +361,9 @@ function renderPosts(posts) {
           <div class="max-h-[250px] overflow-y-auto p-5 space-y-4 custom-scrollbar" id="comments-list-${post.id}">
             ${
               post.comments.length
-                ? post.comments.map((comment) => renderComment(comment)).join("")
+                ? post.comments
+                    .map((comment) => renderComment(comment))
+                    .join("")
                 : `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`
             }
           </div>
@@ -262,46 +405,45 @@ function renderPosts(posts) {
 }
 
 function submitComment(postId) {
-    const input = $(`#comment-input-${postId}`);
-    const content = input.val().trim();
+  const input = $(`#comment-input-${postId}`);
+  const content = input.val().trim();
 
-    if (!content) return;
+  if (!content) return;
 
-    $.ajax({
-        url: `/api/posts/${postId}/comments`,
-        type: "POST",
-        contentType: "application/json",
-        data: JSON.stringify({ content: content }),
-        success: function (response) {
-            if (response.success) {
+  $.ajax({
+    url: `/api/posts/${postId}/comments`,
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({ content: content }),
+    success: function (response) {
+      if (response.success) {
+        input.val("");
+        input.css("height", "auto");
 
-                input.val("");
-                input.css("height", "auto");
+        const newCommentHtml = renderComment(response.comment);
+        const counterSpan = $(`#comment-count-${postId}`);
+        const currentCount = parseInt(counterSpan.text()) || 0;
+        counterSpan.text(currentCount + 1);
 
-                const newCommentHtml = renderComment(response.comment);
-                const counterSpan = $(`#comment-count-${postId}`);
-                const currentCount = parseInt(counterSpan.text()) || 0;
-                counterSpan.text(currentCount + 1);
+        const list = $(`#comments-list-${postId}`);
 
-                const list = $(`#comments-list-${postId}`);
-                
-                list.find(".no-comments-msg").remove();
-                
-                list.append(newCommentHtml);
+        list.find(".no-comments-msg").remove();
 
-                list.animate({ scrollTop: list.prop("scrollHeight") }, 500);
-            }
-        },
-        error: function (xhr) {
-            const msg = xhr.responseJSON ? xhr.responseJSON.message : "Error al comentar";
-            alert(msg);
-        }
-    });
+        list.append(newCommentHtml);
+
+        list.animate({ scrollTop: list.prop("scrollHeight") }, 500);
+      }
+    },
+    error: function (xhr) {
+      const msg = xhr.responseJSON
+        ? xhr.responseJSON.message
+        : "Error al comentar";
+      alert(msg);
+    },
+  });
 }
 
-
 function renderComment(comment) {
-
   const currentUserId = $("#user-data").data("user-id");
 
   return `
@@ -335,13 +477,17 @@ function renderComment(comment) {
           </span>
 
           <div class="flex gap-3 ml-auto">
-            ${comment.author_id === currentUserId ? `
+            ${
+              comment.author_id === currentUserId
+                ? `
               <button onclick="openDeleteModal(${comment.id}, 'comment', this)" class="text-gray-400 hover:text-red-500 p-1">
                 <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                 </svg>
               </button>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
 
         </div>
@@ -357,13 +503,12 @@ function renderComment(comment) {
 }
 
 function toggleComments(postId) {
-    $(`#comments-section-${postId}`).toggleClass('hidden');
+  $(`#comments-section-${postId}`).toggleClass("hidden");
 }
 
 function showLikes(postId) {
-    alert("Próximamente: Lista de personas que dieron like al post " + postId);
+  alert("Próximamente: Lista de personas que dieron like al post " + postId);
 }
-
 
 //Start checking here:
 function createPost() {
@@ -419,57 +564,29 @@ function resetPostForm() {
   $("#media-preview-container").html("").addClass("hidden");
 }
 
-  function openDeleteModal(id, type, element = null) {
-    itemToDelete = { id, type, element };
-    $("#delete-modal").removeClass("hidden").addClass("flex");  
-  }
+function openDeleteModal(id, type, element = null) {
+  itemToDelete = { id, type, element };
+  $("#delete-modal").removeClass("hidden").addClass("flex");
+}
 
-  function closeDeleteModal() { 
-    $("#delete-modal").addClass("hidden").removeClass("flex");
-    itemToDelete = { id: null, type: null, element: null };
-  }
+function closeDeleteModal() {
+  $("#delete-modal").addClass("hidden").removeClass("flex");
+  itemToDelete = { id: null, type: null, element: null };
+}
 
-$("#confirm-delete-btn").on("click", function() {
-    const { id, type, element } = itemToDelete;
-    const url = type === 'post' ? `/api/posts/${id}` : `/api/comments/${id}`;
+// Open Edit Group Modal
+function openEditGroupModal() {
+  const groupName = $("#group-data").data("group-name");
+  const groupDescription = $("#group-data").data("group-description");
+  const groupPicture = $("#group-data").data("group-picture");
 
-    $.ajax({
-        url: url,
-        type: "DELETE",
-        success: function(response) {
-            if (response.success) {
-                if (type === 'post') {
-                    $(`#post-card-${id}`).fadeOut(400, function() { $(this).remove(); });
-                } else {
-                    $(element).closest('.flex.gap-3').fadeOut(300, function() { $(this).remove(); });
-                }
-                closeDeleteModal();
+  $("#edit-group-name").val(groupName);
+  $("#edit-group-description").val(groupDescription);
 
-                if (type === 'comment') {
+  $("#edit-group-modal").removeClass("hidden").addClass("flex");
+}
 
-                      $(element).closest('.flex.gap-3').fadeOut(300);
-
-                      const postId = response.post_id;
-                      const counterSpan = $(`#comment-count-${postId}`);
-                      const currentCount = parseInt(counterSpan.text()) || 0;
-                      counterSpan.text(Math.max(0, currentCount - 1));
-
-                      $(`#comments-card-${id}`).remove();
-                      if(parseInt($(`#comment-count-${postId}`).text()) === 0){
-
-                        $(`#comments-list-${postId}`).html(`<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`);
-                                      
-                      }
-                 }else{
-
-                  $(`#post-card-${id}`).fadeOut(400, function() { $(this).remove(); });
-
-                 }
-             }
-        },
-        error: function() {
-            alert("Error trying to delete this content.");
-            closeDeleteModal();
-        }
-    });
-});
+function closeEditGroupModal() {
+  $("#edit-group-modal").addClass("hidden").removeClass("flex");
+  $("#edit-group-alert").empty();
+}
