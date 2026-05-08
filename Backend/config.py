@@ -23,7 +23,7 @@ class Config:
     # File uploads
     UPLOAD_FOLDER = os.path.join(BASE_DIR, os.pardir, "Frontend", "static", "uploads")
     MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 2 MB
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"}
 
     # Google OAuth
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")

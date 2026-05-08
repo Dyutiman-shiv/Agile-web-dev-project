@@ -23,7 +23,7 @@ class User(db.Model):  # type: ignore[name-defined]
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
     group_memberships = db.relationship("GroupMembership", back_populates="user")
-    liked_posts = db.relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
+    liked_posts = db.relationship("PostLike", back_populates="user", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -460,8 +460,8 @@ class PostLike(db.Model):
                            )
 
     # Relationships
-    user = db.relationship("User", back_populates="liked_posts")
-    post = db.relationship("Post", back_populates="likes")
+    user = db.relationship("User", back_populates="liked_posts", foreign_keys=[user_id])
+    post = db.relationship("Post", back_populates="likes", foreign_keys=[post_id])
 
     
 class GroupInvitation(db.Model):

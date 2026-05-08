@@ -64,6 +64,8 @@ function loadGroupPosts(group_id) {
     "/api/groups/" + group_id + "/posts",
 
     function (posts) {
+
+      console.log(JSON.stringify(posts))
       renderPosts(posts);
     },
   ).fail(function () {
@@ -227,8 +229,12 @@ function formatDate(dateString) {
 //Start checking here:
 function createPost() {
   const content = $("#post-content").val().trim();
+  const group_id = $("#group-data").data("group-id");
 
   if (!content) {
+     $("#post-alert").html(
+        '<p class="text-red-500 text-sm roboto-regular">Please tell us what this post is about.</p>',
+      );
     return;
   }
 
@@ -245,18 +251,35 @@ function createPost() {
   }
 
   $.ajax({
-    url: "/api/groups/" + groupData.group_id + "/posts",
+    url: "/api/groups/" + group_id + "/posts",
     type: "POST",
     data: formData,
     processData: false,
     contentType: false,
     success: function () {
       resetPostForm();
-      loadGroupPosts();
+      loadGroupPosts(group_id);
     },
 
-    error: function () {
-      alert("Failed to create post");
+    error: function (xhr) {
+      const errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Error desconocido";
+      alert("Error: " + errorMsg);
     },
   });
+}
+
+function resetPostForm() {
+
+  $("#post-content").val("");
+
+  $("#article-url")
+    .val("")
+    .addClass("hidden");
+
+  $("#post-media-input").val("");
+
+  $("#media-preview-container")
+    .html("")
+    .addClass("hidden");
+
 }

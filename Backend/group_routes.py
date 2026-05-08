@@ -9,7 +9,7 @@ import re, uuid, os
 groups_bp = Blueprint("group", __name__)
 
 def allowed_file(filename):
-    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif", "webp"})
+    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"})
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
 @groups_bp.route("/api/groups", methods=["POST"])
@@ -114,7 +114,7 @@ def get_user_groups():
 def get_posts(group_id):
 
     group = Group.query.filter_by(id=group_id).first()
-    posts = group.posts
+    posts = [p.to_dict() for p in group.posts]
 
     return jsonify(posts), 200
 
@@ -123,21 +123,33 @@ def get_posts(group_id):
 @login_required
 def create_post(group_id):
 
+    print('I am inside the create_post endpoint.')
+
     content = request.form.get("content")
     article_url = request.form.get("article_url")
     media = request.files.get("media")
 
     if not content:
-        return jsonify({"error": "Post content is required"}), 400
+        return jsonify({"success": False, "message": "Post content is required"}), 400
 
     media_path = None
     media_type = None
 
     if media:
 
+        print(allowed_file(media.filename))
+
         if not allowed_file(media.filename):
 
-            return jsonify({'success': False, 'message': 'This picture format is not allowed.'}, 404)
+            return jsonify({'success': False, 'message': 'Format not allowed'}), 400
+        
+        media.seek(0, os.SEEK_END)
+        file_size = media.tell()
+        media.seek(0)
+
+        if file_size > current_app.config['MAX_CONTENT_LENGTH']:
+
+            return jsonify({'success': False, 'message': 'The file size exceeds 20MB.'}), 404
         
         file_extension = media.filename.split('.')[-1].lower()
         filename = f"{uuid.uuid4()}.{file_extension}"
@@ -146,6 +158,7 @@ def create_post(group_id):
         os.makedirs(upload_folder, exist_ok=True)
 
         file_path = os.path.join(upload_folder, filename)
+        print(f'Media Folder: {file_path}')
 
         media.save(file_path)
 
