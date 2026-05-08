@@ -23,6 +23,7 @@ class User(db.Model):  # type: ignore[name-defined]
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
     group_memberships = db.relationship("GroupMembership", back_populates="user")
+    liked_posts = db.relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -389,8 +390,10 @@ class Post(db.Model):
     __tablename__ = "posts"
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=True)
     content = db.Column(db.Text, nullable=False)
+    media_url = db.Column(db.Text, nullable=True)
+    media_type = db.Column(db.String(20), nullable=True)
+    article_url = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=db.func.now())
 
     # Foreign keys
@@ -400,12 +403,15 @@ class Post(db.Model):
     # Relationships
     author = db.relationship("User", backref="posts")
     comments = db.relationship("Comment", backref="post", cascade="all, delete-orphan")
+    likes = db.relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
 
     def to_dict(self):
         return  {
             "id": self.id,
-            "tittle": self.title,
             "content": self.content,
+            "media_url": self.media_url,
+            "media_type": self.media_type,
+            "article_url": self.article_url,
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
             "author_picture": self.author.profile_picture,
@@ -436,6 +442,27 @@ class Comment(db.Model):
             "author_name": self.author.username,
             "author_picture": self.author.profile_picture 
         }
+    
+class PostLike(db.Model):
+
+    __tablename__ = "post_likes"
+
+    user_id = db.Column(db.Integer,
+                        db.ForeignKey("users.id"),
+                        primary_key=True)
+
+    post_id = db.Column(db.Integer,
+                        db.ForeignKey("posts.id"),
+                        primary_key=True)
+
+    created_at = db.Column(db.DateTime,
+                           default=db.func.now()
+                           )
+
+    # Relationships
+    user = db.relationship("User", back_populates="liked_posts")
+    post = db.relationship("Post", back_populates="likes")
+
     
 class GroupInvitation(db.Model):
     __tablename__ = "group_invitations"

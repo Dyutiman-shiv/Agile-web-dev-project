@@ -34,7 +34,7 @@ endblock %} {% block page_content %}
 
       {% if group.cover_picture %}
       <img
-        src="{{ url_for('static', filename='uploads/group_covers/' + group.cover_picture.split('/')[-1]) }}"
+        src="{{ url_for('static', filename=group.cover_picture) }}"
         class="w-full h-40 object-cover rounded-2xl mb-4"
       />
       {% endif %}

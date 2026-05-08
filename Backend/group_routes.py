@@ -3,7 +3,8 @@ from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
 from models import Group, Post, Comment, GroupMembership, GroupInvitation
 from app import db
-import re, uuid, os, app
+from werkzeug.utils import secure_filename
+import re, uuid, os
 
 groups_bp = Blueprint("group", __name__)
 
@@ -80,7 +81,7 @@ def upload_cover_picture(group_id):
             if os.path.exists(old_picture_path):
                 os.remove(old_picture_path)
 
-        group.cover_picture= f'{upload_folder}/{filename}'
+        group.cover_picture= f'uploads/group_covers/{filename}'
         db.session.commit()
         
         return jsonify({"sucess":False, "message": "Picture successfully uploaded.", "path": file_path}), 200
@@ -116,6 +117,60 @@ def get_posts(group_id):
     posts = group.posts
 
     return jsonify(posts), 200
+
+
+@groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])
+@login_required
+def create_post(group_id):
+
+    content = request.form.get("content")
+    article_url = request.form.get("article_url")
+    media = request.files.get("media")
+
+    if not content:
+        return jsonify({"error": "Post content is required"}), 400
+
+    media_path = None
+    media_type = None
+
+    if media:
+
+        if not allowed_file(media.filename):
+
+            return jsonify({'success': False, 'message': 'This picture format is not allowed.'}, 404)
+        
+        file_extension = media.filename.split('.')[-1].lower()
+        filename = f"{uuid.uuid4()}.{file_extension}"
+        upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "post_media")
+
+        os.makedirs(upload_folder, exist_ok=True)
+
+        file_path = os.path.join(upload_folder, filename)
+
+        media.save(file_path)
+
+        media_path = f"uploads/post_media/{filename}"
+
+        if media.mimetype.startswith("image"):
+            media_type = "image"
+
+        elif media.mimetype.startswith("video"):
+            media_type = "video"
+
+    post = Post(
+        content=content,
+        article_url=article_url,
+        media_url=media_path,
+        media_type=media_type,
+        user_id=current_user.id,
+        group_id=group_id
+    )
+
+    db.session.add(post)
+    db.session.commit()
+
+    return jsonify({"message": "Post created successfully",
+                    "post": post.to_dict()}), 201
 
 
 @groups_bp.route("/api/groups/<int:group_id>/invite", methods=["POST"])
