@@ -521,14 +521,12 @@ function toggleLike(postId) {
     type: "POST",
     success: function (response) {
       if (response.success) {
-        // Actualizar el número
+        // update number of likes
         countSpan.text(response.total_likes);
 
-        // Cambiar estilos visuales
         if (response.status === "liked") {
           btn.addClass("text-red-500").removeClass("text-gray-500");
           icon.attr("fill", "currentColor");
-          // Pequeña animación de "pop"
           icon.addClass("scale-125");
           setTimeout(() => icon.removeClass("scale-125"), 200);
         } else {
