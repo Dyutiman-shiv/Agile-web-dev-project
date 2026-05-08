@@ -72,14 +72,16 @@ def upload_cover_picture(group_id):
         file.save(os.path.join(upload_folder, filename))
 
         file_path = f'File path: {upload_folder}'
-        print(f'New Picture Path: {upload_folder}/{filename}')
-        print(f'Old Picture Path: {old_picture_path}')
 
         #Deleting the old group picture.
-
         if old_picture_path is not None:
-            if os.path.exists(old_picture_path):
-                os.remove(old_picture_path)
+
+            file_name = old_picture_path.split('/')[-1]
+            upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "group_covers")
+
+            if os.path.exists(os.path.join(upload_folder, file_name)):
+                print(os.path.join(upload_folder, file_name))
+                os.remove(os.path.join(upload_folder, file_name))
 
         group.cover_picture= f'uploads/group_covers/{filename}'
         db.session.commit()
@@ -249,6 +251,44 @@ def add_comment(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@groups_bp.route("/api/posts/<int:post_id>", methods=["DELETE"])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    old_media_url = post.media_url
+    group_id = post.group_id
+
+    if post.user_id != current_user.id:
+        return jsonify({"message": "Unauthorised action for this user."}), 403
+    
+    db.session.delete(post)
+    db.session.commit()
+
+    if old_media_url is not None:
+            
+            file_name = old_media_url.split('/')[-1]
+            upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "post_media")
+
+            if os.path.exists(os.path.join(upload_folder, file_name)):
+                print(os.path.join(upload_folder, file_name))
+                os.remove(os.path.join(upload_folder, file_name))
+
+    return jsonify({"success": True, "group_id": group_id}), 200
+
+
+@groups_bp.route("/api/comments/<int:comment_id>", methods=["DELETE"])
+@login_required
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    post_id = comment.post_id
+    if comment.user_id != current_user.id:
+        return jsonify({"message": "Unauthorised action for this user."}), 403
+    
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify({"success": True, "post_id": post_id}), 200
 
 
 @groups_bp.route("/api/groups/invitations/<int:invite_id>/accept", methods=["POST"])

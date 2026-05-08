@@ -414,6 +414,7 @@ class Post(db.Model):
             "article_url": self.article_url,
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
+            "author_id": self.author.id,
             "author_picture": self.author.profile_picture,
             "comments": [c.to_dict() for c in self.comments]
         }
@@ -440,6 +441,8 @@ class Comment(db.Model):
             "content": self.content,
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
+            "author_id": self.author.id,
+            "post_id": self.post_id,
             "author_picture": self.author.profile_picture 
         }
     

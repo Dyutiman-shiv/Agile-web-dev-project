@@ -1,8 +1,8 @@
 $(document).ready(function () {
   "use strict";
   const group_id = $("#group-data").data("group-id");
+  let itemToDelete = { id: null, type: null, element: null };
   loadGroupPosts(group_id);
-
   initSidebar();
 
   $("#upload-media-btn").on("click", function () {
@@ -108,14 +108,14 @@ function renderPosts(posts) {
 
   let html = "";
   const currentUserPicture = $("#user-data").data("user-profile-picture");
+  const currentUserId = $("#user-data").data("user-id");
 
   posts.forEach((post) => {
 
-    console.log(post.created_at);
     const formattedDate = formatMyCustomDate(post.created_at);
     
     html += `
-      <div class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+      <div id="post-card-${post.id}" class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
 
         <!-- POST -->
         <div class="p-6">
@@ -148,6 +148,14 @@ function renderPosts(posts) {
               </p>
 
             </div>
+
+            ${post.author_id === currentUserId ? `
+            <button onclick="openDeleteModal(${post.id}, 'post')" class="text-gray-400 ml-auto hover:text-red-500 p-1">
+              <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          ` : ''}
 
           </div>
 
@@ -201,7 +209,7 @@ function renderPosts(posts) {
             <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0.5 0.5 0 0 0 .416.791 6 6 0 0 0 4.627-2.323 5.964 5.964 0 0 0 2.02.326Z" />
             </svg>
-            <span class="text-xs font-medium">${post.comments.length}</span>
+            <span id="comment-count-${post.id}" class="text-xs font-medium">${post.comments.length}</span>
           </button>
         </div>
 
@@ -271,6 +279,9 @@ function submitComment(postId) {
                 input.css("height", "auto");
 
                 const newCommentHtml = renderComment(response.comment);
+                const counterSpan = $(`#comment-count-${postId}`);
+                const currentCount = parseInt(counterSpan.text()) || 0;
+                counterSpan.text(currentCount + 1);
 
                 const list = $(`#comments-list-${postId}`);
                 
@@ -290,8 +301,11 @@ function submitComment(postId) {
 
 
 function renderComment(comment) {
+
+  const currentUserId = $("#user-data").data("user-id");
+
   return `
-    <div class="flex gap-3">
+    <div id="comments-card-${comment.id}" class="flex gap-3">
 
       ${
         comment.author_picture
@@ -319,6 +333,16 @@ function renderComment(comment) {
           <span class="text-xs text-gray-400 roboto-regular">
             ${formatMyCustomDate(comment.created_at)}
           </span>
+
+          <div class="flex gap-3 ml-auto">
+            ${comment.author_id === currentUserId ? `
+              <button onclick="openDeleteModal(${comment.id}, 'comment', this)" class="text-gray-400 hover:text-red-500 p-1">
+                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                </svg>
+              </button>
+            ` : ''}
+          </div>
 
         </div>
 
@@ -379,7 +403,7 @@ function createPost() {
     error: function (xhr) {
       const errorMsg = xhr.responseJSON
         ? xhr.responseJSON.message
-        : "Error desconocido";
+        : "Unkown error";
       alert("Error: " + errorMsg);
     },
   });
@@ -394,3 +418,58 @@ function resetPostForm() {
 
   $("#media-preview-container").html("").addClass("hidden");
 }
+
+  function openDeleteModal(id, type, element = null) {
+    itemToDelete = { id, type, element };
+    $("#delete-modal").removeClass("hidden").addClass("flex");  
+  }
+
+  function closeDeleteModal() { 
+    $("#delete-modal").addClass("hidden").removeClass("flex");
+    itemToDelete = { id: null, type: null, element: null };
+  }
+
+$("#confirm-delete-btn").on("click", function() {
+    const { id, type, element } = itemToDelete;
+    const url = type === 'post' ? `/api/posts/${id}` : `/api/comments/${id}`;
+
+    $.ajax({
+        url: url,
+        type: "DELETE",
+        success: function(response) {
+            if (response.success) {
+                if (type === 'post') {
+                    $(`#post-card-${id}`).fadeOut(400, function() { $(this).remove(); });
+                } else {
+                    $(element).closest('.flex.gap-3').fadeOut(300, function() { $(this).remove(); });
+                }
+                closeDeleteModal();
+
+                if (type === 'comment') {
+
+                      $(element).closest('.flex.gap-3').fadeOut(300);
+
+                      const postId = response.post_id;
+                      const counterSpan = $(`#comment-count-${postId}`);
+                      const currentCount = parseInt(counterSpan.text()) || 0;
+                      counterSpan.text(Math.max(0, currentCount - 1));
+
+                      $(`#comments-card-${id}`).remove();
+                      if(parseInt($(`#comment-count-${postId}`).text()) === 0){
+
+                        $(`#comments-list-${postId}`).html(`<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`);
+                                      
+                      }
+                 }else{
+
+                  $(`#post-card-${id}`).fadeOut(400, function() { $(this).remove(); });
+
+                 }
+             }
+        },
+        error: function() {
+            alert("Error trying to delete this content.");
+            closeDeleteModal();
+        }
+    });
+});
