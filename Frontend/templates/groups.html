@@ -1,0 +1,141 @@
+{% extends "layout.html" %} {% block title %}Groups{% endblock %} {% block
+main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} {% block
+page_content %}
+
+<div
+  class="h-[calc(100vh-80px)] max-w-6xl mx-auto px-4 py-4 flex flex-col overflow-hidden"
+>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl mx-auto montserrat-bold text-gray-800">My Groups</h2>
+  </div>
+
+  <div class="flex justify-between gap-6 items-center mb-6">
+    <!-- Search -->
+    <div class="w-5/6 mb-auto mt-auto ml-auto mr-auto">
+      <input
+        type="text"
+        id="group-search"
+        placeholder="Search groups..."
+        class="w-full py-1 px-4 mb-auto mt-auto rounded-xl border border-gray-200 bg-gray-50 roboto-regular focus:shadow-md"
+      />
+    </div>
+
+    <button
+      id="create-group-btn"
+      class="w-1/6 px-4 py-1 rounded-xl bg-primary_purp text-white montserrat-regular hover:bg-indigo-600 transition"
+    >
+      + Create Group
+    </button>
+  </div>
+
+  <!-- Groups Grid -->
+  <div class="flex-1 overflow-y-auto pr-1">
+    <div
+      id="groups-container"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+    ></div>
+
+    <div id="empty-groups" class="hidden text-center py-16">
+      <p class="text-gray-500 text-sm">Create your first group!</p>
+    </div>
+  </div>
+
+  <!-- Create Group Modal -->
+  <div
+    id="group-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg montserrat-bold text-gray-800">Create Group</h3>
+
+        <button
+          id="group-modal-close"
+          class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="space-y-4">
+        <!-- Group Name -->
+        <div>
+          <label class="block montserrat-regular text-gray-600 mb-1.5"
+            >Group Name</label
+          >
+          <input
+            type="text"
+            id="group-name"
+            maxlength="120"
+            placeholder="e.g. Algorithms Study Group"
+            class="w-full px-4 roboto-regular py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white"
+          />
+        </div>
+        <!-- Alert -->
+        <div id="group-alert"></div>
+
+        <!-- Description -->
+        <div>
+          <label class="block montserrat-regular text-gray-600 mb-1.5"
+            >Description</label
+          >
+          <textarea
+            id="group-description"
+            rows="3"
+            placeholder="What is this group about?"
+            class="w-full roboto-regular px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white"
+          ></textarea>
+        </div>
+
+        <!-- Cover Upload -->
+        <div>
+          <label class="block montserrat-regular text-gray-600 mb-1.5"
+            >Cover Image</label
+          >
+
+          <input
+            type="file"
+            id="group-cover"
+            accept="image/*"
+            class="w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:roboto-regular file:bg-indigo-50 file:tertiary_blu hover:file:bg-indigo-100"
+          />
+        </div>
+
+        <!-- Preview -->
+        <div id="cover-preview-container" class="hidden">
+          <img
+            id="cover-preview"
+            class="w-full h-32 object-cover rounded-xl border"
+          />
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3 pt-2">
+          <button
+            id="group-cancel-btn"
+            class="flex-1 montserrat-medium py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+
+          <button
+            id="group-save-btn"
+            class="flex-1 montserrat-medium py-2.5 rounded-xl bg-primary_purp text-white text-sm hover:bg-indigo-600"
+          >
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/groups.js') }}"></script>
+{% endblock %}
