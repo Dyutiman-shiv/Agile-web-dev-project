@@ -1,6 +1,6 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app import db
 
 
@@ -22,17 +22,8 @@ class User(db.Model):  # type: ignore[name-defined]
     units = db.relationship("Unit", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notifications = db.relationship("Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan")
     notification_prefs = db.relationship("NotificationPreference", backref="user", uselist=False, cascade="all, delete-orphan")
-    groups = db.relationship("GroupMembership", back_populates="user")
-    sent_group_invitations = db.relationship(
-        "GroupInvitation",
-        foreign_keys="GroupInvitation.sender_id",
-        back_populates="sender",
-    )
-    received_group_invitations = db.relationship(
-        "GroupInvitation",
-        foreign_keys="GroupInvitation.receiver_id",
-        back_populates="receiver",
-    )
+    group_memberships = db.relationship("GroupMembership", back_populates="user")
+    liked_posts = db.relationship("PostLike", back_populates="user", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -347,6 +338,7 @@ class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    cover_picture = db.Column(db.Text, nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=db.func.now())
 
@@ -360,6 +352,7 @@ class Group(db.Model):
             "id": self.id,
             "name": self.name,
             "description": self.description,
+            "cover_picture":self.cover_picture,
             "owner_id": self.owner_id,
             "created_at": self.created_at.isoformat(),
             "posts": [p.id for p in self.posts]
@@ -367,6 +360,8 @@ class Group(db.Model):
 
         if include_members:
             data["members"] = [m.user_id for m in self.members]
+
+        return data
     
 
 class GroupMembership(db.Model):
@@ -378,7 +373,7 @@ class GroupMembership(db.Model):
     role = db.Column(db.String(20), default="member")  # (admin/member) ?
     joined_at = db.Column(db.DateTime, default=db.func.now())
 
-    user = db.relationship("User", backref="group_memberships")
+    user = db.relationship("User", back_populates="group_memberships")
     group = db.relationship("Group", back_populates="members")
 
     def to_dict(self):
@@ -395,9 +390,11 @@ class Post(db.Model):
     __tablename__ = "posts"
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    media_url = db.Column(db.Text, nullable=True)
+    media_type = db.Column(db.String(20), nullable=True)
+    article_url = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -406,16 +403,21 @@ class Post(db.Model):
     # Relationships
     author = db.relationship("User", backref="posts")
     comments = db.relationship("Comment", backref="post", cascade="all, delete-orphan")
+    likes = db.relationship("PostLike", back_populates="post", cascade="all, delete-orphan")
 
     def to_dict(self):
         return  {
             "id": self.id,
-            "tittle": self.title,
             "content": self.content,
+            "media_url": self.media_url,
+            "media_type": self.media_type,
+            "article_url": self.article_url,
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
+            "author_id": self.author.id,
             "author_picture": self.author.profile_picture,
-            "comments": [c.id for c in self.comments]
+            "comments": [c.to_dict() for c in self.comments],
+            "likes": [l.user_id for l in self.likes]
         }
 
 
@@ -424,7 +426,7 @@ class Comment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Foreign keys
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -440,7 +442,37 @@ class Comment(db.Model):
             "content": self.content,
             "created_at": self.created_at.isoformat(),
             "author_name": self.author.username,
+            "author_id": self.author.id,
+            "post_id": self.post_id,
             "author_picture": self.author.profile_picture 
+        }
+    
+class PostLike(db.Model):
+
+    __tablename__ = "post_likes"
+
+    user_id = db.Column(db.Integer,
+                        db.ForeignKey("users.id"),
+                        primary_key=True)
+
+    post_id = db.Column(db.Integer,
+                        db.ForeignKey("posts.id"),
+                        primary_key=True)
+
+    created_at = db.Column(db.DateTime,
+                           default=db.func.now()
+                           )
+
+    # Relationships
+    user = db.relationship("User", back_populates="liked_posts", foreign_keys=[user_id])
+    post = db.relationship("Post", back_populates="likes", foreign_keys=[post_id])
+
+    def to_dict(self):
+        
+        return {
+            "user_id": self.user_id,
+            "post_id": self.post_id,
+            "created_at": self.created_at.isoformat(),
         }
     
 class GroupInvitation(db.Model):
@@ -457,13 +489,5 @@ class GroupInvitation(db.Model):
 
     # Relationships
     group = db.relationship("Group")
-    sender = db.relationship(
-        "User",
-        foreign_keys=[sender_id],
-        back_populates="sent_group_invitations",
-    )
-    receiver = db.relationship(
-        "User",
-        foreign_keys=[receiver_id],
-        back_populates="received_group_invitations",
-    )
+    sender = db.relationship("User", foreign_keys=[sender_id])
+    receiver = db.relationship("User", foreign_keys=[receiver_id])
