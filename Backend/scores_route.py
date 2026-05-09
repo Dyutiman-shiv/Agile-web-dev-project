@@ -4,10 +4,23 @@ import sqlite3
 
 scores_bp = Blueprint("scores", __name__)
 
+def _scores_db_path() -> str:
+    """Return the SQLite file path for raw-sqlite scores access.
+
+    In tests, SCORES_DB_PATH (or SQLALCHEMY_DATABASE_URI) can point to the
+    session-scoped test DB so Selenium tests and unit tests share the same file.
+    """
+    env_path = os.environ.get("SCORES_DB_PATH") or os.environ.get("SQLALCHEMY_DATABASE_URI", "")
+    if env_path.startswith("sqlite:///"):
+        return env_path[len("sqlite:///"):]
+    if env_path and not env_path.startswith("sqlite"):
+        return env_path
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
+
+
 def get_db():
     if "db" not in g:
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
-        print("USING DB PATH:", db_path)
+        db_path = _scores_db_path()
         g.db = sqlite3.connect(db_path)
         g.db.row_factory = sqlite3.Row
     return g.db

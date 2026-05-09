@@ -9,7 +9,7 @@ login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-def create_app(testing=False):
+def create_app(testing=False, db_uri=None):
     app = Flask(
         __name__,
         template_folder=os.path.join(base_dir, "..", "Frontend", "templates"),
@@ -22,6 +22,10 @@ def create_app(testing=False):
     if testing:
         app.config["TESTING"] = True
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["WTF_CSRF_ENABLED"] = False
+
+    if db_uri is not None:
+        app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
         app.config["WTF_CSRF_ENABLED"] = False
 
     db.init_app(app)
