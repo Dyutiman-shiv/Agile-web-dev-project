@@ -24,6 +24,7 @@
                     ('auth.sessions_view', 'Sessions'),
                     ('auth.stats_view', 'Stats'),
                     ('auth.scores_view', 'Scores'),
+                    ('auth.groups_view', 'Groups'),
                 ] %}
                 {% for endpoint, label in nav_items %}
                 <a href="{{ url_for(endpoint) }}"
