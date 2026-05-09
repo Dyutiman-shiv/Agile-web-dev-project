@@ -56,8 +56,10 @@ function loadUnits() {
         }
       });
 
+      loadFromLocal();
       render();
     }).fail(function () {
+      loadFromLocal();
       render();
     });
 
@@ -326,6 +328,35 @@ function render() {
 $(function () {
   loadSemesters();
 });
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem("scoresData");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+
+    Object.keys(parsed).forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(units, key)) return;
+      const localArr = parsed[key];
+      if (!Array.isArray(localArr)) return;
+      const serverArr = units[key];
+      if (!Array.isArray(serverArr)) return;
+
+      const localById = new Map();
+      localArr.forEach((a) => {
+        if (a && typeof a.id !== "undefined") localById.set(a.id, a);
+      });
+
+      units[key] = serverArr.map((a) => {
+        const loc = localById.get(a.id);
+        return loc ? Object.assign({}, a, loc) : a;
+      });
+    });
+  } catch (e) {
+    console.error("loadFromLocal failed:", e);
+  }
+}
 
 function saveToLocal() {
   localStorage.setItem("scoresData", JSON.stringify(units));
