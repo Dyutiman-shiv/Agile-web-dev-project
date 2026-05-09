@@ -208,3 +208,8 @@ def stats_view():
 @login_required
 def scores_view():
     return render_template("scores.html")
+
+@auth_bp.route("/groups")
+@login_required
+def groups_view():
+    return render_template("groups.html")

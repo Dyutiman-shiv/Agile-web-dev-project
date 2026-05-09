@@ -71,6 +71,9 @@ def create_app(testing=False):
     from notification_routes import notif_bp
     app.register_blueprint(notif_bp)
 
+    from group_routes import groups_bp
+    app.register_blueprint(groups_bp)
+
 
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
