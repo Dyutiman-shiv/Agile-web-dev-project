@@ -260,7 +260,7 @@ def add_comment(post_id):
 @groups_bp.route("/api/posts/<int:post_id>/like", methods=["POST"])
 @login_required
 def toggle_like(post_id):
-    # Buscamos si ya existe el like
+    # if likes exist
     like = PostLike.query.filter_by(user_id=current_user.id, post_id=post_id).first()
 
     if like:
@@ -273,7 +273,6 @@ def toggle_like(post_id):
     
     db.session.commit()
     
-    # Obtenemos el total actualizado
     total_likes = PostLike.query.filter_by(post_id=post_id).count()
     
     return jsonify({
