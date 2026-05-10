@@ -3,7 +3,7 @@
 {% block content %}
 <div class="flex flex-col h-screen">
     <!-- Top navigation bar -->
-    <header class="bg-primary_purp text-white shrink-0 z-30 shadow-md">
+    <header class="bg-primary_purp text-white shrink-0 z-30 shadow-md {% if request.endpoint == 'cal.calendar_view' %}hidden sm:block{% endif %}">
         <div class="flex items-center justify-between px-4 sm:px-6 h-14">
             <!-- Left: Brand logo -->
             <a href="{{ url_for('auth.dashboard') }}" class="flex items-center gap-2.5 hover:opacity-90 transition-opacity shrink-0">

@@ -26,29 +26,44 @@
     <!-- ========== RIGHT PANEL ========== -->
     <div class="flex-1 flex flex-col min-w-0 min-h-0 w-full">
         <!-- Toolbar -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-3 sm:px-6 py-3 border-b border-gray-200 shrink-0">
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <button id="cal-today" class="px-4 py-1.5 text-sm montserrat-medium rounded-lg border border-gray-300 bg-white text-text_dark_gray hover:bg-gray-50 transition-colors">Today</button>
-                <button id="cal-prev" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-                </button>
-                <button id="cal-next" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-                </button>
-                <h2 id="cal-title" class="ml-2 text-base montserrat-semi-bold text-text_dark_gray hidden sm:block"></h2>
-            </div>
+        <div class="flex items-center gap-2 px-3 sm:px-6 py-3 border-b border-gray-200 shrink-0">
 
-            <div class="flex items-center justify-between sm:justify-end gap-1.5 w-full sm:w-auto">
-                <!-- Mobile add button (visible only on small screens) -->
-                <button id="add-event-btn-mobile" class="lg:hidden p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-                </button>
+            <!-- Mobile add button: replaces the mobile Planify header area -->
+            <button id="add-event-btn-mobile"
+                    class="lg:hidden shrink-0 w-10 h-10 flex items-center justify-center bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+            </button>
+
+            <!-- Calendar controls -->
+            <div class="flex items-center justify-between gap-2 min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="cal-today"
+                            class="px-3 sm:px-4 py-1.5 text-sm montserrat-medium rounded-lg border border-gray-300 bg-white text-text_dark_gray hover:bg-gray-50 transition-colors">
+                        Today
+                    </button>
+
+                    <button id="cal-prev" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                        </svg>
+                    </button>
+
+                    <button id="cal-next" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                        </svg>
+                    </button>
+
+                    <h2 id="cal-title" class="ml-2 text-base montserrat-semi-bold text-text_dark_gray hidden sm:block"></h2>
+                </div>
 
                 <!-- View switcher -->
-                <div class="inline-flex rounded-xl bg-gray-100 p-1 overflow-x-auto">
-                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="day">Day</button>
-                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="week">Week</button>
-                    <button class="cal-view-btn px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all active" data-view="month">Month</button>
+                <div class="inline-flex rounded-xl bg-gray-100 p-1 shrink-0">
+                    <button class="cal-view-btn px-2 sm:px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="day">Day</button>
+                    <button class="cal-view-btn px-2 sm:px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all" data-view="week">Week</button>
+                    <button class="cal-view-btn px-2 sm:px-3 py-1.5 text-xs montserrat-medium rounded-lg transition-all active" data-view="month">Month</button>
                 </div>
             </div>
         </div>
