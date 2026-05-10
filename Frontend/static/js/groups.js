@@ -5,6 +5,7 @@ $(document).ready(function () {
   let _activeInviteGroupId = null;
   let _newGroupId = null;
   let _allGroups = [];
+  let _searchQuery = "";
   let _groupsLoading = false;
   let _invitesLoading = false;
   let _refreshTimer = null;
@@ -97,7 +98,7 @@ $(document).ready(function () {
     _groupsLoading = true;
     $.getJSON("/api/groups", function (groups) {
       _allGroups = groups;
-      renderGroups(groups);
+      renderGroups(getFilteredGroups());
     })
       .fail(function () {
         $("#groups-container").html(
@@ -188,12 +189,8 @@ $(document).ready(function () {
 
   // ── Group search filter ───────────────────────────────────────────────────
   $("#group-search").on("input", function () {
-    const q = $(this).val().toLowerCase().trim();
-    const filtered = _allGroups.filter((g) =>
-      g.name.toLowerCase().includes(q) ||
-      (g.description || "").toLowerCase().includes(q)
-    );
-    renderGroups(filtered);
+    _searchQuery = $(this).val().toLowerCase().trim();
+    renderGroups(getFilteredGroups());
   });
 
   // ── Invite button on group card ───────────────────────────────────────────
@@ -439,6 +436,14 @@ $(document).ready(function () {
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function getFilteredGroups() {
+    if (!_searchQuery) return _allGroups;
+    return _allGroups.filter((g) =>
+      g.name.toLowerCase().includes(_searchQuery) ||
+      (g.description || "").toLowerCase().includes(_searchQuery)
+    );
   }
 
   // ── Background refresh (invite + groups auto-update) ─────────────────────
