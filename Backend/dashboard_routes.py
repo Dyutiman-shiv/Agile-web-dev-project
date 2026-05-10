@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task, Semester
-from app import db
+from models import Task, Semester
 import re
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -30,10 +29,9 @@ def get_current_semester():
     
     for semester in semesters:
         if semester.is_current:
-            return jsonify(semester.to_dict(), 200)
-        
-    if len(semesters) > 0:
-        return jsonify(semesters[0].to_dict(), 200)
-    
-    else:
-        return jsonify([], 200)
+            return jsonify({"semester": semester.to_dict()}), 200
+
+    if semesters:
+        return jsonify({"semester": semesters[0].to_dict()}), 200
+
+    return jsonify({"semester": None}), 200

@@ -567,7 +567,7 @@ $(function () {
     }
 
     // ============ Load History ============
-    function loadHistory() {
+    function loadHistory(done) {
         $.getJSON("/api/sessions", function (data) {
             const $list = $("#history-list");
             $list.empty();
@@ -575,6 +575,7 @@ $(function () {
             if (!data || data.length === 0) {
                 $("#history-empty").removeClass("hidden");
                 $("#history-count").text("");
+                if (typeof done === "function") done();
                 return;
             }
 
@@ -615,7 +616,63 @@ $(function () {
                     '</div>'
                 );
             });
+            if (typeof done === "function") done();
         });
+    }
+
+    function focusHistorySessionFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const sid = params.get("session");
+        if (!sid) return;
+        const $row = $('.history-item[data-id="' + sid + '"]');
+        if (!$row.length) return;
+        const el = $row.get(0);
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        $row.find(".history-details").removeClass("hidden");
+        $row.addClass("ring-2 ring-primary_purp ring-offset-2 rounded-xl");
+        setTimeout(function () {
+            $row.removeClass("ring-2 ring-primary_purp ring-offset-2 rounded-xl");
+        }, 2600);
+        try {
+            history.replaceState({}, "", window.location.pathname);
+        } catch (e) { /* ignore */ }
+    }
+
+    function applySessionPrefillFromStorage() {
+        let raw = null;
+        try {
+            raw = localStorage.getItem("planify_session_prefill");
+        } catch (e) { /* ignore */ }
+        if (!raw) return;
+        let p = null;
+        try {
+            p = JSON.parse(raw);
+        } catch (e) {
+            return;
+        }
+        try {
+            localStorage.removeItem("planify_session_prefill");
+        } catch (e) { /* ignore */ }
+        if (!p || typeof p !== "object") return;
+        if (p.name) $("#session-name").val(p.name);
+        if (p.timer_mode === "countdown" || p.timer_mode === "stopwatch") {
+            timerMode = p.timer_mode;
+            $(".timer-mode-btn").removeClass("bg-primary_purp text-white").addClass("text-gray-500 hover:text-gray-700");
+            $('.timer-mode-btn[data-mode="' + timerMode + '"]').addClass("bg-primary_purp text-white").removeClass("text-gray-500 hover:text-gray-700");
+            if (timerMode === "countdown") {
+                $("#countdown-setup").removeClass("hidden");
+            } else {
+                $("#countdown-setup").addClass("hidden");
+            }
+        }
+        if (p.checklist && Array.isArray(p.checklist) && p.checklist.length) {
+            checklistItems = p.checklist.map(function (t) {
+                return { title: (typeof t === "string" ? t : (t.title || "")).trim(), completed: false };
+            }).filter(function (x) { return x.title; });
+            renderChecklistBuilder();
+        }
+        if (p.unit_id) $("#session-unit").val(String(p.unit_id));
+        validateStart();
     }
 
     // ============ Handle Tick/Complete in History ============
@@ -700,7 +757,7 @@ $(function () {
 
     // ============ Init ============
     initClockFace();
-    loadHistory();
+    loadHistory(focusHistorySessionFromQuery);
     validateStart();
 
     // Load units for dropdown (current semester only)
@@ -713,6 +770,7 @@ $(function () {
             data.forEach(function (u) {
                 $sel.append('<option value="' + u.id + '">' + $("<span>").text((u.code ? u.code + " — " : "") + u.name).html() + '</option>');
             });
+            applySessionPrefillFromStorage();
         });
     });
 });
