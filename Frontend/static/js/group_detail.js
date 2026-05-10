@@ -4,7 +4,11 @@ $(document).ready(function () {
   "use strict";
   const group_id = $("#group-data").data("group-id");
   loadGroupPosts(group_id);
+  loadGroupMembers(group_id);
   initSidebar();
+  initGroupSettings(group_id);
+  initInviteModal(group_id);
+  initLeaveGroup(group_id);
 
   $("#edit-group-cover").on("change", function () {
     const file = this.files[0];
@@ -617,4 +621,418 @@ function openEditGroupModal() {
 function closeEditGroupModal() {
   $("#edit-group-modal").addClass("hidden").removeClass("flex");
   $("#edit-group-alert").empty();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MEMBERS, INVITES, SETTINGS, LEAVE
+// ═══════════════════════════════════════════════════════════════════
+
+function _escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function _myRole() {
+  return $("#user-data").data("my-role");
+}
+
+function _isOwner() {
+  return $("#user-data").data("is-owner") === true ||
+         $("#user-data").data("is-owner") === "true";
+}
+
+function _myUserId() {
+  return $("#user-data").data("user-id");
+}
+
+function _ownerId() {
+  // Owner is the member whose role === "owner". Cached per render.
+  return window.__ownerId || null;
+}
+
+function _avatarHtml(member) {
+  if (member.profile_picture) {
+    const src = member.profile_picture.startsWith("http") ||
+                member.profile_picture.startsWith("/")
+      ? member.profile_picture
+      : "/static/" + member.profile_picture;
+    return `<img src="${_escapeHtml(src)}" class="w-9 h-9 rounded-full object-cover shrink-0" alt="">`;
+  }
+  const initial = (member.username || "?")[0].toUpperCase();
+  return `<div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm montserrat-semi-bold shrink-0">${_escapeHtml(initial)}</div>`;
+}
+
+function _roleBadge(role) {
+  const styles = {
+    owner:  "bg-indigo-100 text-indigo-600",
+    admin:  "bg-purple-100 text-purple-600",
+    member: "bg-gray-100 text-gray-500",
+  };
+  const cls = styles[role] || styles.member;
+  const label = role.charAt(0).toUpperCase() + role.slice(1);
+  return `<span class="text-[10px] montserrat-medium px-2 py-0.5 rounded-full ${cls}">${label}</span>`;
+}
+
+// ── Sidebar member list (compact) ──────────────────────────────────────────
+function loadGroupMembers(groupId) {
+  $.getJSON(`/api/groups/${groupId}/members`, function (members) {
+    // Cache owner id for downstream logic
+    const owner = members.find((m) => m.role === "owner");
+    window.__ownerId = owner ? owner.user_id : null;
+
+    renderSidebarMembers(members);
+    $("#member-count").text(members.length);
+
+    // If the settings modal is open, refresh that list too
+    if (!$("#settings-modal").hasClass("hidden") &&
+        !$("#settings-tab-members").hasClass("hidden")) {
+      renderSettingsMembers(members);
+    }
+  });
+}
+
+function renderSidebarMembers(members) {
+  const myId = _myUserId();
+  const isOwner = _isOwner();
+  const isAdmin = _myRole() === "admin" || isOwner;
+
+  let html = "";
+  members.forEach((m) => {
+    const canRemove = isAdmin && m.role !== "owner" && m.user_id !== myId;
+    const removeBtn = canRemove
+      ? `<button class="member-remove-btn opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-1"
+                  data-user-id="${m.user_id}" data-username="${_escapeHtml(m.username)}"
+                  title="Remove from group">
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+           </svg>
+         </button>`
+      : "";
+
+    html += `
+      <div class="group flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50">
+        ${_avatarHtml(m)}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm montserrat-medium text-gray-800 truncate">${_escapeHtml(m.username)}</p>
+          <div class="mt-0.5">${_roleBadge(m.role)}</div>
+        </div>
+        ${removeBtn}
+      </div>
+    `;
+  });
+
+  $("#members-list").html(html);
+}
+
+// Sidebar inline remove button -> reuses the confirm flow via a small custom modal
+$(document).on("click", ".member-remove-btn", function (e) {
+  e.stopPropagation();
+  const userId = $(this).data("user-id");
+  const username = $(this).data("username");
+  if (!confirm(`Remove ${username} from this group?`)) return;
+  removeMember(userId, username);
+});
+
+function removeMember(userId, username) {
+  const groupId = $("#group-data").data("group-id");
+  $.ajax({
+    url: `/api/groups/${groupId}/members/${userId}`,
+    type: "DELETE",
+    success: function (resp) {
+      if (resp.success) {
+        loadGroupMembers(groupId);
+      }
+    },
+    error: function (xhr) {
+      alert(xhr.responseJSON?.message || `Could not remove ${username}.`);
+    },
+  });
+}
+
+// ── Settings modal ────────────────────────────────────────────────────────
+function initGroupSettings(groupId) {
+  $("#open-settings-btn").on("click", function () {
+    openSettings("members");
+  });
+  $("#settings-modal-close").on("click", closeSettings);
+
+  $(".settings-tab").on("click", function () {
+    const tab = $(this).data("tab");
+    selectSettingsTab(tab);
+  });
+}
+
+function openSettings(tab) {
+  $("#settings-modal").removeClass("hidden");
+  selectSettingsTab(tab || "members");
+}
+
+function closeSettings() {
+  $("#settings-modal").addClass("hidden");
+}
+
+function selectSettingsTab(tab) {
+  $(".settings-tab").each(function () {
+    const isActive = $(this).data("tab") === tab;
+    if (isActive) {
+      $(this)
+        .removeClass("border-transparent text-gray-500 hover:text-gray-700 text-red-500 hover:text-red-600")
+        .addClass(
+          tab === "danger"
+            ? "border-red-500 text-red-600"
+            : "border-primary_purp text-primary_purp"
+        );
+    } else {
+      $(this)
+        .removeClass("border-primary_purp text-primary_purp border-red-500 text-red-600")
+        .addClass(
+          $(this).data("tab") === "danger"
+            ? "border-transparent text-red-500 hover:text-red-600"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+        );
+    }
+  });
+
+  $(".settings-pane").addClass("hidden");
+  $(`#settings-tab-${tab}`).removeClass("hidden");
+
+  const groupId = $("#group-data").data("group-id");
+  if (tab === "members") loadSettingsMembers(groupId);
+  if (tab === "audit") loadSettingsAudit(groupId);
+}
+
+function loadSettingsMembers(groupId) {
+  $("#settings-members-list").html(
+    `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">Loading...</p>`
+  );
+  $.getJSON(`/api/groups/${groupId}/members`, function (members) {
+    const owner = members.find((m) => m.role === "owner");
+    window.__ownerId = owner ? owner.user_id : null;
+    renderSettingsMembers(members);
+  });
+}
+
+function renderSettingsMembers(members) {
+  const myId = _myUserId();
+  const isOwner = _isOwner();
+  const isAdmin = _myRole() === "admin" || isOwner;
+
+  let html = "";
+  members.forEach((m) => {
+    const isMe = m.user_id === myId;
+    const isMemberOwner = m.role === "owner";
+
+    // Action buttons
+    const actions = [];
+    if (isOwner && !isMemberOwner && !isMe) {
+      if (m.role === "member") {
+        actions.push(
+          `<button class="role-change-btn px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-xs montserrat-medium hover:bg-indigo-100"
+                   data-user-id="${m.user_id}" data-new-role="admin">Promote</button>`
+        );
+      } else if (m.role === "admin") {
+        actions.push(
+          `<button class="role-change-btn px-3 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs montserrat-medium hover:bg-gray-200"
+                   data-user-id="${m.user_id}" data-new-role="member">Demote</button>`
+        );
+      }
+    }
+    if (isAdmin && !isMemberOwner && !isMe) {
+      actions.push(
+        `<button class="settings-remove-btn px-3 py-1 rounded-lg bg-red-50 text-red-600 text-xs montserrat-medium hover:bg-red-100"
+                 data-user-id="${m.user_id}" data-username="${_escapeHtml(m.username)}">Remove</button>`
+      );
+    }
+
+    html += `
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        ${_avatarHtml(m)}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm montserrat-medium text-gray-800 truncate">
+            ${_escapeHtml(m.username)} ${isMe ? '<span class="text-xs text-gray-400 ml-1">(you)</span>' : ""}
+          </p>
+          <div class="mt-0.5">${_roleBadge(m.role)}</div>
+        </div>
+        <div class="flex gap-2 flex-wrap justify-end">${actions.join("")}</div>
+      </div>
+    `;
+  });
+
+  if (!html) {
+    html = `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">No members.</p>`;
+  }
+  $("#settings-members-list").html(html);
+}
+
+$(document).on("click", ".role-change-btn", function () {
+  const userId = $(this).data("user-id");
+  const newRole = $(this).data("new-role");
+  const groupId = $("#group-data").data("group-id");
+
+  $.ajax({
+    url: `/api/groups/${groupId}/members/${userId}/role`,
+    type: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({ role: newRole }),
+    success: function () {
+      loadSettingsMembers(groupId);
+      loadGroupMembers(groupId);
+    },
+    error: function (xhr) {
+      alert(xhr.responseJSON?.message || "Could not change role.");
+    },
+  });
+});
+
+$(document).on("click", ".settings-remove-btn", function () {
+  const userId = $(this).data("user-id");
+  const username = $(this).data("username");
+  if (!confirm(`Remove ${username} from this group?`)) return;
+  removeMember(userId, username);
+  // The modal list refresh happens because removeMember calls loadGroupMembers
+  // which also refreshes the open settings panel.
+  setTimeout(() => loadSettingsMembers($("#group-data").data("group-id")), 200);
+});
+
+// ── Audit log tab ─────────────────────────────────────────────────────────
+function loadSettingsAudit(groupId) {
+  $("#settings-audit-list").html(
+    `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">Loading...</p>`
+  );
+  $.getJSON(`/api/groups/${groupId}/audit-log`, function (logs) {
+    if (!logs.length) {
+      $("#settings-audit-list").html(
+        `<p class="text-sm text-gray-400 text-center py-6 roboto-regular">No moderation actions yet.</p>`
+      );
+      return;
+    }
+
+    const verbs = {
+      remove_member:  "removed",
+      promote_admin:  "promoted",
+      demote_admin:   "demoted",
+      delete_post:    "deleted a post by",
+    };
+
+    let html = "";
+    logs.forEach((log) => {
+      const actor = _escapeHtml(log.actor_username || "Someone");
+      const target = _escapeHtml(log.target_username || "");
+      const verb = verbs[log.action] || log.action.replace("_", " ");
+      const when = formatMyCustomDate(log.created_at);
+
+      html += `
+        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+          <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-700 roboto-regular">
+              <span class="montserrat-semi-bold text-gray-800">${actor}</span>
+              ${verb}
+              ${target ? `<span class="montserrat-semi-bold text-gray-800">${target}</span>` : ""}
+            </p>
+            <p class="text-xs text-gray-400 mt-0.5">${when}</p>
+          </div>
+        </div>
+      `;
+    });
+
+    $("#settings-audit-list").html(html);
+  }).fail(function () {
+    $("#settings-audit-list").html(
+      `<p class="text-sm text-red-500 text-center py-6 roboto-regular">Failed to load audit log.</p>`
+    );
+  });
+}
+
+// ── Invite modal ──────────────────────────────────────────────────────────
+function initInviteModal(groupId) {
+  $("#invite-member-btn").on("click", function () {
+    $("#invite-code-input").val("");
+    $("#invite-alert").text("");
+    $("#invite-modal").removeClass("hidden");
+  });
+
+  $("#invite-modal-close").on("click", function () {
+    $("#invite-modal").addClass("hidden");
+  });
+
+  $("#invite-code-input").on("input", function () {
+    const pos = this.selectionStart;
+    this.value = this.value.toUpperCase();
+    this.setSelectionRange(pos, pos);
+  });
+
+  $("#invite-code-input").on("keydown", function (e) {
+    if (e.key === "Enter") $("#invite-send-btn").trigger("click");
+  });
+
+  $("#invite-send-btn").on("click", function () {
+    const code = $("#invite-code-input").val().trim().toUpperCase();
+    if (!code) {
+      $("#invite-alert").text("Please enter a friend code.").css("color", "#ef4444");
+      return;
+    }
+    if (code.length !== 8) {
+      $("#invite-alert").text("Friend codes are 8 characters long.").css("color", "#ef4444");
+      return;
+    }
+
+    $("#invite-alert").text("Sending...").css("color", "#6b7280");
+
+    $.ajax({
+      url: `/api/groups/${groupId}/invite-by-code`,
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ friend_code: code }),
+      success: function () {
+        $("#invite-alert").text("Invitation sent!").css("color", "#16a34a");
+        $("#invite-code-input").val("");
+      },
+      error: function (xhr) {
+        const msg = xhr.responseJSON?.message || "Failed to send invitation.";
+        $("#invite-alert").text(msg).css("color", "#ef4444");
+      },
+    });
+  });
+}
+
+// ── Leave group ───────────────────────────────────────────────────────────
+function initLeaveGroup(groupId) {
+  $("#leave-group-btn").on("click", function () {
+    $("#leave-modal").removeClass("hidden");
+  });
+  $("#leave-cancel-btn").on("click", function () {
+    $("#leave-modal").addClass("hidden");
+  });
+  $("#leave-confirm-btn").on("click", function () {
+    $.ajax({
+      url: `/api/groups/${groupId}/leave`,
+      type: "POST",
+      success: function () {
+        window.location.href = "/groups";
+      },
+      error: function (xhr) {
+        alert(xhr.responseJSON?.message || "Could not leave group.");
+        $("#leave-modal").addClass("hidden");
+      },
+    });
+  });
+}
+
+// ── Helper for the "Delete Group" button in the danger zone ────────────────
+function openDeleteGroupModal() {
+  // Reuse the existing delete-confirm modal. type=null falls through to /api/groups/<id>.
+  itemToDelete = { id: null, type: null, element: null };
+  $("#delete-modal").removeClass("hidden").addClass("flex");
 }
