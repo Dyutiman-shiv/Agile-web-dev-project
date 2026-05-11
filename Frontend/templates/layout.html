@@ -16,7 +16,7 @@
                 <span class="text-3xl tracking-tight montserrat-logo">Planify</span>
             </a>
 
-            <!-- Center: Nav links (hidden on small screens, shown via hamburger) -->
+            <!-- Center: Nav links -->
             <nav id="nav-links" class="hidden md:flex items-center gap-1 ml-auto mr-[20px] border-r-[0.5px] border-white pr-[20px]">
                 {% set nav_items = [
                     ('auth.dashboard', 'Dashboard'),
@@ -40,11 +40,6 @@
 
             <!-- Right: User section -->
             <div class="flex items-center gap-3">
-                <!-- Mobile hamburger -->
-                <button id="mobile-nav-btn" class="md:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
-                </button>
-
                 <!-- Notification bell -->
                 <div class="relative" id="notif-bell-wrapper">
                     <button id="notif-bell-btn" class="relative p-1.5 rounded-lg hover:bg-white/10 transition-colors" title="Notifications">
@@ -68,7 +63,7 @@
                 </div>
 
                 <!-- User dropdown -->
-                <div class="relative" id="user-dropdown-wrapper">   
+                <div class="relative" id="user-dropdown-wrapper">
                     <button id="user-dropdown-btn" class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors duration-200">
                         {% if current_user.profile_picture %}
                         <img src="{{ current_user.profile_picture }}" class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30" referrerpolicy="no-referrer" alt="avatar">
@@ -101,13 +96,13 @@
                         </a>
                         <a href="{{ url_for('semesters.academic_settings_view') }}" class="flex items-center gap-3 px-4 py-2.5 roboto-regular text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41"/>
                             </svg>
                             Academic Settings
                         </a>
                         <a href="/notifications/settings" class="flex items-center gap-3 px-4 py-2.5 roboto-regular text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
                             Notification Settings
@@ -123,23 +118,173 @@
                 </div>
             </div>
         </div>
-
-        <!-- Mobile nav dropdown -->
-        <nav id="mobile-nav-menu" class="hidden md:hidden border-t border-white/10 px-4 py-2 space-y-1">
-            {% for endpoint, label in nav_items %}
-            <a href="{{ url_for(endpoint) }}"
-               class="block px-3 py-2 text-sm montserrat-semi-bold rounded-lg transition-colors
-                      {% if request.endpoint == endpoint %}bg-white/15 text-white{% else %}text-white/70 hover:text-white hover:bg-white/10{% endif %}">
-                {{ label }}
-            </a>
-            {% endfor %}
-        </nav>
     </header>
 
     <!-- Scrollable page content -->
-    <main class="flex-1 {% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}">
+    <main class="flex-1 pb-20 md:pb-0 {% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}">
         {% block page_content %}{% endblock %}
     </main>
+
+    <!-- Mobile bottom navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-r from-secondary_blu to-primary_purp text-white shadow-[0_-4px_20px_rgba(114,90,234,0.25)]">
+        <div class="relative grid grid-cols-5 items-end px-2 pt-2 pb-3">
+
+            <!-- Calendar -->
+            <a href="{{ url_for('cal.calendar_view') }}"
+               class="relative flex flex-col items-center gap-1 text-[10px] montserrat-medium
+                      {% if request.endpoint == 'cal.calendar_view' %}text-white{% else %}text-white/65 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M4.5 6h15A1.5 1.5 0 0121 7.5v12A1.5 1.5 0 0119.5 21h-15A1.5 1.5 0 013 19.5v-12A1.5 1.5 0 014.5 6z"/>
+                </svg>
+                <span>Calendar</span>
+                {% if request.endpoint == 'cal.calendar_view' %}
+                <span class="absolute -bottom-1 w-7 h-0.5 rounded-full bg-white"></span>
+                {% endif %}
+            </a>
+
+            <!-- Sessions -->
+            <a href="{{ url_for('auth.sessions_view') }}"
+               class="relative flex flex-col items-center gap-1 text-[10px] montserrat-medium
+                      {% if request.endpoint == 'auth.sessions_view' %}text-white{% else %}text-white/65 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>Sessions</span>
+                {% if request.endpoint == 'auth.sessions_view' %}
+                <span class="absolute -bottom-1 w-7 h-0.5 rounded-full bg-white"></span>
+                {% endif %}
+            </a>
+
+            <!-- Dashboard center -->
+            <a href="{{ url_for('auth.dashboard') }}"
+               class="flex flex-col items-center gap-1 text-[10px] montserrat-medium -mt-8
+                      {% if request.endpoint == 'auth.dashboard' %}text-white{% else %}text-white/80{% endif %}">
+                <div class="w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white/90
+                            {% if request.endpoint == 'auth.dashboard' %}
+                                bg-white text-primary_purp
+                            {% else %}
+                                bg-white/15 text-white backdrop-blur-sm
+                            {% endif %}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h3A2.25 2.25 0 0111.25 6v3A2.25 2.25 0 019 11.25H6A2.25 2.25 0 013.75 9V6zM12.75 6A2.25 2.25 0 0115 3.75h3A2.25 2.25 0 0120.25 6v3A2.25 2.25 0 0118 11.25h-3A2.25 2.25 0 0112.75 9V6zM3.75 15A2.25 2.25 0 016 12.75h3A2.25 2.25 0 0111.25 15v3A2.25 2.25 0 019 20.25H6A2.25 2.25 0 013.75 18v-3zM12.75 15A2.25 2.25 0 0115 12.75h3A2.25 2.25 0 0120.25 15v3A2.25 2.25 0 0118 20.25h-3A2.25 2.25 0 0112.75 18v-3z"/>
+                    </svg>
+                </div>
+                <span>Dashboard</span>
+            </a>
+
+            <!-- Stats -->
+            <a href="{{ url_for('auth.stats_view') }}"
+               class="relative flex flex-col items-center gap-1 text-[10px] montserrat-medium
+                      {% if request.endpoint == 'auth.stats_view' %}text-white{% else %}text-white/65 hover:text-white{% endif %}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75A1.125 1.125 0 016.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25A1.125 1.125 0 0113.125 21h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125C16.5 3.504 17.004 3 17.625 3h2.25C20.496 3 21 3.504 21 4.125v15.75A1.125 1.125 0 0119.875 21h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                </svg>
+                <span>Stats</span>
+                {% if request.endpoint == 'auth.stats_view' %}
+                <span class="absolute -bottom-1 w-7 h-0.5 rounded-full bg-white"></span>
+                {% endif %}
+            </a>
+
+            <!-- More -->
+            <button type="button" id="mobile-more-btn"
+                    class="relative flex flex-col items-center gap-1 text-[10px] montserrat-medium transition-opacity text-white/65 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm6 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm6 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+                </svg>
+                <span>More</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile More Menu -->
+    <div id="mobile-more-menu" class="hidden md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+        <div class="absolute left-0 right-0 bottom-0 bg-white rounded-t-3xl shadow-2xl p-5 animate-slide-up">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg montserrat-semi-bold text-gray-800">More</h3>
+                <button id="mobile-more-close" class="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <a href="{{ url_for('auth.scores_view') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008zm0-3h.008v.008h-.008v-.008z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h10.5A2.25 2.25 0 0119.5 6v12A2.25 2.25 0 0117.25 20.25H6.75A2.25 2.25 0 014.5 18V6A2.25 2.25 0 016.75 3.75z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Scores</span>
+                </a>
+
+                <a href="{{ url_for('auth.groups_view') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.75.78m-3.75-.78a3 3 0 11-6 0m6 0a3 3 0 00-6 0m-6.75.78a9.094 9.094 0 003.75-.78m-3.75.78a3 3 0 116 0m-6 0a3 3 0 006 0M12 12.75a3 3 0 100-6 3 3 0 000 6z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Groups</span>
+                </a>
+
+                <a href="{{ url_for('profile.profile_view') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Profile</span>
+                </a>
+
+                <a href="/notifications" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a3 3 0 11-5.714 0"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Notifications</span>
+                </a>
+
+                <a href="{{ url_for('cal.calendar_settings_view') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M4.5 6h15A1.5 1.5 0 0121 7.5v12A1.5 1.5 0 0119.5 21h-15A1.5 1.5 0 013 19.5v-12A1.5 1.5 0 014.5 6z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Calendar Settings</span>
+                </a>
+
+                <a href="{{ url_for('semesters.academic_settings_view') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Academic Settings</span>
+                </a>
+
+                <a href="/notifications/settings" class="flex items-center gap-3 p-3 rounded-2xl bg-gray-50 hover:bg-indigo-50 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-primary_purp/10 text-primary_purp flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-gray-700">Notification Settings</span>
+                </a>
+
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 p-3 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors">
+                    <div class="w-10 h-10 rounded-xl bg-red-100 text-red-500 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>
+                        </svg>
+                    </div>
+                    <span class="text-sm montserrat-medium text-red-600">Logout</span>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% include "_command_palette.html" %}
@@ -149,15 +294,16 @@
     // User dropdown
     var btn = document.getElementById("user-dropdown-btn");
     var menu = document.getElementById("user-dropdown-menu");
-    if (btn) {
+    if (btn && menu) {
         btn.addEventListener("click", function(e){
             e.stopPropagation();
             menu.classList.toggle("hidden");
         });
     }
+
     document.addEventListener("click", function(){
         if (menu) menu.classList.add("hidden");
-        // Close notification dropdown
+
         var notifDrop = document.getElementById("notif-dropdown");
         if (notifDrop) notifDrop.classList.add("hidden");
     });
@@ -165,24 +311,43 @@
     // Notification bell toggle
     var bellBtn = document.getElementById("notif-bell-btn");
     var notifDrop = document.getElementById("notif-dropdown");
-    if (bellBtn) {
+    if (bellBtn && notifDrop) {
         bellBtn.addEventListener("click", function(e){
             e.stopPropagation();
             if (menu) menu.classList.add("hidden");
             notifDrop.classList.toggle("hidden");
         });
     }
+
     if (notifDrop) {
-        notifDrop.addEventListener("click", function(e){ e.stopPropagation(); });
+        notifDrop.addEventListener("click", function(e){
+            e.stopPropagation();
+        });
     }
 
-    // Mobile nav toggle
-    var mobBtn = document.getElementById("mobile-nav-btn");
-    var mobMenu = document.getElementById("mobile-nav-menu");
-    if (mobBtn) {
-        mobBtn.addEventListener("click", function(e){
+    // Mobile More menu
+    var moreBtn = document.getElementById("mobile-more-btn");
+    var moreMenu = document.getElementById("mobile-more-menu");
+    var moreClose = document.getElementById("mobile-more-close");
+
+    if (moreBtn && moreMenu) {
+        moreBtn.addEventListener("click", function(e) {
             e.stopPropagation();
-            mobMenu.classList.toggle("hidden");
+            moreMenu.classList.remove("hidden");
+        });
+    }
+
+    if (moreClose && moreMenu) {
+        moreClose.addEventListener("click", function() {
+            moreMenu.classList.add("hidden");
+        });
+    }
+
+    if (moreMenu) {
+        moreMenu.addEventListener("click", function(e) {
+            if (e.target === moreMenu) {
+                moreMenu.classList.add("hidden");
+            }
         });
     }
 })();
