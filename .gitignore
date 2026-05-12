@@ -209,9 +209,9 @@ __marimo__/
 #MacOS
 .DS_Store
 
-#App.db
-<<<<<<< HEAD
+# App / local DB
 Backend/app.db
-=======
 *.db
->>>>>>> main
+
+# Local DB seed scripts (not tracked)
+Backend/seed/
