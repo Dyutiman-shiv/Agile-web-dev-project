@@ -18,6 +18,9 @@ $(function () {
     let editTempCountdownTotal = 25 * 60;
     let currentSessionId = null;  // Track the ID of the current session if it's from history
     let isResumedSession = false;  // Flag to track if we're resuming a session
+    let resumeChoiceSnapshot = null;  // Session JSON while resume modal is open
+    let sittingWallStart = null;  // Date when current sitting's timer first ran (wall clock)
+    let sittingBaselineElapsed = null;  // elapsedSeconds at sittingWallStart
 
     // ============ Helpers ============
     function pad(n) { return n < 10 ? "0" + n : "" + n; }
@@ -27,6 +30,54 @@ $(function () {
         const m = Math.floor((totalSec % 3600) / 60);
         const s = totalSec % 60;
         return pad(h) + ":" + pad(m) + ":" + pad(s);
+    }
+
+    function savedSecondsFromSnapshot(s) {
+        if (!s) return 0;
+        if (s.accumulated_seconds != null && s.accumulated_seconds !== "") {
+            return Math.max(0, parseInt(s.accumulated_seconds, 10) || 0);
+        }
+        return Math.max(0, (parseInt(s.duration, 10) || 0) * 60);
+    }
+
+    function formatSavedStudyHuman(snapshot) {
+        const sec = savedSecondsFromSnapshot(snapshot);
+        if (sec <= 0) return "0 min";
+        const m = Math.round(sec / 60);
+        if (m < 1) return "under 1 min";
+        return m + " min";
+    }
+
+    function openResumeChoiceModal(snapshot) {
+        resumeChoiceSnapshot = snapshot;
+        $("#resume-choice-saved-label").text(formatSavedStudyHuman(snapshot));
+        $("#resume-choice-modal").removeClass("hidden");
+    }
+
+    function closeResumeChoiceModal() {
+        $("#resume-choice-modal").addClass("hidden");
+        resumeChoiceSnapshot = null;
+    }
+
+    function markSittingAnchorIfNeeded() {
+        if (!timerRunning || timerPaused) return;
+        if (sittingWallStart != null) return;
+        sittingWallStart = new Date();
+        sittingBaselineElapsed = elapsedSeconds;
+    }
+
+    function buildSegmentPayload() {
+        const endIso = new Date().toISOString();
+        const startIso = sittingWallStart
+            ? sittingWallStart.toISOString()
+            : (startTimestamp ? startTimestamp.toISOString() : endIso);
+        const base = sittingBaselineElapsed != null ? sittingBaselineElapsed : 0;
+        const segElapsed = Math.max(0, elapsedSeconds - base);
+        return {
+            segment_started_at: startIso,
+            segment_ended_at: endIso,
+            segment_elapsed_seconds: segElapsed
+        };
     }
 
     function formatDurationShort(minutes) {
@@ -228,8 +279,11 @@ $(function () {
         startTimestamp = new Date();
         elapsedSeconds = 0;
         timerRunning = true;
+        timerPaused = false;
         isResumedSession = false;
         currentSessionId = null;
+        sittingWallStart = null;
+        sittingBaselineElapsed = null;
 
         $("#setup-phase").addClass("hidden");
         $("#active-phase").removeClass("hidden");
@@ -248,6 +302,7 @@ $(function () {
             elapsedSeconds++;
             updateTimerDisplay();
         }, 1000);
+        markSittingAnchorIfNeeded();
     });
 
     // ============ Pause / Resume ============
@@ -270,6 +325,7 @@ $(function () {
                 elapsedSeconds++;
                 updateTimerDisplay();
             }, 1000);
+            markSittingAnchorIfNeeded();
             $("#pause-icon").removeClass("hidden");
             $("#resume-icon").addClass("hidden");
             $("#pause-resume-label").text("Pause");
@@ -326,80 +382,98 @@ $(function () {
     });
 
     // ============ Resume Session from History ============
-    function resumeSession(sessionData, elapsedSecondsParam) {
-        // Load session data
+    function resumeSession(sessionData, elapsedSecondsParam, options) {
+        options = options || {};
+        const startPaused = !!options.startPaused;
+
+        sittingWallStart = null;
+        sittingBaselineElapsed = null;
+
         sessionName = sessionData.title;
         timerMode = sessionData.timer_mode || "stopwatch";
-        checklistItems = sessionData.checklist || [];
+        checklistItems = (sessionData.checklist || []).map(function (c) {
+            return { id: c.id, title: c.title, completed: !!c.completed };
+        });
         currentSessionId = sessionData.id;
         isResumedSession = true;
-        
-        // Calculate elapsed time based on when it started
-        elapsedSeconds = Math.floor(elapsedSecondsParam);
-        
+
+        elapsedSeconds = Math.floor(Math.max(0, elapsedSecondsParam));
+
         if (timerMode === "countdown") {
-            // For countdown, calculate original total duration
-            // We need to get the original duration from the session
-            const originalDuration = sessionData.duration * 60;
+            const originalDuration = (parseInt(sessionData.duration, 10) || 25) * 60;
             countdownTotalSeconds = originalDuration;
-            
-            // Check if countdown has already finished
+
             if (elapsedSeconds >= countdownTotalSeconds) {
                 timerRunning = false;
                 timerPaused = false;
                 if (timerInterval) clearInterval(timerInterval);
+                timerInterval = null;
                 $("#countdown-done-badge").removeClass("hidden");
                 showSetupAlert("This countdown session has already finished. Please end it to save.", "info");
             }
         }
-        
-        // Switch to active phase
-        timerRunning = true;
-        timerPaused = false;
+
+        if (!(timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds)) {
+            timerRunning = true;
+            timerPaused = !!startPaused;
+        }
+
         startTimestamp = new Date(sessionData.start);
-        
-        // Reset UI elements
-        $("#pause-icon").removeClass("hidden");
-        $("#resume-icon").addClass("hidden");
-        $("#pause-resume-label").text("Pause");
-        $("#pause-resume-btn").removeClass("bg-emerald-500 hover:bg-emerald-600").addClass("bg-amber-500 hover:bg-amber-600");
-        $("#active-badge").removeClass("bg-amber-100 text-amber-700").addClass("bg-emerald-100 text-emerald-700 animate-pulse").text("In Progress");
-        
+
+        if (!timerRunning) {
+            $("#pause-icon").addClass("hidden");
+            $("#resume-icon").addClass("hidden");
+            $("#pause-resume-label").text("Pause");
+            $("#pause-resume-btn").removeClass("bg-emerald-500 hover:bg-emerald-600").addClass("bg-amber-500 hover:bg-amber-600");
+            $("#active-badge").removeClass("animate-pulse").addClass("bg-amber-100 text-amber-700").text("Countdown finished — end session to save");
+        } else if (timerPaused) {
+            $("#pause-icon").addClass("hidden");
+            $("#resume-icon").removeClass("hidden");
+            $("#pause-resume-label").text("Resume");
+            $("#pause-resume-btn").removeClass("bg-amber-500 hover:bg-amber-600").addClass("bg-emerald-500 hover:bg-emerald-600");
+            $("#active-badge").removeClass("bg-emerald-100 text-emerald-700 animate-pulse").addClass("bg-amber-100 text-amber-700").text("Paused — press Resume when ready");
+        } else {
+            $("#pause-icon").removeClass("hidden");
+            $("#resume-icon").addClass("hidden");
+            $("#pause-resume-label").text("Pause");
+            $("#pause-resume-btn").removeClass("bg-emerald-500 hover:bg-emerald-600").addClass("bg-amber-500 hover:bg-amber-600");
+            $("#active-badge").removeClass("bg-amber-100 text-amber-700").addClass("bg-emerald-100 text-emerald-700 animate-pulse").text("In Progress");
+        }
+
         $("#setup-phase").addClass("hidden");
         $("#active-phase").removeClass("hidden");
         $("#active-session-name").text(sessionName);
-        
+
         if (timerMode === "stopwatch") {
-            $("#active-timer-mode").text("Stopwatch — counting up (Resumed)");
+            $("#active-timer-mode").text("Stopwatch — counting up" + (timerRunning && timerPaused ? " (paused)" : timerRunning ? " (Resumed)" : ""));
         } else {
             const remaining = Math.max(0, countdownTotalSeconds - elapsedSeconds);
-            $("#active-timer-mode").text("Countdown — " + formatDuration(remaining) + " remaining (Resumed)");
+            $("#active-timer-mode").text("Countdown — " + formatDuration(remaining) + " remaining" + (timerRunning && timerPaused ? " (paused)" : timerRunning ? " (Resumed)" : ""));
         }
-        
+
         renderLiveChecklist();
         updateTimerDisplay();
         initClockFace();
         updateClockHands(timerMode === "stopwatch" ? elapsedSeconds : Math.max(0, countdownTotalSeconds - elapsedSeconds));
-        
-        // Start the timer if it hasn't finished
+
         if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+
         if (timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds) {
             timerRunning = false;
-        } else {
+        } else if (timerRunning && !timerPaused) {
             timerInterval = setInterval(function () {
                 if (!timerRunning || timerPaused) return;
                 elapsedSeconds++;
                 updateTimerDisplay();
-                
-                // Check if countdown just finished
+
                 if (timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds && timerRunning) {
                     timerRunning = false;
                     if (timerInterval) clearInterval(timerInterval);
                     timerInterval = null;
                     $("#countdown-done-badge").removeClass("hidden");
                     updateTimerDisplay();
-                    
-                    // Browser notification
+
                     if ("Notification" in window && Notification.permission === "granted") {
                         try {
                             var n = new Notification("Time's up!", {
@@ -411,13 +485,24 @@ $(function () {
                     }
                 }
             }, 1000);
+            markSittingAnchorIfNeeded();
         }
-        
-        // Show success message
-        showSetupAlert("Session resumed! Timer continues from where you left off.", "success");
-        setTimeout(function() {
-            $("#setup-alert").fadeOut(200, function() { $(this).empty().show(); });
-        }, 3000);
+
+        const isNewContinuation = !!options.isNewContinuation;
+
+        if (!(timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds)) {
+            showSetupAlert(
+                isNewContinuation
+                    ? "New timer for today is ready (paused). Press Resume when you want it to run, or End Session to log time on this date."
+                    : timerRunning && timerPaused
+                        ? "Session loaded while paused. Press Resume on the timer when you want the clock to run, or End Session to save time to your calendar."
+                        : "Session resumed! Timer continues from where you left off.",
+                "success"
+            );
+            setTimeout(function () {
+                $("#setup-alert").fadeOut(200, function () { $(this).empty().show(); });
+            }, 3200);
+        }
     }
 
     // ============ Edit Session Modal ============
@@ -595,18 +680,28 @@ $(function () {
         $btn.prop("disabled", true).text("Saving…");
         
         const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
-        
+        const allTasksDone =
+            checklistItems.length > 0 &&
+            checklistItems.every(function (item) {
+                return item.completed;
+            });
+
         if (currentSessionId && isResumedSession) {
-            // This is a resumed session - update it to completed status
+            // Keep DB status "active" until every checklist item is done, so Resume stays available.
+            const seg = buildSegmentPayload();
             $.ajax({
                 url: "/api/sessions/" + currentSessionId,
                 method: "PUT",
                 contentType: "application/json",
                 data: JSON.stringify({
-                    status: "completed",
+                    status: allTasksDone ? "completed" : "active",
                     duration_minutes: durationMinutes,
+                    accumulated_seconds: elapsedSeconds,
                     notes: "",
-                    checklist: checklistItems
+                    checklist: checklistItems,
+                    segment_started_at: seg.segment_started_at,
+                    segment_ended_at: seg.segment_ended_at,
+                    segment_elapsed_seconds: seg.segment_elapsed_seconds
                 }),
                 success: function () {
                     timerRunning = false;
@@ -617,7 +712,12 @@ $(function () {
                     }
                     resetToSetup();
                     loadHistory();
-                    showSetupAlert("Session completed and saved!", "success");
+                    showSetupAlert(
+                        allTasksDone
+                            ? "Session completed and saved!"
+                            : "Progress saved. You can resume this session anytime.",
+                        "success"
+                    );
                     currentSessionId = null;
                     isResumedSession = false;
                     $btn.prop("disabled", false).text("End Session");
@@ -631,16 +731,20 @@ $(function () {
             });
         } else {
             // New session - create it
+            const seg = buildSegmentPayload();
             const payload = {
                 name: sessionName,
                 start_time: startTimestamp.toISOString(),
                 duration_minutes: durationMinutes,
+                accumulated_seconds: elapsedSeconds,
                 timer_mode: timerMode,
                 color: "#6366f1",
                 notes: "",
                 checklist: checklistItems,
                 unit_id: $("#session-unit").val() || null,
-                status: "completed"
+                segment_started_at: seg.segment_started_at,
+                segment_ended_at: seg.segment_ended_at,
+                segment_elapsed_seconds: seg.segment_elapsed_seconds
             };
             
             $.ajax({
@@ -657,7 +761,12 @@ $(function () {
                     }
                     resetToSetup();
                     loadHistory();
-                    showSetupAlert("Session saved! It will now appear in your Calendar.", "success");
+                    showSetupAlert(
+                        allTasksDone
+                            ? "Session saved! It will now appear in your Calendar."
+                            : "Session saved. You can resume anytime until all tasks are done.",
+                        "success"
+                    );
                     $btn.prop("disabled", false).text("End Session");
                 },
                 error: function (xhr) {
@@ -685,6 +794,8 @@ $(function () {
         startTimestamp = null;
         currentSessionId = null;
         isResumedSession = false;
+        sittingWallStart = null;
+        sittingBaselineElapsed = null;
         
         $("#pause-icon").removeClass("hidden");
         $("#resume-icon").addClass("hidden");
@@ -740,6 +851,8 @@ $(function () {
                 const checklist = s.checklist || [];
                 const done = checklist.filter(function (c) { return c.completed; }).length;
                 const isActive = s.status === "active";
+                const hasSplitChild = isActive && s.continued_as_session_id;
+                const canResume = isActive && !s.continued_as_session_id;
 
                 // Build the HTML string properly
                 let html = '<div class="history-item px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">';
@@ -756,7 +869,9 @@ $(function () {
                     html += '        <span class="px-2 py-0.5 text-xs rounded-full text-white roboto-regular shrink-0" style="background:' + (s.color || '#6366f1') + '">' + $("<span>").text(s.unit_code).html() + '</span>';
                 }
                 
-                if (isActive) {
+                if (hasSplitChild) {
+                    html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-50 text-amber-800 roboto-regular shrink-0">Continued with new timer</span>';
+                } else if (isActive) {
                     html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 roboto-regular shrink-0 animate-pulse">In Progress</span>';
                 }
                 
@@ -766,7 +881,7 @@ $(function () {
                 html += '    <div class="flex items-center gap-2 shrink-0">';
                 html += '      <span class="text-xs roboto-regular ' + (done === checklist.length && checklist.length > 0 ? 'text-emerald-600' : 'text-gray-400') + '">' + done + '/' + checklist.length + ' done</span>';
                 
-                if (isActive) {
+                if (canResume) {
                     html += '      <button class="resume-history-btn p-1.5 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors" data-id="' + s.id + '" title="Resume this session">';
                     html += '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M18 12h2.25M12 18H9.75M5.666 6.743l-1.59-1.59M5.666 17.257l-1.59 1.59M6 12H3.75"/></svg>';
                     html += '      </button>';
@@ -824,33 +939,108 @@ $(function () {
     $(document).on("click", ".resume-history-btn", function (e) {
         e.stopPropagation();
         const sessionId = $(this).data("id");
-        
-        // Show loading indicator
         const $btn = $(this);
-        const originalHtml = $btn.html();
-        $btn.html('<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>');
         $btn.prop("disabled", true);
-        
+        $.getJSON("/api/sessions/" + sessionId)
+            .done(function (data) {
+                if (data.status !== "active") {
+                    showSetupAlert("That session is no longer active.", "info");
+                    return;
+                }
+                if (data.continued_as_session_id) {
+                    showSetupAlert("This row was continued with a new timer. Use the newest session in the list to resume.", "info");
+                    return;
+                }
+                openResumeChoiceModal(data);
+            })
+            .fail(function (xhr) {
+                let msg = "Could not load session.";
+                try {
+                    const j = xhr.responseJSON;
+                    if (j && j.message) msg = j.message;
+                } catch (err) { /* ignore */ }
+                showSetupAlert(msg, "danger");
+            })
+            .always(function () {
+                $btn.prop("disabled", false);
+            });
+    });
+
+    $("#resume-choice-continue-btn").on("click", function () {
+        if (!resumeChoiceSnapshot) return;
+        const sid = resumeChoiceSnapshot.id;
+        const $m = $(this);
+        $m.prop("disabled", true);
         $.ajax({
-            url: "/api/sessions/" + sessionId + "/resume",
+            url: "/api/sessions/" + sid + "/resume",
             method: "POST",
             success: function (response) {
                 if (response.success) {
-                    resumeSession(response.session, response.elapsed_seconds);
+                    closeResumeChoiceModal();
+                    resumeSession(response.session, response.elapsed_seconds, { startPaused: true });
+                    loadHistory();
                 } else {
                     showSetupAlert(response.message || "Failed to resume session.", "danger");
                 }
             },
             error: function (xhr) {
                 let msg = "Failed to resume session.";
-                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e2) {}
                 showSetupAlert(msg, "danger");
             },
-            complete: function() {
-                $btn.html(originalHtml);
-                $btn.prop("disabled", false);
+            complete: function () {
+                $m.prop("disabled", false);
             }
         });
+    });
+
+    $("#resume-choice-new-btn").on("click", function () {
+        if (!resumeChoiceSnapshot) return;
+        const snap = resumeChoiceSnapshot;
+        const $m = $(this);
+        $m.prop("disabled", true);
+        const checklistPayload = (snap.checklist || []).map(function (c) {
+            return { title: c.title, completed: !!c.completed };
+        });
+        $.ajax({
+            url: "/api/sessions",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                continued_from_session_id: snap.id,
+                name: snap.title,
+                start_time: new Date().toISOString(),
+                duration_minutes: 1,
+                timer_mode: snap.timer_mode || "stopwatch",
+                color: snap.color || "#6366f1",
+                notes: snap.notes || "",
+                checklist: checklistPayload,
+                unit_id: snap.unit_id || null,
+                accumulated_seconds: 0
+            }),
+            success: function (resp) {
+                if (resp.success && resp.session) {
+                    closeResumeChoiceModal();
+                    resumeSession(resp.session, 0, { startPaused: true, isNewContinuation: true });
+                    loadHistory();
+                } else {
+                    showSetupAlert((resp && resp.message) || "Could not start a new timer.", "danger");
+                }
+            },
+            error: function (xhr) {
+                let msg = "Could not start a new timer.";
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e3) {}
+                showSetupAlert(msg, "danger");
+            },
+            complete: function () {
+                $m.prop("disabled", false);
+            }
+        });
+    });
+
+    $("#resume-choice-cancel-btn").on("click", closeResumeChoiceModal);
+    $("#resume-choice-modal").on("click", function (e) {
+        if (e.target === this) closeResumeChoiceModal();
     });
 
     // ============ Toggle History Details ============

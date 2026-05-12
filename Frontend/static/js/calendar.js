@@ -97,7 +97,7 @@ $(function () {
 
     function getEndTime(ev) {
         const start = new Date(ev.start);
-        const dur = ev.duration || (ev.type === "session" ? 60 : 30);
+        const dur = ev.duration || ((ev.type === "session" || ev.type === "session_segment") ? 60 : 30);
         return new Date(start.getTime() + dur * 60000);
     }
 
@@ -326,7 +326,7 @@ $(function () {
         $("#summary-datetime").text(dateStr + " at " + timeStr);
         
         // Show/hide fields based on event type
-        if (ev.type === "session") {
+        if (ev.type === "session" || ev.type === "session_segment") {
             $("#summary-duration-container").show();
             $("#summary-notes-container").show();
             $("#summary-description-container").hide();
@@ -341,7 +341,11 @@ $(function () {
             $("#summary-duration").text(durationText || "60 min");
             
             // Set notes
-            $("#summary-notes").text(ev.notes || "No notes");
+            let notesText = ev.notes || "No notes";
+            if (ev.type === "session_segment") {
+                notesText = "Logged study time (timer). " + notesText;
+            }
+            $("#summary-notes").text(notesText);
         } else if (ev.type === "ical") {
             $("#summary-duration-container").show();
             $("#summary-notes-container").hide();
@@ -378,7 +382,7 @@ $(function () {
         }
         
         // Hide edit/delete for iCal events (read-only)
-        if (ev.readonly) {
+        if (ev.readonly || ev.type === "session_segment") {
             $("#summary-edit-btn").hide();
             $("#summary-delete-btn").hide();
         } else {
@@ -541,7 +545,7 @@ $(function () {
                 const evDate = new Date(ev.start);
                 const evEnd = getEndTime(ev);
                 let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-                const height = ev.type === "session" ? (ev.duration || 60) : 30;
+                const height = (ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30;
                 if (topMin < 0) { topMin = 0; }
                 const leftPct = ((d2 + 1) / 8 * 100);
                 const widthPct = (1 / 8 * 100);
@@ -605,7 +609,7 @@ $(function () {
             const evDate = new Date(ev.start);
             const evEnd = getEndTime(ev);
             let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-            const height = (ev.type === "session" ? (ev.duration || 60) : 30) - 15;
+            const height = ((ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30) - 15;
             if (topMin < 0) { topMin = 0; }
             const bgColor = ev.color || "#6366f1";
             html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:5.5rem;right:0.5rem;height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
