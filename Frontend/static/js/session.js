@@ -590,8 +590,8 @@ $(function () {
                 const done = checklist.filter(function (c) { return c.completed; }).length;
 
                 $list.append(
-                    '<div class="history-item px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">' +
-                    '  <div class="flex items-center gap-4">' +
+                    '<div class="history-item px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">' +
+                    '  <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">' +
                     '    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:' + (s.color || '#6366f1') + '20">' +
                     '      <svg class="w-5 h-5" style="color:' + (s.color || '#6366f1') + '" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
                     '    </div>' +
@@ -603,14 +603,14 @@ $(function () {
                     '      </div>' +
                     '      <p class="text-xs text-gray-400 roboto-regular mt-0.5">' + dateStr + ' at ' + timeStr + ' · ' + formatDurationShort(s.duration) + '</p>' +
                     '    </div>' +
-                    '    <div class="flex items-center gap-3 shrink-0">' +
+                    '    <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 w-full sm:w-auto">' +
                     '      <span class="text-xs roboto-regular ' + (done === checklist.length && checklist.length > 0 ? 'text-emerald-600' : 'text-gray-400') + '">' + done + '/' + checklist.length + ' done</span>' +
                     '      <button class="delete-history-btn p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" data-id="' + s.id + '">' +
                     '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>' +
                     '      </button>' +
                     '    </div>' +
                     '  </div>' +
-                    '  <div class="history-details hidden mt-3 ml-14 space-y-1">' +
+                    '  <div class="history-details hidden mt-3 sm:ml-14 space-y-1">' +
                     renderHistoryChecklist(s.id, checklist) +
                     '  </div>' +
                     '</div>'
