@@ -83,11 +83,16 @@ $(function () {
             $("#hours-empty").addClass("hidden");
 
             const labels = data.map(function (d) { return d.code || d.name; });
-            const hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
+            const hours = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
             const colors = data.map(function (d) { return d.color || "#6366f1"; });
 
             charts.hoursBar = new ApexCharts(document.querySelector("#chart-hours-by-unit"), {
-                chart: { type: "bar", height: Math.max(200, labels.length * 42), toolbar: { show: false }, fontFamily: "Roboto, sans-serif" },
+                chart: {
+                    type: "bar",
+                    height: window.innerWidth < 640 ? Math.max(220, labels.length * 34) : Math.max(200, labels.length * 42),
+                    toolbar: { show: false },
+                    fontFamily: "Roboto, sans-serif"
+                },
                 series: [{ name: "Hours", data: hours }],
                 plotOptions: { bar: { horizontal: true, borderRadius: 6, barHeight: "60%" } },
                 colors: colors,
@@ -115,11 +120,15 @@ $(function () {
         $("#donut-empty").addClass("hidden");
 
         const labels = data.map(function (d) { return d.code || d.name; });
-        const hours  = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
+        const hours = data.map(function (d) { return parseFloat(d.hours.toFixed(1)); });
         const colors = data.map(function (d) { return d.color || "#6366f1"; });
 
         charts.donut = new ApexCharts(document.querySelector("#chart-donut"), {
-            chart: { type: "donut", height: 300, fontFamily: "Roboto, sans-serif" },
+            chart: {
+                type: "donut",
+                height: window.innerWidth < 640 ? 240 : 300,
+                fontFamily: "Roboto, sans-serif"
+            },
             series: hours,
             labels: labels,
             colors: colors,
@@ -146,7 +155,13 @@ $(function () {
             const hours = data.map(function (d) { return parseFloat(d.hours.toFixed(2)); });
 
             charts.trend = new ApexCharts(document.querySelector("#chart-daily-trend"), {
-                chart: { type: "area", height: 300, toolbar: { show: false }, fontFamily: "Roboto, sans-serif", zoom: { enabled: false } },
+                chart: {
+                    type: "area",
+                    height: window.innerWidth < 640 ? 240 : 300,
+                    toolbar: { show: false },
+                    fontFamily: "Roboto, sans-serif",
+                    zoom: { enabled: false }
+                },
                 series: [{ name: "Hours", data: hours }],
                 xaxis: { categories: dates, type: "category", labels: { rotate: -45, style: { fontSize: "11px" }, formatter: function (val) { if (!val) return ""; const parts = val.split("-"); return parts[2] + "/" + parts[1]; } }, tickAmount: Math.min(dates.length, 15) },
                 yaxis: { labels: { formatter: function (v) { return v.toFixed(1) + "h"; } } },
@@ -163,6 +178,7 @@ $(function () {
 
     // ============ Peak Study Hours (heatmap) ============
     function loadHeatmap() {
+        const isMobile = window.innerWidth < 640;
         $.getJSON("/api/stats/hourly-heatmap" + qs(), function (data) {
             destroyChart("heatmap");
 
@@ -183,20 +199,87 @@ $(function () {
             }
 
             charts.heatmap = new ApexCharts(document.querySelector("#chart-heatmap"), {
-                chart: { type: "heatmap", height: 240, toolbar: { show: false }, fontFamily: "Roboto, sans-serif" },
+                chart: {
+                    type: "heatmap",
+                    height: 280,
+                    toolbar: { show: false },
+                    fontFamily: "Roboto, sans-serif",
+                    parentHeightOffset: 0
+                },
                 series: series,
                 colors: ["#725AEA"],
                 dataLabels: { enabled: false },
-                xaxis: { labels: { style: { fontSize: "11px" } } },
-                yaxis: { labels: { style: { fontSize: "12px", fontFamily: "Montserrat, sans-serif" } } },
-                plotOptions: { heatmap: { radius: 4, colorScale: { ranges: [
-                    { from: 0, to: 0, color: "#f3f4f6", name: "None" },
-                    { from: 1, to: 30, color: "#c7d2fe", name: "< 30m" },
-                    { from: 31, to: 60, color: "#818cf8", name: "30-60m" },
-                    { from: 61, to: 120, color: "#6366f1", name: "1-2h" },
-                    { from: 121, to: 9999, color: "#4338ca", name: "> 2h" }
-                ] } } },
-                tooltip: { y: { formatter: function (v) { return v + " min"; } } }
+
+                legend: {
+                    position: "bottom",
+                    fontSize: isMobile ? "10px" : "12px",
+                    markers: {
+                        width: isMobile ? 8 : 12,
+                        height: isMobile ? 8 : 12
+                    },
+                    itemMargin: {
+                        horizontal: isMobile ? 4 : 8,
+                        vertical: isMobile ? 2 : 4
+                    }
+                },
+
+                xaxis: {
+                    labels: {
+                        rotate: isMobile ? 0 : -45,
+                        style: {
+                            fontSize: isMobile ? "9px" : "11px"
+                        },
+                        formatter: function (val) {
+                            if (!isMobile) return val;
+
+                            const hour = parseInt(String(val).split(":")[0]);
+                            if (hour % 3 === 0) {
+                                return hour + ":00";
+                            }
+                            return "";
+                        }
+                    }
+                },
+
+                yaxis: {
+                    labels: {
+                        minWidth: 36,
+                        maxWidth: 36,
+                        style: {
+                            fontSize: "12px",
+                            fontFamily: "Montserrat, sans-serif"
+                        }
+                    }
+                },
+
+                plotOptions: {
+                    heatmap: {
+                        radius: isMobile ? 2 : 4,
+                        colorScale: {
+                            ranges: [
+                                { from: 0, to: 0, color: "#f3f4f6", name: "None" },
+                                { from: 1, to: 30, color: "#c7d2fe", name: "< 30m" },
+                                { from: 31, to: 60, color: "#818cf8", name: "30-60m" },
+                                { from: 61, to: 120, color: "#6366f1", name: "1-2h" },
+                                { from: 121, to: 9999, color: "#4338ca", name: "> 2h" }
+                            ]
+                        }
+                    }
+                },
+                grid: {
+                    padding: {
+                        left: 8,
+                        right: 8
+                    }
+                },
+
+                tooltip: {
+                    y: {
+                        formatter: function (v) {
+                            return v + " min";
+                        }
+                    }
+                }
             });
             charts.heatmap.render();
         });
@@ -213,12 +296,18 @@ $(function () {
             }
             $("#tasks-empty").addClass("hidden");
 
-            const labels    = data.map(function (d) { return d.code || d.name; });
+            const labels = data.map(function (d) { return d.code || d.name; });
             const completed = data.map(function (d) { return d.completed; });
             const remaining = data.map(function (d) { return d.total - d.completed; });
 
             charts.tasks = new ApexCharts(document.querySelector("#chart-task-completion"), {
-                chart: { type: "bar", height: Math.max(200, labels.length * 44), stacked: true, toolbar: { show: false }, fontFamily: "Roboto, sans-serif" },
+                chart: {
+                    type: "bar",
+                    height: window.innerWidth < 640 ? Math.max(220, labels.length * 32) : Math.max(220, labels.length * 40),
+                    stacked: true,
+                    toolbar: { show: false },
+                    fontFamily: "Roboto, sans-serif"
+                },
                 series: [
                     { name: "Completed", data: completed },
                     { name: "Remaining", data: remaining }
