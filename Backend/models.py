@@ -66,6 +66,7 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
     timer_mode = db.Column(db.String(20), nullable=True)  # "stopwatch" or "countdown"
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="active")  # "active" or "completed"
 
     # Relationship to checklist items
     checklist_items = db.relationship("ChecklistItem", backref="session", lazy="select", cascade="all, delete-orphan")
@@ -88,6 +89,7 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "unit_id": self.unit_id,
             "unit_name": self.unit.name if self.unit else None,
             "unit_code": self.unit.code if self.unit else None,
+            "status": self.status,
         }
 
 

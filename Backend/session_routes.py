@@ -6,6 +6,57 @@ from app import db
 
 session_bp = Blueprint("sessions", __name__)
 
+@session_bp.route("/api/sessions/active", methods=["GET"])
+@login_required
+def get_active_sessions():
+    """Get all active (unfinished) sessions for the current user."""
+    sessions = (
+        StudySession.query
+        .filter_by(user_id=current_user.id, status="active")
+        .order_by(StudySession.start_time.desc())
+        .all()
+    )
+    return jsonify([s.to_dict() for s in sessions])
+
+@session_bp.route("/api/sessions/<int:session_id>/resume", methods=["POST"])
+@login_required
+def resume_session(session_id):
+    """Resume an active session that was previously saved but not completed."""
+    session = db.session.get(StudySession, session_id)
+    if not session or session.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Not found."}), 404
+    
+    if session.status != "active":
+        return jsonify({"success": False, "message": "This session has already been completed."}), 400
+    
+    # Return the session data to resume
+    return jsonify({
+        "success": True,
+        "session": session.to_dict(),
+        "elapsed_seconds": (datetime.utcnow() - session.start_time).total_seconds()
+    })
+
+@session_bp.route("/api/sessions/<int:session_id>", methods=["PUT"])
+@login_required
+def update_session(session_id):
+    session = db.session.get(StudySession, session_id)
+    if not session or session.user_id != current_user.id:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    data = request.get_json()
+    if "name" in data:
+        session.subject = (data["name"] or "").strip() or session.subject
+    if "unit_id" in data:
+        session.unit_id = int(data["unit_id"]) if data["unit_id"] else None
+    if "color" in data:
+        session.color = data["color"]
+    if "notes" in data:
+        session.notes = data["notes"]
+    if "status" in data:
+        session.status = data["status"]
+
+    db.session.commit()
+    return jsonify({"success": True, "session": session.to_dict()})
 
 @session_bp.route("/api/sessions", methods=["POST"])
 @login_required

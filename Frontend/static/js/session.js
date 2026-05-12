@@ -16,6 +16,8 @@ $(function () {
     let timerPaused = false;
     let editTempTimerMode = "stopwatch";
     let editTempCountdownTotal = 25 * 60;
+    let currentSessionId = null;  // Track the ID of the current session if it's from history
+    let isResumedSession = false;  // Flag to track if we're resuming a session
 
     // ============ Helpers ============
     function pad(n) { return n < 10 ? "0" + n : "" + n; }
@@ -37,7 +39,8 @@ $(function () {
     function showSetupAlert(msg, type) {
         const colors = {
             danger: "bg-red-100 text-red-700 border-red-200",
-            success: "bg-emerald-100 text-emerald-700 border-emerald-200"
+            success: "bg-emerald-100 text-emerald-700 border-emerald-200",
+            info: "bg-blue-100 text-blue-700 border-blue-200"
         };
         const cls = colors[type] || colors.danger;
         $("#setup-alert").html(
@@ -225,6 +228,8 @@ $(function () {
         startTimestamp = new Date();
         elapsedSeconds = 0;
         timerRunning = true;
+        isResumedSession = false;
+        currentSessionId = null;
 
         $("#setup-phase").addClass("hidden");
         $("#active-phase").removeClass("hidden");
@@ -237,7 +242,9 @@ $(function () {
         initClockFace();
         updateClockHands(0);
 
+        if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(function () {
+            if (!timerRunning || timerPaused) return;
             elapsedSeconds++;
             updateTimerDisplay();
         }, 1000);
@@ -248,8 +255,10 @@ $(function () {
         if (!timerRunning) return;
         timerPaused = !timerPaused;
         if (timerPaused) {
-            clearInterval(timerInterval);
-            timerInterval = null;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
             $("#pause-icon").addClass("hidden");
             $("#resume-icon").removeClass("hidden");
             $("#pause-resume-label").text("Resume");
@@ -257,6 +266,7 @@ $(function () {
             $("#active-badge").removeClass("bg-emerald-100 text-emerald-700 animate-pulse").addClass("bg-amber-100 text-amber-700").text("Paused");
         } else {
             timerInterval = setInterval(function () {
+                if (!timerRunning || timerPaused) return;
                 elapsedSeconds++;
                 updateTimerDisplay();
             }, 1000);
@@ -275,7 +285,7 @@ $(function () {
             displaySeconds = elapsedSeconds;
         } else {
             displaySeconds = Math.max(0, countdownTotalSeconds - elapsedSeconds);
-            if (displaySeconds === 0 && elapsedSeconds > 0) {
+            if (displaySeconds === 0 && elapsedSeconds > 0 && timerRunning && !timerPaused) {
                 $("#countdown-done-badge").removeClass("hidden");
                 // Browser push notification for timer done
                 if ("Notification" in window && Notification.permission === "granted") {
@@ -314,6 +324,101 @@ $(function () {
     $("#live-new-item").on("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); addLiveItem(); }
     });
+
+    // ============ Resume Session from History ============
+    function resumeSession(sessionData, elapsedSecondsParam) {
+        // Load session data
+        sessionName = sessionData.title;
+        timerMode = sessionData.timer_mode || "stopwatch";
+        checklistItems = sessionData.checklist || [];
+        currentSessionId = sessionData.id;
+        isResumedSession = true;
+        
+        // Calculate elapsed time based on when it started
+        elapsedSeconds = Math.floor(elapsedSecondsParam);
+        
+        if (timerMode === "countdown") {
+            // For countdown, calculate original total duration
+            // We need to get the original duration from the session
+            const originalDuration = sessionData.duration * 60;
+            countdownTotalSeconds = originalDuration;
+            
+            // Check if countdown has already finished
+            if (elapsedSeconds >= countdownTotalSeconds) {
+                timerRunning = false;
+                timerPaused = false;
+                if (timerInterval) clearInterval(timerInterval);
+                $("#countdown-done-badge").removeClass("hidden");
+                showSetupAlert("This countdown session has already finished. Please end it to save.", "info");
+            }
+        }
+        
+        // Switch to active phase
+        timerRunning = true;
+        timerPaused = false;
+        startTimestamp = new Date(sessionData.start);
+        
+        // Reset UI elements
+        $("#pause-icon").removeClass("hidden");
+        $("#resume-icon").addClass("hidden");
+        $("#pause-resume-label").text("Pause");
+        $("#pause-resume-btn").removeClass("bg-emerald-500 hover:bg-emerald-600").addClass("bg-amber-500 hover:bg-amber-600");
+        $("#active-badge").removeClass("bg-amber-100 text-amber-700").addClass("bg-emerald-100 text-emerald-700 animate-pulse").text("In Progress");
+        
+        $("#setup-phase").addClass("hidden");
+        $("#active-phase").removeClass("hidden");
+        $("#active-session-name").text(sessionName);
+        
+        if (timerMode === "stopwatch") {
+            $("#active-timer-mode").text("Stopwatch — counting up (Resumed)");
+        } else {
+            const remaining = Math.max(0, countdownTotalSeconds - elapsedSeconds);
+            $("#active-timer-mode").text("Countdown — " + formatDuration(remaining) + " remaining (Resumed)");
+        }
+        
+        renderLiveChecklist();
+        updateTimerDisplay();
+        initClockFace();
+        updateClockHands(timerMode === "stopwatch" ? elapsedSeconds : Math.max(0, countdownTotalSeconds - elapsedSeconds));
+        
+        // Start the timer if it hasn't finished
+        if (timerInterval) clearInterval(timerInterval);
+        if (timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds) {
+            timerRunning = false;
+        } else {
+            timerInterval = setInterval(function () {
+                if (!timerRunning || timerPaused) return;
+                elapsedSeconds++;
+                updateTimerDisplay();
+                
+                // Check if countdown just finished
+                if (timerMode === "countdown" && elapsedSeconds >= countdownTotalSeconds && timerRunning) {
+                    timerRunning = false;
+                    if (timerInterval) clearInterval(timerInterval);
+                    timerInterval = null;
+                    $("#countdown-done-badge").removeClass("hidden");
+                    updateTimerDisplay();
+                    
+                    // Browser notification
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        try {
+                            var n = new Notification("Time's up!", {
+                                body: sessionName || "Your countdown timer has finished.",
+                                tag: "planify-timer-done"
+                            });
+                            n.onclick = function () { window.focus(); };
+                        } catch (e) { /* ignore */ }
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Show success message
+        showSetupAlert("Session resumed! Timer continues from where you left off.", "success");
+        setTimeout(function() {
+            $("#setup-alert").fadeOut(200, function() { $(this).empty().show(); });
+        }, 3000);
+    }
 
     // ============ Edit Session Modal ============
     function renderEditChecklist() {
@@ -484,62 +589,109 @@ $(function () {
 
     // ============ End Session ============
     $("#end-session-btn").on("click", function () {
-        closeEditModal();
-        if (!timerRunning) return;
-        timerRunning = false;
-        clearInterval(timerInterval);
-
-        const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
-
-        const payload = {
-            name: sessionName,
-            start_time: startTimestamp.toISOString(),
-            duration_minutes: durationMinutes,
-            timer_mode: timerMode,
-            color: "#6366f1",
-            notes: "",
-            checklist: checklistItems,
-            unit_id: $("#session-unit").val() || null
-        };
-
+        if (!timerRunning && timerMode === "stopwatch") return;
+        
         const $btn = $("#end-session-btn");
         $btn.prop("disabled", true).text("Saving…");
-
-        $.ajax({
-            url: "/api/sessions",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify(payload),
-            success: function () {
-                // Reset and go back to setup
-                resetToSetup();
-                loadHistory();
-                showSetupAlert("Session saved! It will now appear in your Calendar.", "success");
-            },
-            error: function (xhr) {
-                const msg = "Failed to save session.";
-                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
-                showSetupAlert(msg, "danger");
-                $btn.prop("disabled", false).text("End Session");
-            }
-        });
+        
+        const durationMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+        
+        if (currentSessionId && isResumedSession) {
+            // This is a resumed session - update it to completed status
+            $.ajax({
+                url: "/api/sessions/" + currentSessionId,
+                method: "PUT",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    status: "completed",
+                    duration_minutes: durationMinutes,
+                    notes: "",
+                    checklist: checklistItems
+                }),
+                success: function () {
+                    timerRunning = false;
+                    timerPaused = false;
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                    resetToSetup();
+                    loadHistory();
+                    showSetupAlert("Session completed and saved!", "success");
+                    currentSessionId = null;
+                    isResumedSession = false;
+                    $btn.prop("disabled", false).text("End Session");
+                },
+                error: function (xhr) {
+                    let msg = "Failed to update session.";
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+                    showSetupAlert(msg, "danger");
+                    $btn.prop("disabled", false).text("End Session");
+                }
+            });
+        } else {
+            // New session - create it
+            const payload = {
+                name: sessionName,
+                start_time: startTimestamp.toISOString(),
+                duration_minutes: durationMinutes,
+                timer_mode: timerMode,
+                color: "#6366f1",
+                notes: "",
+                checklist: checklistItems,
+                unit_id: $("#session-unit").val() || null,
+                status: "completed"
+            };
+            
+            $.ajax({
+                url: "/api/sessions",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function () {
+                    timerRunning = false;
+                    timerPaused = false;
+                    if (timerInterval) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                    }
+                    resetToSetup();
+                    loadHistory();
+                    showSetupAlert("Session saved! It will now appear in your Calendar.", "success");
+                    $btn.prop("disabled", false).text("End Session");
+                },
+                error: function (xhr) {
+                    let msg = "Failed to save session.";
+                    try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+                    showSetupAlert(msg, "danger");
+                    $btn.prop("disabled", false).text("End Session");
+                }
+            });
+        }
     });
 
     // ============ Reset to Setup ============
     function resetToSetup() {
+        timerRunning = false;
+        timerPaused = false;
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+        
         sessionName = "";
         checklistItems = [];
         elapsedSeconds = 0;
         startTimestamp = null;
-        timerRunning = false;
-        timerPaused = false;
-
+        currentSessionId = null;
+        isResumedSession = false;
+        
         $("#pause-icon").removeClass("hidden");
         $("#resume-icon").addClass("hidden");
         $("#pause-resume-label").text("Pause");
         $("#pause-resume-btn").removeClass("bg-emerald-500 hover:bg-emerald-600").addClass("bg-amber-500 hover:bg-amber-600");
         $("#active-badge").removeClass("bg-amber-100 text-amber-700").addClass("bg-emerald-100 text-emerald-700 animate-pulse").text("In Progress");
-
+        
         $("#active-phase").addClass("hidden");
         $("#setup-phase").removeClass("hidden");
         $("#session-name").val("");
@@ -587,33 +739,50 @@ $(function () {
                 const timeStr = d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
                 const checklist = s.checklist || [];
                 const done = checklist.filter(function (c) { return c.completed; }).length;
+                const isActive = s.status === "active";
 
-                $list.append(
-                    '<div class="history-item px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">' +
-                    '  <div class="flex items-center gap-4">' +
-                    '    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:' + (s.color || '#6366f1') + '20">' +
-                    '      <svg class="w-5 h-5" style="color:' + (s.color || '#6366f1') + '" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
-                    '    </div>' +
-                    '    <div class="flex-1 min-w-0">' +
-                    '      <div class="flex items-center gap-2">' +
-                    '        <span class="montserrat-medium text-sm text-gray-800 truncate">' + $("<span>").text(s.title).html() + '</span>' +
-                    '        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500 roboto-regular shrink-0">' + (s.timer_mode || 'stopwatch') + '</span>' +
-                    (s.unit_code ? '        <span class="px-2 py-0.5 text-xs rounded-full text-white roboto-regular shrink-0" style="background:' + (s.color || '#6366f1') + '">' + $("<span>").text(s.unit_code).html() + '</span>' : '') +
-                    '      </div>' +
-                    '      <p class="text-xs text-gray-400 roboto-regular mt-0.5">' + dateStr + ' at ' + timeStr + ' · ' + formatDurationShort(s.duration) + '</p>' +
-                    '    </div>' +
-                    '    <div class="flex items-center gap-3 shrink-0">' +
-                    '      <span class="text-xs roboto-regular ' + (done === checklist.length && checklist.length > 0 ? 'text-emerald-600' : 'text-gray-400') + '">' + done + '/' + checklist.length + ' done</span>' +
-                    '      <button class="delete-history-btn p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" data-id="' + s.id + '">' +
-                    '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>' +
-                    '      </button>' +
-                    '    </div>' +
-                    '  </div>' +
-                    '  <div class="history-details hidden mt-3 ml-14 space-y-1">' +
-                    renderHistoryChecklist(s.id, checklist) +
-                    '  </div>' +
-                    '</div>'
-                );
+                // Build the HTML string properly
+                let html = '<div class="history-item px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">';
+                html += '  <div class="flex items-center gap-4">';
+                html += '    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:' + (s.color || '#6366f1') + '20">';
+                html += '      <svg class="w-5 h-5" style="color:' + (s.color || '#6366f1') + '" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                html += '    </div>';
+                html += '    <div class="flex-1 min-w-0">';
+                html += '      <div class="flex items-center gap-2 flex-wrap">';
+                html += '        <span class="montserrat-medium text-sm text-gray-800 truncate">' + $("<span>").text(s.title).html() + '</span>';
+                html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500 roboto-regular shrink-0">' + (s.timer_mode || 'stopwatch') + '</span>';
+                
+                if (s.unit_code) {
+                    html += '        <span class="px-2 py-0.5 text-xs rounded-full text-white roboto-regular shrink-0" style="background:' + (s.color || '#6366f1') + '">' + $("<span>").text(s.unit_code).html() + '</span>';
+                }
+                
+                if (isActive) {
+                    html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 roboto-regular shrink-0 animate-pulse">In Progress</span>';
+                }
+                
+                html += '      </div>';
+                html += '      <p class="text-xs text-gray-400 roboto-regular mt-0.5">' + dateStr + ' at ' + timeStr + ' · ' + (isActive ? 'Still running' : formatDurationShort(s.duration)) + '</p>';
+                html += '    </div>';
+                html += '    <div class="flex items-center gap-2 shrink-0">';
+                html += '      <span class="text-xs roboto-regular ' + (done === checklist.length && checklist.length > 0 ? 'text-emerald-600' : 'text-gray-400') + '">' + done + '/' + checklist.length + ' done</span>';
+                
+                if (isActive) {
+                    html += '      <button class="resume-history-btn p-1.5 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors" data-id="' + s.id + '" title="Resume this session">';
+                    html += '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M18 12h2.25M12 18H9.75M5.666 6.743l-1.59-1.59M5.666 17.257l-1.59 1.59M6 12H3.75"/></svg>';
+                    html += '      </button>';
+                }
+                
+                html += '      <button class="delete-history-btn p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" data-id="' + s.id + '" title="Delete session">';
+                html += '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>';
+                html += '      </button>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '  <div class="history-details hidden mt-3 ml-14 space-y-1">';
+                html += renderHistoryChecklist(s.id, checklist);
+                html += '  </div>';
+                html += '</div>';
+                
+                $list.append(html);
             });
         });
     }
@@ -635,7 +804,6 @@ $(function () {
         let html = '<div class="space-y-2">';
         checklist.forEach(function (item) {
             html += '<div class="flex items-center gap-2 group hover:bg-gray-50 rounded-lg p-1 transition-colors">' +
-                // ADDED: Tick button to mark complete/incomplete
                 '<button class="tick-checklist-item p-1 rounded-md transition-colors ' + (item.completed ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-400 hover:text-emerald-500') + '" ' +
                 'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + item.completed + '">' +
                 '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
@@ -652,9 +820,42 @@ $(function () {
         return html;
     }
 
+    // ============ Resume Session Button Handler ============
+    $(document).on("click", ".resume-history-btn", function (e) {
+        e.stopPropagation();
+        const sessionId = $(this).data("id");
+        
+        // Show loading indicator
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+        $btn.html('<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>');
+        $btn.prop("disabled", true);
+        
+        $.ajax({
+            url: "/api/sessions/" + sessionId + "/resume",
+            method: "POST",
+            success: function (response) {
+                if (response.success) {
+                    resumeSession(response.session, response.elapsed_seconds);
+                } else {
+                    showSetupAlert(response.message || "Failed to resume session.", "danger");
+                }
+            },
+            error: function (xhr) {
+                let msg = "Failed to resume session.";
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e) {}
+                showSetupAlert(msg, "danger");
+            },
+            complete: function() {
+                $btn.html(originalHtml);
+                $btn.prop("disabled", false);
+            }
+        });
+    });
+
     // ============ Toggle History Details ============
     $(document).on("click", ".history-item", function (e) {
-        if ($(e.target).closest(".delete-history-btn, .tick-checklist-item").length) return;
+        if ($(e.target).closest(".delete-history-btn, .resume-history-btn, .tick-checklist-item").length) return;
         $(this).find(".history-details").toggleClass("hidden");
     });
 
@@ -691,12 +892,22 @@ $(function () {
                 deleteTargetId = null;
                 $btn.prop("disabled", false).text("Delete");
                 loadHistory();
+                showSetupAlert("Session deleted successfully.", "success");
+                setTimeout(function() {
+                    $("#setup-alert").fadeOut(200, function() { $(this).empty().show(); });
+                }, 2000);
             },
             error: function () {
                 $btn.prop("disabled", false).text("Delete");
+                showSetupAlert("Failed to delete session.", "danger");
             }
         });
     });
+
+    // ============ Request Notification Permission ============
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
 
     // ============ Init ============
     initClockFace();
@@ -716,8 +927,3 @@ $(function () {
         });
     });
 });
-
-
-
-
-
