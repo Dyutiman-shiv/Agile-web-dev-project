@@ -787,3 +787,19 @@ def decline_invitation(invite_id):
 @login_required
 def get_my_friend_code():
     return jsonify({"friend_code": current_user.friend_code}), 200
+
+
+@groups_bp.route("/api/users/lookup-by-friend-code", methods=["GET"])
+@login_required
+def lookup_user_by_friend_code():
+    code = request.args.get("friend_code", "").strip().upper()
+    if len(code) != 8:
+        return jsonify({"success": False, "message": "Friend code must be 8 characters."}), 400
+    user = User.query.filter_by(friend_code=code).first()
+    if not user:
+        return jsonify({"success": False, "message": "No user found with that friend code."}), 404
+    return jsonify({
+        "success": True,
+        "username": user.username,
+        "profile_picture": user.profile_picture,
+    }), 200

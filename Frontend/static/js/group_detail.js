@@ -960,11 +960,14 @@ const MAX_INVITE_CODES_DETAIL = 15;
 
 function inviteRowTemplateDetail() {
   return (
-    `<div class="invite-code-row flex gap-2 items-center">
-      <input type="text" maxlength="8" autocomplete="off" spellcheck="false"
-        placeholder="Friend code"
-        class="invite-code-field flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase tracking-widest" />
-      <button type="button" class="invite-code-remove shrink-0 w-9 h-9 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-100 montserrat-medium text-lg leading-none disabled:opacity-30" title="Remove row" aria-label="Remove row" disabled>×</button>
+    `<div class="invite-code-row">
+      <div class="flex gap-2 items-center">
+        <input type="text" maxlength="8" autocomplete="off" spellcheck="false"
+          placeholder="Friend code"
+          class="invite-code-field flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase tracking-widest" />
+        <button type="button" class="invite-code-remove shrink-0 w-9 h-9 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-100 montserrat-medium text-lg leading-none disabled:opacity-30" title="Remove row" aria-label="Remove row" disabled>×</button>
+      </div>
+      <div class="invite-user-preview"></div>
     </div>`
   );
 }
@@ -1033,6 +1036,108 @@ function sendMassInvitesDetail(groupId, $container, $alert) {
   });
 }
 
+// ── Friend-code user preview (group detail) ───────────────────────────────
+const _detailLookupXHRMap = new WeakMap();
+
+function _detailEscapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function _detailPreviewAvatarHtml(username, profilePicture) {
+  if (profilePicture) {
+    return `<img src="${profilePicture}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0" referrerpolicy="no-referrer" alt="avatar" />`;
+  }
+  const initial = (username || "?")[0].toUpperCase();
+  return `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm montserrat-medium shrink-0">${initial}</div>`;
+}
+
+function _detailShowPreviewLoading($preview) {
+  $preview.html(
+    `<div class="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
+      <div class="invite-preview-spinner"></div>
+      <span class="text-xs roboto-regular text-gray-400">Looking up…</span>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailShowPreviewFound($preview, username, profilePicture) {
+  $preview.html(
+    `<div class="flex items-center gap-2.5 px-3 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+      ${_detailPreviewAvatarHtml(username, profilePicture)}
+      <div class="min-w-0">
+        <p class="text-xs montserrat-medium text-gray-800 truncate">${_detailEscapeHtml(username)}</p>
+        <p class="text-[10px] roboto-regular text-indigo-500">Ready to invite ✓</p>
+      </div>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailShowPreviewNotFound($preview) {
+  $preview.html(
+    `<div class="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-xl border border-red-100">
+      <svg class="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span class="text-xs roboto-regular text-red-500">No user found with this code</span>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailHidePreview($preview) {
+  $preview.removeClass("is-visible");
+  setTimeout(function () {
+    if (!$preview.hasClass("is-visible")) $preview.html("");
+  }, 320);
+}
+
+function triggerFriendCodeLookupDetail($input) {
+  const code = ($input.val() || "").trim().toUpperCase();
+  const $row = $input.closest(".invite-code-row");
+  const $preview = $row.find(".invite-user-preview");
+  const rowEl = $row[0];
+
+  if (_detailLookupXHRMap.has(rowEl)) {
+    _detailLookupXHRMap.get(rowEl).abort();
+    _detailLookupXHRMap.delete(rowEl);
+  }
+
+  if (code.length < 8) {
+    _detailHidePreview($preview);
+    return;
+  }
+
+  _detailShowPreviewLoading($preview);
+
+  const xhr = $.ajax({
+    url: `/api/users/lookup-by-friend-code?friend_code=${encodeURIComponent(code)}`,
+    method: "GET",
+    success: function (res) {
+      if (res.success) {
+        _detailShowPreviewFound($preview, res.username, res.profile_picture);
+      } else {
+        _detailShowPreviewNotFound($preview);
+      }
+    },
+    error: function (jqXHR, status) {
+      if (status === "abort") return;
+      _detailShowPreviewNotFound($preview);
+    },
+    complete: function () {
+      _detailLookupXHRMap.delete(rowEl);
+    },
+  });
+
+  _detailLookupXHRMap.set(rowEl, xhr);
+}
+
 function initInviteModal(groupId) {
   const $root = $("#invite-code-rows-detail");
 
@@ -1065,13 +1170,20 @@ function initInviteModal(groupId) {
       $root.append(inviteRowTemplateDetail());
       syncInviteRemoveButtonsDetail($root);
     }
+    triggerFriendCodeLookupDetail($(input));
   });
 
   $root.on("click", ".invite-code-remove", function (e) {
     e.preventDefault();
     const $rows = $root.find(".invite-code-row");
     if ($rows.length <= 1) return;
-    $(this).closest(".invite-code-row").remove();
+    const $row = $(this).closest(".invite-code-row");
+    const rowEl = $row[0];
+    if (_detailLookupXHRMap.has(rowEl)) {
+      _detailLookupXHRMap.get(rowEl).abort();
+      _detailLookupXHRMap.delete(rowEl);
+    }
+    $row.remove();
     syncInviteRemoveButtonsDetail($root);
   });
 

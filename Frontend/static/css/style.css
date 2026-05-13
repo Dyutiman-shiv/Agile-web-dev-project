@@ -237,6 +237,38 @@ canvas {
     max-width: 100%;
 }
 
+/* ── Friend code user preview panel ──────────────────────── */
+.invite-user-preview {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    margin-top: 0;
+    transition:
+        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.25s ease,
+        margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.invite-user-preview.is-visible {
+    max-height: 64px;
+    opacity: 1;
+    margin-top: 6px;
+}
+
+@keyframes invite-preview-spin {
+    to { transform: rotate(360deg); }
+}
+
+.invite-preview-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #c7d2fe;
+    border-top-color: #6366f1;
+    animation: invite-preview-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
 /* Make long text/URLs wrap instead of breaking the layout */
 .responsive-wrap,
 a,
