@@ -159,27 +159,31 @@ $(document).ready(function () {
 
     const url = URL.createObjectURL(file);
 
-    let previewHTML = "";
+    let mediaHTML = "";
 
     if (file.type.startsWith("image")) {
-      previewHTML = `
-      <img
-        src="${url}"
-        class="w-auto h-auto max-h-[300px] object-contain rounded-md"
-      />
-    `;
+      mediaHTML = `<img src="${url}" class="w-auto h-auto max-h-[300px] object-contain rounded-md" />`;
     } else if (file.type.startsWith("video")) {
-      previewHTML = `
-      <video
-        controls
-        class="w-full max-h-80 rounded-2xl"
-      >
-        <source src="${url}">
-      </video>
-    `;
+      mediaHTML = `<video controls class="w-full max-h-80 rounded-2xl"><source src="${url}"></video>`;
     }
 
+    const previewHTML = `
+      <div class="relative inline-block w-full">
+        ${mediaHTML}
+        <button
+          id="remove-media-btn"
+          type="button"
+          title="Remove media"
+          class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-gray-900/60 hover:bg-gray-900/80 text-white text-sm leading-none transition-colors"
+        >✕</button>
+      </div>`;
+
     $("#media-preview-container").html(previewHTML).removeClass("hidden");
+  });
+
+  $(document).on("click", "#remove-media-btn", function () {
+    $("#post-media-input").val("");
+    $("#media-preview-container").html("").addClass("hidden");
   });
   $("#submit-post-btn").on("click", createPost);
 });
