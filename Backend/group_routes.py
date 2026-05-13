@@ -346,7 +346,8 @@ def create_post(group_id):
         media.seek(0, os.SEEK_END)
         file_size = media.tell()
         media.seek(0)
-        if file_size > current_app.config["MAX_CONTENT_LENGTH"]:
+        max_media = current_app.config.get("MAX_POST_MEDIA_BYTES", 20 * 1024 * 1024)
+        if file_size > max_media:
             return jsonify({"success": False, "message": "File size exceeds the 20 MB limit."}), 400
 
         path, err = _save_upload(media, "post_media")

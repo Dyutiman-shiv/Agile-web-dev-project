@@ -1,5 +1,8 @@
 let itemToDelete = { id: null, type: null, element: null };
 
+/** Must match Backend/config.py MAX_POST_MEDIA_BYTES (20 MB). */
+const POST_MEDIA_MAX_BYTES = 20 * 1024 * 1024;
+
 $(document).ready(function () {
   "use strict";
   const group_id = $("#group-data").data("group-id");
@@ -156,6 +159,19 @@ $(document).ready(function () {
     const file = event.target.files[0];
 
     if (!file) return;
+
+    if (file.size > POST_MEDIA_MAX_BYTES) {
+      $("#post-alert").empty().append(
+        $("<p>", {
+          class: "text-red-500 text-sm roboto-regular",
+          text: "This file is too large. Maximum size for photos and videos is 20 MB.",
+        }),
+      );
+      event.target.value = "";
+      return;
+    }
+
+    $("#post-alert").empty();
 
     const url = URL.createObjectURL(file);
 
@@ -551,9 +567,22 @@ function createPost() {
   const content = $("#post-content").val().trim();
   const group_id = $("#group-data").data("group-id");
 
+  $("#post-alert").empty();
+
   if (!content) {
     $("#post-alert").html(
       '<p class="text-red-500 text-sm roboto-regular">Please tell us what this post is about.</p>',
+    );
+    return;
+  }
+
+  const mediaFile = $("#post-media-input")[0].files[0];
+  if (mediaFile && mediaFile.size > POST_MEDIA_MAX_BYTES) {
+    $("#post-alert").empty().append(
+      $("<p>", {
+        class: "text-red-500 text-sm roboto-regular",
+        text: "This file is too large. Maximum size for photos and videos is 20 MB.",
+      }),
     );
     return;
   }
@@ -563,8 +592,6 @@ function createPost() {
   formData.append("content", content);
 
   formData.append("article_url", $("#article-url").val());
-
-  const mediaFile = $("#post-media-input")[0].files[0];
 
   if (mediaFile) {
     formData.append("media", mediaFile);
@@ -582,10 +609,20 @@ function createPost() {
     },
 
     error: function (xhr) {
-      const errorMsg = xhr.responseJSON
-        ? xhr.responseJSON.message
-        : "Unkown error";
-      alert("Error: " + errorMsg);
+      let errorMsg = "Something went wrong. Please try again.";
+      const body = xhr.responseJSON;
+      if (body && typeof body.message === "string" && body.message.trim()) {
+        errorMsg = body.message;
+      } else if (xhr.status === 413) {
+        errorMsg =
+          "File or request is too large. Maximum upload size is 20 MB.";
+      }
+      $("#post-alert").empty().append(
+        $("<p>", {
+          class: "text-red-500 text-sm roboto-regular",
+          text: errorMsg,
+        }),
+      );
     },
   });
 }
@@ -598,6 +635,8 @@ function resetPostForm() {
   $("#post-media-input").val("");
 
   $("#media-preview-container").html("").addClass("hidden");
+
+  $("#post-alert").empty();
 }
 
 function openDeleteModal(id, type, element = null) {
