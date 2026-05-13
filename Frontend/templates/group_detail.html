@@ -308,7 +308,7 @@ endblock %} {% block page_content %}
   id="invite-modal"
   class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
 >
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-base montserrat-bold text-gray-800">Invite Member</h3>
@@ -320,21 +320,17 @@ endblock %} {% block page_content %}
     </div>
 
     <div class="space-y-3">
-      <div class="flex gap-2">
-        <input
-          type="text"
-          id="invite-code-input"
-          maxlength="8"
-          placeholder="Friend code (e.g. ABCD1234)"
-          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase"
-        />
-        <button
-          id="invite-send-btn"
-          class="px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600"
-        >
-          Send
-        </button>
-      </div>
+      <div id="invite-code-rows-detail" class="invite-code-rows space-y-2"></div>
+      <p class="text-[11px] roboto-regular text-gray-400 leading-snug">
+        Up to <span class="font-medium text-gray-500">15</span> friend codes. When a row is complete, another appears. Use <span class="font-medium text-gray-600">Send invites</span> to send all at once.
+      </p>
+      <button
+        id="invite-mass-btn-detail"
+        type="button"
+        class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600"
+      >
+        Send invites
+      </button>
       <div id="invite-alert" class="text-xs roboto-regular min-h-[1rem]"></div>
     </div>
   </div>

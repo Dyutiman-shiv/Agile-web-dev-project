@@ -955,11 +955,90 @@ function loadSettingsAudit(groupId) {
   });
 }
 
-// ── Invite modal ──────────────────────────────────────────────────────────
+// ── Invite modal (mass invite by friend code) ─────────────────────────────
+const MAX_INVITE_CODES_DETAIL = 15;
+
+function inviteRowTemplateDetail() {
+  return (
+    `<div class="invite-code-row flex gap-2 items-center">
+      <input type="text" maxlength="8" autocomplete="off" spellcheck="false"
+        placeholder="Friend code"
+        class="invite-code-field flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase tracking-widest" />
+      <button type="button" class="invite-code-remove shrink-0 w-9 h-9 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-100 montserrat-medium text-lg leading-none disabled:opacity-30" title="Remove row" aria-label="Remove row" disabled>×</button>
+    </div>`
+  );
+}
+
+function resetInviteRowsDetail($container) {
+  $container.empty().append(inviteRowTemplateDetail());
+  syncInviteRemoveButtonsDetail($container);
+}
+
+function syncInviteRemoveButtonsDetail($container) {
+  const $rows = $container.find(".invite-code-row");
+  const many = $rows.length > 1;
+  $rows
+    .find(".invite-code-remove")
+    .prop("disabled", !many)
+    .toggleClass("opacity-30 pointer-events-none", !many);
+}
+
+function collectFriendCodesDetail($container) {
+  const codes = [];
+  const seen = new Set();
+  $container.find(".invite-code-field").each(function () {
+    const c = ($(this).val() || "").trim().toUpperCase();
+    if (c.length === 8 && !seen.has(c)) {
+      seen.add(c);
+      codes.push(c);
+    }
+  });
+  return codes;
+}
+
+function sendMassInvitesDetail(groupId, $container, $alert) {
+  const codes = collectFriendCodesDetail($container);
+  if (codes.length === 0) {
+    $alert
+      .text("Enter at least one complete 8-character friend code.")
+      .css("color", "#ef4444");
+    return;
+  }
+
+  $alert.text("Sending...").css("color", "#6b7280");
+  $("#invite-mass-btn-detail").prop("disabled", true);
+
+  $.ajax({
+    url: `/api/groups/${groupId}/invite-bulk`,
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({ friend_codes: codes }),
+    success: function (res) {
+      const sent = res.sent != null ? res.sent : 0;
+      $alert
+        .text(
+          res.message ||
+            (sent ? `Sent ${sent} invitation(s).` : "No invitations were sent."),
+        )
+        .css("color", sent > 0 ? "#16a34a" : "#ef4444");
+      resetInviteRowsDetail($container);
+    },
+    error: function (xhr) {
+      const msg = xhr.responseJSON?.message || "Failed to send invitations.";
+      $alert.text(msg).css("color", "#ef4444");
+    },
+    complete: function () {
+      $("#invite-mass-btn-detail").prop("disabled", false);
+    },
+  });
+}
+
 function initInviteModal(groupId) {
+  const $root = $("#invite-code-rows-detail");
+
   $("#invite-member-btn").on("click", function () {
-    $("#invite-code-input").val("");
     $("#invite-alert").text("");
+    resetInviteRowsDetail($root);
     $("#invite-modal").removeClass("hidden");
   });
 
@@ -967,44 +1046,47 @@ function initInviteModal(groupId) {
     $("#invite-modal").addClass("hidden");
   });
 
-  $("#invite-code-input").on("input", function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
-  });
-
-  $("#invite-code-input").on("keydown", function (e) {
-    if (e.key === "Enter") $("#invite-send-btn").trigger("click");
-  });
-
-  $("#invite-send-btn").on("click", function () {
-    const code = $("#invite-code-input").val().trim().toUpperCase();
-    if (!code) {
-      $("#invite-alert").text("Please enter a friend code.").css("color", "#ef4444");
-      return;
+  $root.on("input", ".invite-code-field", function () {
+    const input = this;
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (input.value.length > 8) input.value = input.value.slice(0, 8);
+    if (typeof pos === "number") {
+      const p = Math.min(pos, input.value.length);
+      input.setSelectionRange(p, p);
     }
-    if (code.length !== 8) {
-      $("#invite-alert").text("Friend codes are 8 characters long.").css("color", "#ef4444");
-      return;
+    const $rows = $root.find(".invite-code-row");
+    const $row = $(input).closest(".invite-code-row");
+    if (
+      $row.is($rows.last()) &&
+      (input.value || "").trim().length >= 8 &&
+      $rows.length < MAX_INVITE_CODES_DETAIL
+    ) {
+      $root.append(inviteRowTemplateDetail());
+      syncInviteRemoveButtonsDetail($root);
     }
-
-    $("#invite-alert").text("Sending...").css("color", "#6b7280");
-
-    $.ajax({
-      url: `/api/groups/${groupId}/invite-by-code`,
-      type: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({ friend_code: code }),
-      success: function () {
-        $("#invite-alert").text("Invitation sent!").css("color", "#16a34a");
-        $("#invite-code-input").val("");
-      },
-      error: function (xhr) {
-        const msg = xhr.responseJSON?.message || "Failed to send invitation.";
-        $("#invite-alert").text(msg).css("color", "#ef4444");
-      },
-    });
   });
+
+  $root.on("click", ".invite-code-remove", function (e) {
+    e.preventDefault();
+    const $rows = $root.find(".invite-code-row");
+    if ($rows.length <= 1) return;
+    $(this).closest(".invite-code-row").remove();
+    syncInviteRemoveButtonsDetail($root);
+  });
+
+  $root.on("keydown", ".invite-code-field", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMassInvitesDetail(groupId, $root, $("#invite-alert"));
+    }
+  });
+
+  $("#invite-mass-btn-detail").on("click", function () {
+    sendMassInvitesDetail(groupId, $root, $("#invite-alert"));
+  });
+
+  resetInviteRowsDetail($root);
 }
 
 // ── Leave group ───────────────────────────────────────────────────────────

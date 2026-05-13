@@ -8,12 +8,142 @@ $(document).ready(function () {
   let _searchQuery = "";
   let _groupsLoading = false;
   let _invitesLoading = false;
+  let _sentInvitesLoading = false;
   let _refreshTimer = null;
+
+  const MAX_INVITE_CODES = 15;
+
+  function inviteRowTemplate() {
+    return (
+      `<div class="invite-code-row flex gap-2 items-center">
+        <input type="text" maxlength="8" autocomplete="off" spellcheck="false"
+          placeholder="Friend code"
+          class="invite-code-field flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase tracking-widest" />
+        <button type="button" class="invite-code-remove shrink-0 w-9 h-9 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-100 montserrat-medium text-lg leading-none disabled:opacity-30" title="Remove row" aria-label="Remove row" disabled>×</button>
+      </div>`
+    );
+  }
+
+  function resetInviteRows($container) {
+    $container.empty().append(inviteRowTemplate());
+    syncInviteRemoveButtons($container);
+  }
+
+  function syncInviteRemoveButtons($container) {
+    const $rows = $container.find(".invite-code-row");
+    const many = $rows.length > 1;
+    $rows
+      .find(".invite-code-remove")
+      .prop("disabled", !many)
+      .toggleClass("opacity-30 pointer-events-none", !many);
+  }
+
+  function collectFriendCodes($container) {
+    const codes = [];
+    const seen = new Set();
+    $container.find(".invite-code-field").each(function () {
+      const c = ($(this).val() || "").trim().toUpperCase();
+      if (c.length === 8 && !seen.has(c)) {
+        seen.add(c);
+        codes.push(c);
+      }
+    });
+    return codes;
+  }
+
+  function sendMassInvites(groupId, $container, $alert) {
+    if (!groupId) {
+      $alert.text("No group selected.").css("color", "#ef4444");
+      return;
+    }
+    const codes = collectFriendCodes($container);
+    if (codes.length === 0) {
+      $alert
+        .text("Enter at least one complete 8-character friend code.")
+        .css("color", "#ef4444");
+      return;
+    }
+
+    $alert.text("Sending…").css("color", "#6b7280");
+    $("#invite-mass-btn, #modal-invite-mass-btn").prop("disabled", true);
+
+    $.ajax({
+      url: `/api/groups/${groupId}/invite-bulk`,
+      method: "POST",
+      contentType: "application/json",
+      data: JSON.stringify({ friend_codes: codes }),
+      success: function (res) {
+        const sent = res.sent != null ? res.sent : 0;
+        $alert
+          .text(
+            res.message ||
+              (sent ? `Sent ${sent} invitation(s).` : "No invitations were sent.")
+          )
+          .css("color", sent > 0 ? "#16a34a" : "#ef4444");
+        resetInviteRows($container);
+        loadSentInvitations();
+      },
+      error: function (xhr) {
+        const msg =
+          xhr.responseJSON?.message || "Failed to send invitations.";
+        $alert.text(msg).css("color", "#ef4444");
+      },
+      complete: function () {
+        $("#invite-mass-btn, #modal-invite-mass-btn").prop("disabled", false);
+      },
+    });
+  }
+
+  $(document).on("input", ".invite-code-rows .invite-code-field", function () {
+    const input = this;
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (input.value.length > 8) input.value = input.value.slice(0, 8);
+    if (typeof pos === "number") {
+      const p = Math.min(pos, input.value.length);
+      input.setSelectionRange(p, p);
+    }
+    const $container = $(input).closest(".invite-code-rows");
+    const $rows = $container.find(".invite-code-row");
+    const $row = $(input).closest(".invite-code-row");
+    if (
+      $row.is($rows.last()) &&
+      (input.value || "").trim().length >= 8 &&
+      $rows.length < MAX_INVITE_CODES
+    ) {
+      $container.append(inviteRowTemplate());
+      syncInviteRemoveButtons($container);
+    }
+  });
+
+  $(document).on("click", ".invite-code-rows .invite-code-remove", function (e) {
+    e.preventDefault();
+    const $container = $(this).closest(".invite-code-rows");
+    const $rows = $container.find(".invite-code-row");
+    if ($rows.length <= 1) return;
+    $(this).closest(".invite-code-row").remove();
+    syncInviteRemoveButtons($container);
+  });
+
+  $(document).on("keydown", ".invite-code-rows .invite-code-field", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const $container = $(this).closest(".invite-code-rows");
+      if ($container.attr("id") === "invite-code-rows-card") {
+        sendMassInvites(_activeInviteGroupId, $container, $("#invite-alert"));
+      } else {
+        sendMassInvites(_newGroupId, $container, $("#modal-invite-alert"));
+      }
+    }
+  });
 
   // ── Init ─────────────────────────────────────────────────────────────────
   loadFriendCode();
   loadGroups();
   loadPendingInvitations();
+  loadSentInvitations();
+  resetInviteRows($("#invite-code-rows-card"));
+  resetInviteRows($("#invite-code-rows-modal"));
   handleInvitationDeepLink();
   initAutoRefresh();
 
@@ -54,13 +184,6 @@ $(document).ready(function () {
     } else {
       $("#cover-preview-container").addClass("hidden");
     }
-  });
-
-  // Normalise friend code inputs to uppercase as you type
-  $("#invite-code-input, #invite-code-input-modal").on("input", function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
   });
 
   // ── My Friend Code ────────────────────────────────────────────────────────
@@ -199,8 +322,8 @@ $(document).ready(function () {
     _activeInviteGroupId = $(this).data("group-id");
     const groupName = $(this).data("group-name");
     $("#invite-modal-group-name").text(groupName);
-    $("#invite-code-input").val("");
     $("#invite-alert").text("");
+    resetInviteRows($("#invite-code-rows-card"));
     $("#invite-modal").removeClass("hidden");
   });
 
@@ -208,15 +331,12 @@ $(document).ready(function () {
     $("#invite-modal").addClass("hidden");
   });
 
-  $("#invite-send-btn").on("click", function () {
-    const code = $("#invite-code-input").val().trim().toUpperCase();
-    sendInvite(_activeInviteGroupId, code, "#invite-alert", function () {
-      $("#invite-code-input").val("");
-    });
-  });
-
-  $("#invite-code-input").on("keydown", function (e) {
-    if (e.key === "Enter") $("#invite-send-btn").trigger("click");
+  $("#invite-mass-btn").on("click", function () {
+    sendMassInvites(
+      _activeInviteGroupId,
+      $("#invite-code-rows-card"),
+      $("#invite-alert")
+    );
   });
 
   // ── Create Group modal ────────────────────────────────────────────────────
@@ -244,8 +364,8 @@ $(document).ready(function () {
     $("#group-cover").val("");
     $("#cover-preview-container").addClass("hidden");
     $("#group-alert").html("");
-    $("#invite-code-input-modal").val("");
     $("#modal-invite-alert").text("");
+    resetInviteRows($("#invite-code-rows-modal"));
     _newGroupId = null;
   }
 
@@ -303,55 +423,17 @@ $(document).ready(function () {
     $("#modal-step-create").addClass("hidden");
     $("#modal-step-invite").removeClass("hidden");
     $("#group-save-btn").prop("disabled", false).text("Create");
+    $("#modal-invite-alert").text("");
+    resetInviteRows($("#invite-code-rows-modal"));
   }
 
-  // Invite from the post-creation step
-  $("#modal-invite-btn").on("click", function () {
-    const code = $("#invite-code-input-modal").val().trim().toUpperCase();
-    sendInvite(_newGroupId, code, "#modal-invite-alert", function () {
-      $("#invite-code-input-modal").val("");
-    });
+  $("#modal-invite-mass-btn").on("click", function () {
+    sendMassInvites(
+      _newGroupId,
+      $("#invite-code-rows-modal"),
+      $("#modal-invite-alert")
+    );
   });
-
-  $("#invite-code-input-modal").on("keydown", function (e) {
-    if (e.key === "Enter") $("#modal-invite-btn").trigger("click");
-  });
-
-  // ── Send invite helper ─────────────────────────────────────────────────────
-  function sendInvite(groupId, code, alertSelector, onSuccess) {
-    if (!code) {
-      $(alertSelector)
-        .text("Please enter a friend code.")
-        .css("color", "#ef4444");
-      return;
-    }
-    if (code.length !== 8) {
-      $(alertSelector)
-        .text("Friend codes are 8 characters long.")
-        .css("color", "#ef4444");
-      return;
-    }
-
-    $(alertSelector).text("Sending…").css("color", "#6b7280");
-
-    $.ajax({
-      url: `/api/groups/${groupId}/invite-by-code`,
-      method: "POST",
-      contentType: "application/json",
-      data: JSON.stringify({ friend_code: code }),
-      success: function () {
-        $(alertSelector)
-          .text("Invitation sent!")
-          .css("color", "#16a34a");
-        if (onSuccess) onSuccess();
-      },
-      error: function (xhr) {
-        const msg =
-          xhr.responseJSON?.message || "Failed to send invitation.";
-        $(alertSelector).text(msg).css("color", "#ef4444");
-      },
-    });
-  }
 
   // ── Pending Invitations ───────────────────────────────────────────────────
   function loadPendingInvitations() {
@@ -407,7 +489,7 @@ $(document).ready(function () {
   });
 
   function respondToInvite(inviteId, action) {
-    const row = $(`[data-invite-id="${inviteId}"]`);
+    const row = $(`#invitations-container [data-invite-id="${inviteId}"]`);
     row.find("button").prop("disabled", true);
 
     $.ajax({
@@ -427,6 +509,67 @@ $(document).ready(function () {
       },
     });
   }
+
+  // ── Sent Invitations ──────────────────────────────────────────────────────
+  function loadSentInvitations() {
+    if (_sentInvitesLoading) return;
+    _sentInvitesLoading = true;
+    $.getJSON("/api/groups/invitations/sent", function (invites) {
+      if (invites.length === 0) {
+        $("#sent-invitations-container").html("");
+        $("#no-sent-invitations").removeClass("hidden");
+        return;
+      }
+      $("#no-sent-invitations").addClass("hidden");
+
+      let html = "";
+      invites.forEach((inv) => {
+        const coverImg = inv.group_cover
+          ? `<img src="/static/${inv.group_cover}" class="w-8 h-8 rounded-lg object-cover shrink-0" alt="">`
+          : `<div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+               <span class="text-xs montserrat-bold text-indigo-400">${escapeHtml(inv.group_name[0] || "G")}</span>
+             </div>`;
+
+        html += `
+          <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl" data-sent-invite-id="${inv.id}">
+            ${coverImg}
+            <div class="flex-1 min-w-0">
+              <p class="text-xs montserrat-semi-bold text-gray-700 truncate">${escapeHtml(inv.group_name)}</p>
+              <p class="text-[11px] roboto-regular text-gray-400 truncate">to ${escapeHtml(inv.receiver_username || "user")}</p>
+              <div class="flex gap-2 mt-2">
+                <button class="cancel-invite-btn flex-1 py-1 rounded-lg border border-gray-200 text-gray-500 text-[11px] montserrat-medium hover:bg-gray-100 transition"
+                        data-invite-id="${inv.id}">Cancel</button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      $("#sent-invitations-container").html(html);
+    }).always(function () {
+      _sentInvitesLoading = false;
+    });
+  }
+
+  $(document).on("click", ".cancel-invite-btn", function () {
+    const id = $(this).data("invite-id");
+    const row = $(`[data-sent-invite-id="${id}"]`);
+    row.find("button").prop("disabled", true);
+
+    $.ajax({
+      url: `/api/groups/invitations/${id}/cancel`,
+      method: "POST",
+      success: function () {
+        row.remove();
+        if ($("#sent-invitations-container").children().length === 0) {
+          $("#no-sent-invitations").removeClass("hidden");
+        }
+      },
+      error: function () {
+        row.find("button").prop("disabled", false);
+      },
+    });
+  });
 
   // ── Utility ───────────────────────────────────────────────────────────────
   function escapeHtml(str) {
@@ -449,6 +592,7 @@ $(document).ready(function () {
   // ── Background refresh (invite + groups auto-update) ─────────────────────
   function refreshGroupsData() {
     loadPendingInvitations();
+    loadSentInvitations();
     loadGroups();
   }
 

@@ -502,7 +502,7 @@ class GroupInvitation(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    status = db.Column(db.String(20), default="pending")  # pending / accepted / declined
+    status = db.Column(db.String(20), default="pending")  # pending / accepted / declined / cancelled
     created_at = db.Column(db.DateTime, default=db.func.now())
 
     # Relationships
@@ -520,6 +520,8 @@ class GroupInvitation(db.Model):
             "sender_username": self.sender.username,
             "sender_picture": self.sender.profile_picture,
             "receiver_id": self.receiver_id,
+            "receiver_username": self.receiver.username,
+            "receiver_picture": self.receiver.profile_picture,
             "status": self.status,
             "created_at": self.created_at.isoformat(),
         }

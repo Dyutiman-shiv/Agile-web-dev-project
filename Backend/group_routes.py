@@ -44,6 +44,9 @@ _INVITE_PER_MIN_USER = 10
 _INVITE_PER_HOUR_USER = 60
 _INVITE_PER_MIN_IP = 30
 
+# Max friend codes per bulk-invite request (UI matches this).
+_MAX_BULK_INVITE_CODES = 15
+
 
 def _check_rate_limit(user_key: str, ip_key: str):
     now = _time.time()
@@ -541,6 +544,147 @@ def invite_by_code(group_id):
     return jsonify({"success": True, "message": "Invitation sent.", "invitation": invitation.to_dict()}), 201
 
 
+@groups_bp.route("/api/groups/<int:group_id>/invite-bulk", methods=["POST"])
+@login_required
+def invite_bulk_by_codes(group_id):
+    """Invite up to 15 users by friend code in one request. One rate-limit slot for the whole batch."""
+    group = Group.query.get_or_404(group_id)
+
+    if not _is_admin_or_owner(group, current_user.id):
+        return jsonify({"success": False, "message": "Only admins or the owner can invite new members."}), 403
+
+    if not current_app.config.get("TESTING", False):
+        user_key = f"invite:user:{current_user.id}"
+        ip_key = f"invite:ip:{request.remote_addr}"
+        allowed, reason = _check_rate_limit(user_key, ip_key)
+        if not allowed:
+            return jsonify({"success": False, "message": reason}), 429
+
+    data = request.get_json() or {}
+    raw_list = data.get("friend_codes")
+    if not isinstance(raw_list, list):
+        return jsonify({"success": False, "message": "friend_codes must be a list."}), 400
+
+    seen_codes = set()
+    codes = []
+    for item in raw_list:
+        rc = (str(item) if item is not None else "").strip().upper()
+        if not rc or rc in seen_codes:
+            continue
+        seen_codes.add(rc)
+        codes.append(rc)
+
+    if not codes:
+        return jsonify({"success": False, "message": "Add at least one friend code."}), 400
+
+    if len(codes) > _MAX_BULK_INVITE_CODES:
+        return jsonify({
+            "success": False,
+            "message": f"You can invite at most {_MAX_BULK_INVITE_CODES} people at once.",
+        }), 400
+
+    results = []
+    sent = 0
+    receivers_in_batch = set()
+
+    for raw_code in codes:
+        if len(raw_code) != 8:
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "Friend codes must be exactly 8 characters.",
+            })
+            continue
+
+        target = User.query.filter_by(friend_code=raw_code).first()
+        if not target:
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "No user found with that friend code.",
+            })
+            continue
+
+        if target.id == current_user.id:
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "You cannot invite yourself.",
+            })
+            continue
+
+        if target.id in receivers_in_batch:
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "Duplicate user in this invite list.",
+            })
+            continue
+
+        if _is_member(target.id, group_id):
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "This user is already a member of the group.",
+            })
+            continue
+
+        existing = GroupInvitation.query.filter_by(
+            receiver_id=target.id,
+            group_id=group_id,
+            status="pending",
+        ).first()
+        if existing:
+            results.append({
+                "friend_code": raw_code,
+                "success": False,
+                "message": "This user has already been invited and has not responded yet.",
+            })
+            continue
+
+        invitation = GroupInvitation(
+            group_id=group_id,
+            sender_id=current_user.id,
+            receiver_id=target.id,
+        )
+        db.session.add(invitation)
+        db.session.flush()
+
+        _notify(
+            user_id=target.id,
+            notif_type="group_invite",
+            title=f"Group invitation from {current_user.username}",
+            message=f'{current_user.username} invited you to join "{group.name}".',
+            link="/groups#invitations",
+        )
+
+        receivers_in_batch.add(target.id)
+        sent += 1
+        results.append({
+            "friend_code": raw_code,
+            "success": True,
+            "invitation": invitation.to_dict(),
+        })
+
+    db.session.commit()
+
+    failed = len(results) - sent
+    if sent == 0 and failed > 0:
+        msg = "No invitations were sent."
+    elif failed == 0:
+        msg = f"Sent {sent} invitation(s)." if sent != 1 else "Invitation sent."
+    else:
+        msg = f"Sent {sent} invitation(s); {failed} could not be sent."
+
+    return jsonify({
+        "success": sent > 0,
+        "message": msg,
+        "sent": sent,
+        "failed": failed,
+        "results": results,
+    }), 200
+
+
 @groups_bp.route("/api/groups/invitations/pending", methods=["GET"])
 @login_required
 def get_pending_invitations():
@@ -551,6 +695,33 @@ def get_pending_invitations():
         .all()
     )
     return jsonify([i.to_dict() for i in invitations]), 200
+
+
+@groups_bp.route("/api/groups/invitations/sent", methods=["GET"])
+@login_required
+def get_sent_invitations():
+    invitations = (
+        GroupInvitation.query
+        .filter_by(sender_id=current_user.id, status="pending")
+        .order_by(GroupInvitation.created_at.desc())
+        .all()
+    )
+    return jsonify([i.to_dict() for i in invitations]), 200
+
+
+@groups_bp.route("/api/groups/invitations/<int:invite_id>/cancel", methods=["POST"])
+@login_required
+def cancel_invitation(invite_id):
+    invite = GroupInvitation.query.get_or_404(invite_id)
+
+    if invite.sender_id != current_user.id:
+        return jsonify({"success": False, "message": "You can only cancel invitations you sent."}), 403
+    if invite.status != "pending":
+        return jsonify({"success": False, "message": f"This invitation is already {invite.status}."}), 400
+
+    invite.status = "cancelled"
+    db.session.commit()
+    return jsonify({"success": True, "message": "Invitation cancelled."}), 200
 
 
 @groups_bp.route("/api/groups/invitations/<int:invite_id>/accept", methods=["POST"])

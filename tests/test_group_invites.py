@@ -441,3 +441,265 @@ def test_decline_creates_notification_for_sender(app):
 
     notif = Notification.query.filter_by(user_id=owner.id, type="group_invite_declined").first()
     assert notif is not None
+
+
+# ── Sent invitations + cancel ─────────────────────────────────────────────────
+
+def test_sent_invitations_visible_to_sender(app):
+    """Sender sees pending invitations they sent."""
+    from app import db
+    owner = make_user(db, "inv_owner_s1", "inv_owner_s1@test.com")
+    target = make_user(db, "inv_target_s1", "inv_target_s1@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_s1@test.com")
+    group_id = _create_group(owner_client, name="Sent Invites Group 1")
+    _invite_by_code(owner_client, group_id, target.friend_code)
+
+    resp = owner_client.get("/api/groups/invitations/sent")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert len(data) == 1
+    assert data[0]["group_id"] == group_id
+    assert data[0]["receiver_id"] == target.id
+    assert data[0]["receiver_username"] == target.username
+
+
+def test_sent_list_excludes_other_users_sent_invites(app):
+    """A user does not see invitations another user sent."""
+    from app import db
+    from models import GroupMembership
+
+    owner = make_user(db, "inv_owner_s2", "inv_owner_s2@test.com")
+    admin = make_user(db, "inv_admin_s2", "inv_admin_s2@test.com")
+    target = make_user(db, "inv_target_s2", "inv_target_s2@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_s2@test.com")
+    group_id = _create_group(owner_client, name="Sent Invites Group 2")
+
+    db.session.add(GroupMembership(user_id=admin.id, group_id=group_id, role="admin"))
+    db.session.commit()
+
+    _invite_by_code(owner_client, group_id, target.friend_code)
+
+    admin_client = app.test_client()
+    _login(admin_client, "inv_admin_s2@test.com")
+    resp = admin_client.get("/api/groups/invitations/sent")
+    assert resp.status_code == 200
+    assert len(resp.get_json()) == 0
+
+
+def test_sender_can_cancel_pending_invite(app):
+    """Sender successfully cancels a pending invitation."""
+    from app import db
+    owner = make_user(db, "inv_owner_c1", "inv_owner_c1@test.com")
+    target = make_user(db, "inv_target_c1", "inv_target_c1@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_c1@test.com")
+    group_id = _create_group(owner_client, name="Cancel Group 1")
+    invite_resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    invite_id = invite_resp.get_json()["invitation"]["id"]
+
+    resp = owner_client.post(f"/api/groups/invitations/{invite_id}/cancel")
+    assert resp.status_code == 200
+    assert resp.get_json()["success"] is True
+
+
+def test_cancelled_invite_disappears_from_sent_and_pending(app):
+    """After cancel, invite is not in sender's sent list nor receiver's pending list."""
+    from app import db
+    owner = make_user(db, "inv_owner_c2", "inv_owner_c2@test.com")
+    target = make_user(db, "inv_target_c2", "inv_target_c2@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_c2@test.com")
+    group_id = _create_group(owner_client, name="Cancel Group 2")
+    invite_resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    invite_id = invite_resp.get_json()["invitation"]["id"]
+
+    owner_client.post(f"/api/groups/invitations/{invite_id}/cancel")
+
+    sent_resp = owner_client.get("/api/groups/invitations/sent")
+    assert len(sent_resp.get_json()) == 0
+
+    target_client = app.test_client()
+    _login(target_client, "inv_target_c2@test.com")
+    pending_resp = target_client.get("/api/groups/invitations/pending")
+    assert len(pending_resp.get_json()) == 0
+
+
+def test_only_sender_can_cancel_invite(app):
+    """A non-sender (including the receiver) gets 403 when cancelling."""
+    from app import db
+    owner = make_user(db, "inv_owner_c3", "inv_owner_c3@test.com")
+    target = make_user(db, "inv_target_c3", "inv_target_c3@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_c3@test.com")
+    group_id = _create_group(owner_client, name="Cancel Group 3")
+    invite_resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    invite_id = invite_resp.get_json()["invitation"]["id"]
+
+    target_client = app.test_client()
+    _login(target_client, "inv_target_c3@test.com")
+    resp = target_client.post(f"/api/groups/invitations/{invite_id}/cancel")
+    assert resp.status_code == 403
+
+
+def test_cannot_cancel_non_pending_invite(app):
+    """Cancelling an already-accepted invite returns 400."""
+    from app import db
+    owner = make_user(db, "inv_owner_c4", "inv_owner_c4@test.com")
+    target = make_user(db, "inv_target_c4", "inv_target_c4@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_c4@test.com")
+    group_id = _create_group(owner_client, name="Cancel Group 4")
+    invite_resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    invite_id = invite_resp.get_json()["invitation"]["id"]
+
+    target_client = app.test_client()
+    _login(target_client, "inv_target_c4@test.com")
+    target_client.post(f"/api/groups/invitations/{invite_id}/accept")
+
+    _login(owner_client, "inv_owner_c4@test.com")
+    resp = owner_client.post(f"/api/groups/invitations/{invite_id}/cancel")
+    assert resp.status_code == 400
+
+
+def test_can_reinvite_after_cancel(app):
+    """After cancelling a pending invite, the same user can be invited again."""
+    from app import db
+    owner = make_user(db, "inv_owner_c5", "inv_owner_c5@test.com")
+    target = make_user(db, "inv_target_c5", "inv_target_c5@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_owner_c5@test.com")
+    group_id = _create_group(owner_client, name="Cancel Group 5")
+    invite_resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    invite_id = invite_resp.get_json()["invitation"]["id"]
+
+    owner_client.post(f"/api/groups/invitations/{invite_id}/cancel")
+
+    resp = _invite_by_code(owner_client, group_id, target.friend_code)
+    assert resp.status_code == 201
+
+
+# ── Bulk invite by friend codes ───────────────────────────────────────────────
+
+def _invite_bulk(client, group_id, codes):
+    return client.post(
+        f"/api/groups/{group_id}/invite-bulk",
+        json={"friend_codes": codes},
+    )
+
+
+def test_bulk_invite_sends_multiple_pending_invites(app):
+    """Owner can invite several users in one bulk request."""
+    from app import db
+    from models import GroupInvitation
+
+    owner = make_user(db, "inv_bulk_o1", "inv_bulk_o1@test.com")
+    t1 = make_user(db, "inv_bulk_t1", "inv_bulk_t1@test.com")
+    t2 = make_user(db, "inv_bulk_t2", "inv_bulk_t2@test.com")
+    t3 = make_user(db, "inv_bulk_t3", "inv_bulk_t3@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_bulk_o1@test.com")
+    group_id = _create_group(owner_client, name="Bulk Group 1")
+
+    resp = _invite_bulk(
+        owner_client,
+        group_id,
+        [t1.friend_code, t2.friend_code, t3.friend_code],
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["sent"] == 3
+    assert data["failed"] == 0
+    assert len(data["results"]) == 3
+    assert all(r["success"] for r in data["results"])
+
+    pending = GroupInvitation.query.filter_by(group_id=group_id, status="pending").count()
+    assert pending == 3
+
+
+def test_bulk_invite_rejects_more_than_15_codes(app):
+    """Bulk endpoint returns 400 when more than 15 codes are submitted."""
+    from app import db
+    owner = make_user(db, "inv_bulk_o2", "inv_bulk_o2@test.com")
+    owner_client = app.test_client()
+    _login(owner_client, "inv_bulk_o2@test.com")
+    group_id = _create_group(owner_client, name="Bulk Group 2")
+
+    codes = [f"CODE{i:04d}" for i in range(16)]
+    resp = _invite_bulk(owner_client, group_id, codes)
+    assert resp.status_code == 400
+
+
+def test_bulk_invite_plain_member_forbidden(app):
+    """A plain member cannot use bulk invite."""
+    from app import db
+    from models import GroupMembership
+
+    owner = make_user(db, "inv_bulk_o3", "inv_bulk_o3@test.com")
+    member = make_user(db, "inv_bulk_m3", "inv_bulk_m3@test.com")
+    t1 = make_user(db, "inv_bulk_t4", "inv_bulk_t4@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_bulk_o3@test.com")
+    group_id = _create_group(owner_client, name="Bulk Group 3")
+
+    db.session.add(GroupMembership(user_id=member.id, group_id=group_id, role="member"))
+    db.session.commit()
+
+    member_client = app.test_client()
+    _login(member_client, "inv_bulk_m3@test.com")
+    resp = _invite_bulk(member_client, group_id, [t1.friend_code])
+    assert resp.status_code == 403
+
+
+def test_bulk_invite_deduplicates_duplicate_codes_in_request(app):
+    """Duplicate friend codes in the JSON list are only processed once."""
+    from app import db
+    from models import GroupInvitation
+
+    owner = make_user(db, "inv_bulk_o4", "inv_bulk_o4@test.com")
+    t1 = make_user(db, "inv_bulk_t5", "inv_bulk_t5@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_bulk_o4@test.com")
+    group_id = _create_group(owner_client, name="Bulk Group 4")
+
+    code = t1.friend_code
+    resp = _invite_bulk(owner_client, group_id, [code, code.lower(), code])
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["sent"] == 1
+    assert GroupInvitation.query.filter_by(group_id=group_id, receiver_id=t1.id, status="pending").count() == 1
+
+
+def test_bulk_invite_partial_success(app):
+    """Bulk returns per-code failures and still sends valid invites."""
+    from app import db
+    from models import GroupInvitation
+
+    owner = make_user(db, "inv_bulk_o5", "inv_bulk_o5@test.com")
+    t1 = make_user(db, "inv_bulk_t6", "inv_bulk_t6@test.com")
+
+    owner_client = app.test_client()
+    _login(owner_client, "inv_bulk_o5@test.com")
+    group_id = _create_group(owner_client, name="Bulk Group 5")
+
+    resp = _invite_bulk(
+        owner_client,
+        group_id,
+        [t1.friend_code, "ZZZZZZZZ"],
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["sent"] == 1
+    assert data["failed"] == 1
+    assert GroupInvitation.query.filter_by(receiver_id=t1.id, group_id=group_id, status="pending").count() == 1
