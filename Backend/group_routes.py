@@ -124,7 +124,9 @@ def get_posts(group_id):
     group = Group.query.filter_by(id=group_id).first()
     posts = [p.to_dict() for p in group.posts]
 
-    return jsonify(posts), 200
+    sorted_posts = sorted(posts, key=lambda x: x["created_at"], reverse=True)
+
+    return jsonify(sorted_posts), 200
 
 #This handles the size of the file.
 @groups_bp.errorhandler(RequestEntityTooLarge)
