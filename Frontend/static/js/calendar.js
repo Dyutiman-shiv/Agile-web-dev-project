@@ -12,9 +12,9 @@ $(function () {
     let isEditMode = false;  // Track if we're in edit mode
     let currentSummaryEvent = null;
 
-    const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const DAYS_MINI = ["S", "M", "T", "W", "T", "F", "S"];
 
     //Format date & time
@@ -22,12 +22,16 @@ $(function () {
         return num.toString().padStart(2, '0');
     }
 
+    function isMobileView() {
+        return window.innerWidth < 640;
+    }
+
     function toLocalISO(d) {
-        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":00";
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":00";
     }
 
     function dateKey(d) {
-        return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
     }
 
     function sameDay(a, b) { return dateKey(a) === dateKey(b); }
@@ -35,7 +39,7 @@ $(function () {
     function startOfWeek(d) {
         const s = new Date(d);
         s.setDate(s.getDate() - s.getDay());
-        s.setHours(0,0,0,0);
+        s.setHours(0, 0, 0, 0);
         return s;
     }
 
@@ -52,7 +56,7 @@ $(function () {
             end.setDate(end.getDate() + 7);
         } else {
             start = new Date(currentDate);
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0);
             end = new Date(start);
             end.setDate(end.getDate() + 1);
         }
@@ -61,7 +65,7 @@ $(function () {
 
     function getAgendaRange() {
         const today = new Date();
-        today.setHours(0,0,0,0);
+        today.setHours(0, 0, 0, 0);
         const end = new Date(today);
         end.setDate(end.getDate() + 2);
         return { start: today, end: end };
@@ -69,7 +73,7 @@ $(function () {
 
     function showAlert(msg, type) {
         const colorMap = {
-            danger:  "bg-red-100 text-red-700 border-red-200",
+            danger: "bg-red-100 text-red-700 border-red-200",
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
         const cls = colorMap[type] || colorMap.danger;
@@ -97,7 +101,7 @@ $(function () {
 
     function getEndTime(ev) {
         const start = new Date(ev.start);
-        const dur = ev.duration || (ev.type === "session" ? 60 : 30);
+        const dur = ev.duration || ((ev.type === "session" || ev.type === "session_segment") ? 60 : 30);
         return new Date(start.getTime() + dur * 60000);
     }
 
@@ -166,7 +170,7 @@ $(function () {
 
         const year = miniDate.getFullYear();
         const month = miniDate.getMonth();
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
 
         let html = '<div class="select-none">';
         // Header: Month Year < >
@@ -216,17 +220,17 @@ $(function () {
     }
 
     // Mini calendar navigation
-    $(document).on("click", "#mini-prev", function() {
+    $(document).on("click", "#mini-prev", function () {
         miniDate.setMonth(miniDate.getMonth() - 1);
         renderMiniCalendar();
     });
-    $(document).on("click", "#mini-next", function() {
+    $(document).on("click", "#mini-next", function () {
         miniDate.setMonth(miniDate.getMonth() + 1);
         renderMiniCalendar();
     });
 
     // Click mini calendar cell → navigate main calendar
-    $(document).on("click", ".mini-cal-cell", function() {
+    $(document).on("click", ".mini-cal-cell", function () {
         const parts = $(this).data("date").split("-");
         currentDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         loadEvents();
@@ -234,10 +238,10 @@ $(function () {
 
     // ============ Agenda Panel ============
     function renderAgenda() {
-        const $ap = $("#agenda-panel");
-        if (!$ap.length) return;
+        const $agendaPanels = $("#agenda-panel, #mobile-agenda-panel");
+        if (!$agendaPanels.length) return;
 
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
 
         const todayEvents = getEventsForDateFromAll(today);
@@ -249,7 +253,7 @@ $(function () {
         html += '<div class="mb-5">';
         html += '<div class="flex items-center gap-2 mb-2">';
         html += '<span class="text-sm roboto-semi-bold text-tertiary_blu">Today</span>';
-        html += '<span class="text-xs text-tertiary_blu roboto-regular">' + (today.getMonth()+1) + '/' + today.getDate() + '/' + today.getFullYear() + '</span>';
+        html += '<span class="text-xs text-tertiary_blu roboto-regular">' + (today.getMonth() + 1) + '/' + today.getDate() + '/' + today.getFullYear() + '</span>';
         html += '</div>';
 
         if (todayEvents.length === 0) {
@@ -265,7 +269,7 @@ $(function () {
         html += '<div>';
         html += '<div class="flex items-center gap-2 mb-2">';
         html += '<span class="text-sm roboto-semi-bold text-text_dark_gray">Tomorrow</span>';
-        html += '<span class="text-xs roboto-regular text-text_dark_gray">' + (tomorrow.getMonth()+1) + '/' + tomorrow.getDate() + '/' + tomorrow.getFullYear() + '</span>';
+        html += '<span class="text-xs roboto-regular text-text_dark_gray">' + (tomorrow.getMonth() + 1) + '/' + tomorrow.getDate() + '/' + tomorrow.getFullYear() + '</span>';
         html += '</div>';
 
         if (tomorrowEvents.length === 0) {
@@ -277,7 +281,7 @@ $(function () {
         }
         html += '</div>';
 
-        $ap.html(html);
+        $agendaPanels.html(html);
     }
 
     function renderAgendaItem(ev) {
@@ -296,9 +300,9 @@ $(function () {
 
     function getEventsForDateFromAll(date) {
         const key = dateKey(date);
-        return allEvents.filter(function(ev) {
+        return allEvents.filter(function (ev) {
             return dateKey(new Date(ev.start)) === key;
-        }).sort(function(a, b) {
+        }).sort(function (a, b) {
             return new Date(a.start) - new Date(b.start);
         });
     }
@@ -308,21 +312,21 @@ $(function () {
         currentSummaryEvent = ev;
         const startDate = new Date(ev.start);
         const endDate = getEndTime(ev);
-        
+
         // Set title and color
         $("#summary-title").text(ev.title);
         $("#summary-color-dot").css("background", ev.color || "#725AEA");
-        
+
         // Set date and time
-        const dateStr = startDate.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
+        const dateStr = startDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
         });
 
         const timeStr = formatTime12(startDate) + " - " + formatTime12(endDate);
-        
+
         $("#summary-datetime").text(dateStr + " at " + timeStr);
 
         // Set repeat info
@@ -334,14 +338,14 @@ $(function () {
         };
 
         $("#summary-repeat").text(repeatLabels[ev.repeat_type || "none"] || "Does not repeat");
-        
+
         // Show/hide fields based on event type
-        if (ev.type === "session") {
+        if (ev.type === "session" || ev.type === "session_segment") {
             $("#summary-duration-container").show();
             $("#summary-notes-container").show();
             $("#summary-description-container").hide();
             $("#summary-completed-container").hide();
-            
+
             // Set duration
             const duration = ev.duration || 60;
             const hours = Math.floor(duration / 60);
@@ -349,9 +353,13 @@ $(function () {
             let durationText = hours > 0 ? hours + " hr" + (hours > 1 ? "s" : "") : "";
             durationText += minutes > 0 ? (durationText ? " " : "") + minutes + " min" : "";
             $("#summary-duration").text(durationText || "60 min");
-            
+
             // Set notes
-            $("#summary-notes").text(ev.notes || "No notes");
+            let notesText = ev.notes || "No notes";
+            if (ev.type === "session_segment") {
+                notesText = "Logged study time (timer). " + notesText;
+            }
+            $("#summary-notes").text(notesText);
         } else if (ev.type === "ical") {
             $("#summary-duration-container").show();
             $("#summary-notes-container").hide();
@@ -377,18 +385,18 @@ $(function () {
             $("#summary-notes-container").hide();
             $("#summary-description-container").show();
             $("#summary-completed-container").show();
-            
+
             // Set description
             $("#summary-description").text(ev.description || "No description");
-            
+
             // Set completed status
             $("#summary-completed").text(ev.completed ? "Completed ✓" : "Not completed");
-            $("#summary-completed").removeClass().addClass("text-sm font-medium " + 
+            $("#summary-completed").removeClass().addClass("text-sm font-medium " +
                 (ev.completed ? "text-green-600" : "text-gray-800"));
         }
-        
+
         // Hide edit/delete for iCal events (read-only)
-        if (ev.readonly) {
+        if (ev.readonly || ev.type === "session_segment") {
             $("#summary-edit-btn").hide();
             $("#summary-delete-btn").hide();
         } else {
@@ -400,12 +408,12 @@ $(function () {
     }
 
     // Summary modal handlers
-    $("#summary-close-btn").on("click", function() {
+    $("#summary-close-btn").on("click", function () {
         $("#event-summary-modal").addClass("hidden");
         currentSummaryEvent = null;
     });
 
-    $("#event-summary-modal").on("click", function(e) {
+    $("#event-summary-modal").on("click", function (e) {
         if (e.target === this) {
             $("#event-summary-modal").addClass("hidden");
             currentSummaryEvent = null;
@@ -413,7 +421,7 @@ $(function () {
     });
 
     // Edit from summary - open the main edit modal
-    $("#summary-edit-btn").on("click", function() {
+    $("#summary-edit-btn").on("click", function () {
         if (currentSummaryEvent) {
             $("#event-summary-modal").addClass("hidden");
             openModal(currentSummaryEvent);
@@ -422,10 +430,10 @@ $(function () {
     });
 
     // Delete from summary
-    $("#summary-delete-btn").on("click", function() {
+    $("#summary-delete-btn").on("click", function () {
         if (!currentSummaryEvent) return;
         if (!confirm("Delete this event?")) return;
-        
+
         const eventToDelete = currentSummaryEvent;
         const deleteId = eventToDelete.original_id || eventToDelete.id;
         $.ajax({
@@ -444,11 +452,11 @@ $(function () {
     });
 
     // Click agenda event → open edit modal
-    $(document).on("click", ".agenda-event", function(e) {
+    $(document).on("click", ".agenda-event", function (e) {
         e.stopPropagation();
         const id = $(this).data("id");
         const type = $(this).data("type");
-        const ev = allEvents.find(function(x) { return x.id === id && x.type === type; });
+        const ev = allEvents.find(function (x) { return x.id === id && x.type === type; });
         if (ev) showSummaryModal(ev);
     });
 
@@ -462,7 +470,7 @@ $(function () {
 
         const first = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const startDay = new Date(first); startDay.setDate(startDay.getDate() - startDay.getDay());
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
 
         for (let i = 0; i < 42; i++) {
             const cell = new Date(startDay);
@@ -478,10 +486,16 @@ $(function () {
                 const ev = dayEvents[e];
                 const evStart = new Date(ev.start);
                 const timeLabel = formatTimeShort(evStart);
+                const mobile = isMobileView();
+
                 html += '<div class="event-pill flex items-center gap-1 text-xs py-0.5 mb-0.5 truncate cursor-pointer group" data-id="' + ev.id + '" data-type="' + ev.type + '">';
                 html += '<span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:' + ev.color + '"></span>';
-                html += '<span class="text-black roboto-regular">' + timeLabel + '</span>';
-                html += '<span class="text-black roboto-semi-bold truncate">' + escapeHtml(ev.title) + '</span>';
+
+                if (!mobile) {
+                    html += '<span class="text-black roboto-regular shrink-0">' + timeLabel + '</span>';
+                }
+
+                html += '<span class="' + (mobile ? 'text-[11px] overflow-hidden whitespace-nowrap' : 'text-xs truncate') + ' text-black roboto-semi-bold">' + escapeHtml(ev.title) + '</span>';
                 html += '</div>';
             }
             if (dayEvents.length > 3) {
@@ -496,7 +510,7 @@ $(function () {
     // -- Week view --
     function renderWeek($c) {
         const ws = startOfWeek(currentDate);
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const hours = [];
         for (let h = 0; h < 24; h++) hours.push(h);
 
@@ -527,7 +541,7 @@ $(function () {
         for (let hi = 0; hi < hours.length; hi++) {
             const hour = hours[hi];
             const topPx = hi * 60;
-            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
+            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour - 12) + ':00 pm'));
             html += '<div class="absolute text-xs text-text_dark_gray roboto-regular text-right pr-2 pt-2" style="top:' + (topPx - 8) + 'px;width:4rem">' + label + '</div>';
             html += '<div class="absolute border-t border-gray-100" style="top:' + topPx + 'px;left:4rem;right:0"></div>';
         }
@@ -539,7 +553,7 @@ $(function () {
             const leftPercent = ci * colWidthPercent;
 
             html += '<div class="absolute border-l border-gray-100" ' +
-                    'style="top:0; bottom:0; left:' + leftPercent + '%"></div>';
+                'style="top:0; bottom:0; left:' + leftPercent + '%"></div>';
         }
 
         // Events
@@ -552,15 +566,32 @@ $(function () {
                 const evDate = new Date(ev.start);
                 const evEnd = getEndTime(ev);
                 let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-                const height = ev.duration || (ev.type === "session" ? 60 : 30);
+                const height = (ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30;
                 if (topMin < 0) { topMin = 0; }
                 const leftPct = ((d2 + 1) / 8 * 100);
                 const widthPct = (1 / 8 * 100);
                 const bgColor = ev.color || "#725AEA";
                 // Lighter background with colored left border
-                html += '<div class="absolute rounded-lg px-2 py-1 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftPct + '%;width:calc(' + widthPct + '% - 4px);height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
-                html += '<div class="text-[10px] montserrat-regular leading-tight" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
-                html += '<div class="text-xs montserrat-semi-bold truncate" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
+                const mobile = isMobileView();
+
+                html += '<div class="absolute rounded-lg px-2 py-1 overflow-hidden cursor-pointer event-pill shadow-sm ' +
+                    (mobile ? '' : 'border-l-4') +
+                    '" style="' +
+                    (mobile ? '' : 'border-color:' + bgColor + ';') +
+                    'background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftPct + '%;width:calc(' + widthPct + '% - 4px);height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
+
+                if (!mobile) {
+                    html += '<div class="text-[10px] montserrat-regular leading-tight truncate" style="color:' + bgColor + '">' +
+                        formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) +
+                        '</div>';
+                }
+
+                html += '<div class="' +
+                    (mobile ? 'text-[11px] overflow-hidden whitespace-nowrap' : 'text-xs truncate') +
+                    ' montserrat-semi-bold leading-tight" style="color:' + bgColor + '">' +
+                    escapeHtml(ev.title) +
+                    '</div>';
+
                 html += '</div>';
             }
         }
@@ -580,7 +611,7 @@ $(function () {
 
     // -- Day view --
     function renderDay($c) {
-        const today = new Date(); today.setHours(0,0,0,0);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
         const isToday = sameDay(currentDate, today);
         const dayEvents = getEventsForDate(currentDate);
         const hours = [];
@@ -604,7 +635,7 @@ $(function () {
         for (let hi = 0; hi < hours.length; hi++) {
             const hour = hours[hi];
             const topPx = hi * 60;
-            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour-12) + ':00 pm'));
+            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour - 12) + ':00 pm'));
             html += '<div class="absolute pt-2 left-0 text-xs text-text_dark_gray roboto-regular w-20 text-right pr-3" style="top:' + (topPx - 8) + 'px">' + label + '</div>';
             html += '<div class="absolute border-t border-gray-100" style="top:' + topPx + 'px;left:5rem;right:0"></div>';
             html += '<div class="absolute cursor-pointer hover:bg-tertiary_blu/10 transition-colors cal-hour-cell" style="top:' + topPx + 'px;left:5rem;right:0;height:60px" data-hour="' + hour + '"></div>';
@@ -616,7 +647,7 @@ $(function () {
             const evDate = new Date(ev.start);
             const evEnd = getEndTime(ev);
             let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-            const height = (ev.duration || (ev.type === "session" ? 60 : 30)) - 15;
+            const height = ((ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30) - 15;
             if (topMin < 0) { topMin = 0; }
             const bgColor = ev.color || "#6366f1";
             html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:5.5rem;right:0.5rem;height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
@@ -666,7 +697,7 @@ $(function () {
     setInterval(drawCurrentTimeLine, 60000);
 
     // ============ Click on week time slots ============
-    $(document).on("click", "#week-scroll .grid", function(e) {
+    $(document).on("click", "#week-scroll .grid", function (e) {
         if ($(e.target).hasClass("event-pill") || $(e.target).closest(".event-pill").length) return;
         if ($(e.target).hasClass("current-time-line") || $(e.target).closest(".current-time-line").length) return;
         const $grid = $(this);
@@ -690,7 +721,7 @@ $(function () {
         const key = dateKey(date);
         return events.filter(function (ev) {
             return dateKey(new Date(ev.start)) === key;
-        }).sort(function(a, b) {
+        }).sort(function (a, b) {
             return new Date(a.start) - new Date(b.start);
         });
     }
@@ -781,11 +812,11 @@ $(function () {
             // Editing existing event
             $("#event-modal-title").text("Edit Event");
             $("#event-id").val(ev.id);
-            
+
             // Enable all form fields for editing
             $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
             $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
-            
+
             const editStart = ev.is_repeated_occurrence && ev.original_start ? ev.original_start : ev.start;
             const evDate = new Date(editStart);
             selectType(ev.type);
@@ -808,7 +839,7 @@ $(function () {
                 $("#event-description").val(ev.description || "");
                 $("#event-completed").prop("checked", ev.completed);
             }
-            
+
             // Set save button text
             $("#event-save-btn").text("Update").removeClass("bg-indigo-600").addClass("bg-indigo-700");
         } else {
@@ -816,11 +847,11 @@ $(function () {
             $("#event-modal-title").text("New Event");
             $("#event-id").val("");
             $("#event-form")[0].reset();
-            
+
             // Enable all form fields
             $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
             $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
-            
+
             selectType("session");
             selectColor("#6366f1");
             $("#event-repeat").val("none");
@@ -829,7 +860,7 @@ $(function () {
             $("#event-unit").val("");
             if (date) $("#event-date").val(date);
             if (time) $("#event-time").val(time);
-            
+
             // Set save button text
             $("#event-save-btn").text("Save").removeClass("bg-indigo-700").addClass("bg-indigo-600");
         }
@@ -841,7 +872,7 @@ $(function () {
         $("#event-modal").addClass("hidden");
         editingEvent = null;
         isEditMode = false;
-        
+
         // Reset form state
         $("#event-form input, #event-form textarea, .event-type-btn, .color-dot").prop("disabled", false);
         $(".event-type-btn, .color-dot").removeClass("opacity-50 cursor-not-allowed");
@@ -880,7 +911,7 @@ $(function () {
     $(".event-type-btn").on("click", function () {
         selectType($(this).data("type"));
     });
-    
+
     function updateRepeatUntilVisibility() {
         const repeatType = $("#event-repeat").val() || "none";
 
@@ -948,19 +979,19 @@ $(function () {
     // ============ Save event ============
     $("#event-form").on("submit", function (e) {
         e.preventDefault();
-        
+
         const id = $("#event-id").val();
         const title = $("#event-title").val().trim();
         const date = $("#event-date").val();
         const time = $("#event-time").val();
         const repeatType = $("#event-repeat").val() || "none";
         const repeatUntil = $("#event-repeat-until").val() || "";
-         
+
         if (!title || !date || !time) {
             showAlert("Please fill in all required fields.", "danger");
             return;
         }
-        
+
         if (repeatType !== "none" && !repeatUntil) {
             showAlert("Please choose a repeat until date.", "danger");
             return;
@@ -1021,7 +1052,7 @@ $(function () {
     });
 
     // ============ Delete event ============
-   $("#event-delete-btn").on("click", function () {
+    $("#event-delete-btn").on("click", function () {
         if (!editingEvent) return;
         if (!confirm("Delete this event?")) return;
 
@@ -1098,12 +1129,12 @@ $(function () {
         // Formats: 20260415, 20260415T103000, 20260415T103000Z
         if (!dt) return null;
         dt = dt.replace(/Z$/, "");
-        const year  = parseInt(dt.slice(0, 4), 10);
+        const year = parseInt(dt.slice(0, 4), 10);
         const month = parseInt(dt.slice(4, 6), 10) - 1;
-        const day   = parseInt(dt.slice(6, 8), 10);
+        const day = parseInt(dt.slice(6, 8), 10);
         let hour = 0, minute = 0, second = 0;
         if (dt.length >= 13) {
-            hour   = parseInt(dt.slice(9, 11), 10);
+            hour = parseInt(dt.slice(9, 11), 10);
             minute = parseInt(dt.slice(11, 13), 10);
             second = dt.length >= 15 ? parseInt(dt.slice(13, 15), 10) : 0;
         }

@@ -68,22 +68,22 @@
 
     <!-- ===== Units Section ===== -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <h3 class="text-lg montserrat-semi-bold text-gray-800 flex items-center gap-2">
                 <svg class="w-5 h-5 text-primary_purp" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/>
                 </svg>
                 Units
             </h3>
-            <div class="flex items-center gap-3">
-                <select id="filter-semester" class="px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
+                <select id="filter-semester" class="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all roboto-regular">
                     <option value="">All Semesters</option>
                 </select>
                 <label class="flex items-center gap-2 text-sm text-gray-500 roboto-regular cursor-pointer">
                     <input type="checkbox" id="show-archived" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400">
                     Archived
                 </label>
-                <button id="add-unit-btn" class="px-4 py-2 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors flex items-center gap-1.5">
+                <button id="add-unit-btn" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors flex items-center justify-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Unit
                 </button>

@@ -17,11 +17,11 @@ def test_app_creates(app):
 def test_all_models_importable():
     """Every model class should be importable."""
     from models import (
-        User, StudySession, Task, ChecklistItem,
+        User, StudySession, StudySessionSegment, Task, ChecklistItem,
         ICalCalendar, Semester, Unit,
         Notification, NotificationPreference,
     )
-    for cls in [User, StudySession, Task, ChecklistItem,
+    for cls in [User, StudySession, StudySessionSegment, Task, ChecklistItem,
                 ICalCalendar, Semester, Unit,
                 Notification, NotificationPreference]:
         assert hasattr(cls, "__tablename__")

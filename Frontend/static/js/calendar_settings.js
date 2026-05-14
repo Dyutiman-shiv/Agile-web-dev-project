@@ -56,9 +56,9 @@ $(function () {
 
             data.forEach(function (cal) {
                 $list.append(
-                    '<div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors" data-cal-id="' + cal.id + '">' +
+                    '<div class="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors" data-cal-id="' + cal.id + '">' +
                     '  <div class="w-4 h-4 rounded-full shrink-0" style="background:' + escapeHtml(cal.color) + '"></div>' +
-                    '  <div class="flex-1 min-w-0">' +
+                    '  <div class="w-full sm:flex-1 min-w-0 responsive-wrap">' +
                     '    <p class="text-sm montserrat-medium text-gray-800 truncate">' + escapeHtml(cal.name) + '</p>' +
                     '    <p class="text-xs text-gray-400 roboto-regular truncate">' + escapeHtml(cal.url) + '</p>' +
                     '  </div>' +
