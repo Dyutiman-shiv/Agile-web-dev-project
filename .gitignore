@@ -212,3 +212,9 @@ __marimo__/
 #App.db
 
 Backend/app.db
+# App / local DB
+Backend/app.db
+*.db
+
+# Local DB seed scripts (not tracked)
+Backend/seed/
