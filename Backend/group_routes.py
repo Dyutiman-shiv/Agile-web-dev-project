@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from models import Group, Post, Comment, PostLike, GroupMembership, GroupInvitation
 from app import db
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 import re, uuid, os
 
 groups_bp = Blueprint("group", __name__)
@@ -126,11 +127,18 @@ def get_posts(group_id):
     return jsonify(posts), 200
 
 
+#This handles the size of the file.
+@groups_bp.errorhandler(RequestEntityTooLarge)
+def handle_file_too_large(e):
+    return jsonify({
+        "success": False,
+        "message": "The file size exceeds 20MB."
+    }), 413
+
+
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])
 @login_required
 def create_post(group_id):
-
-    print('I am inside the create_post endpoint.')
 
     content = request.form.get("content")
     article_url = request.form.get("article_url")
@@ -144,9 +152,9 @@ def create_post(group_id):
 
     if media:
 
-        print(allowed_file(media.filename))
-
         if not allowed_file(media.filename):
+
+            print(allowed_file(media.filename))
 
             return jsonify({'success': False, 'message': 'Format not allowed'}), 400
         
@@ -155,6 +163,8 @@ def create_post(group_id):
         media.seek(0)
 
         if file_size > current_app.config['MAX_CONTENT_LENGTH']:
+
+            print('I am inside the create_post endpoint. Max size exceeded')
 
             return jsonify({'success': False, 'message': 'The file size exceeds 20MB.'}), 404
         
