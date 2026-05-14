@@ -10,6 +10,79 @@ login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
+
+def _ensure_study_session_columns():
+    """Add columns introduced after first deploy (SQLite)."""
+    from sqlalchemy import inspect, text
+
+    engine = db.engine
+    if engine.dialect.name != "sqlite":
+        return
+    try:
+        inspector = inspect(engine)
+        if "study_sessions" not in inspector.get_table_names():
+            return
+        cols = {c["name"] for c in inspector.get_columns("study_sessions")}
+        alters = []
+        if "accumulated_seconds" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN accumulated_seconds INTEGER"
+            )
+        if "continued_as_session_id" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN continued_as_session_id INTEGER"
+            )
+        if "status" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN status VARCHAR(20) DEFAULT 'active'"
+            )
+        if "repeat_type" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN repeat_type VARCHAR(20) DEFAULT 'none'"
+            )
+        if "repeat_until" not in cols:
+            alters.append("ALTER TABLE study_sessions ADD COLUMN repeat_until DATE")
+        if not alters:
+            return
+        with engine.begin() as conn:
+            for stmt in alters:
+                conn.execute(text(stmt))
+    except Exception:
+        # Non-fatal: create_all may still match models on fresh DBs
+        pass
+
+
+def _ensure_study_session_segments_table():
+    """Create study_session_segments on existing SQLite DBs."""
+    from sqlalchemy import inspect, text
+
+    engine = db.engine
+    if engine.dialect.name != "sqlite":
+        return
+    try:
+        inspector = inspect(engine)
+        if "study_session_segments" in inspector.get_table_names():
+            return
+        ddl = """
+        CREATE TABLE study_session_segments (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            segment_start DATETIME NOT NULL,
+            segment_end DATETIME NOT NULL,
+            elapsed_seconds INTEGER NOT NULL,
+            FOREIGN KEY(session_id) REFERENCES study_sessions (id) ON DELETE CASCADE
+        )
+        """
+        with engine.begin() as conn:
+            conn.execute(text(ddl))
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_study_session_segments_session_id "
+                "ON study_session_segments (session_id)"
+            ))
+    except Exception:
+        pass
+
+
 def create_app(testing=False):
     app = Flask(
         __name__,
@@ -97,6 +170,9 @@ def create_app(testing=False):
                 "message": "File or request is too large. Maximum upload size is 20 MB.",
             }), 413
         return exc.get_response()
+        if not testing:
+            _ensure_study_session_columns()
+            _ensure_study_session_segments_table()
 
     from calendar_api import calendar_api
     app.register_blueprint(calendar_api)

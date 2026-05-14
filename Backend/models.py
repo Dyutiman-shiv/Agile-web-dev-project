@@ -85,12 +85,25 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
     timer_mode = db.Column(db.String(20), nullable=True)  # "stopwatch" or "countdown"
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=True)
+    status = db.Column(db.String(20), nullable=False, default="active")  # "active" or "completed"
+    # Total focused seconds saved across partial ends (drives resume; avoids wall-clock drift).
+    accumulated_seconds = db.Column(db.Integer, nullable=True)
+    # When user starts a "new timer" continuation, points from parent row to the new session row.
+    continued_as_session_id = db.Column(db.Integer, db.ForeignKey("study_sessions.id"), nullable=True)
     repeat_type = db.Column(db.String(20), nullable=False, default="none")
     repeat_until = db.Column(db.Date, nullable=True)
 
     # Relationship to checklist items
     checklist_items = db.relationship("ChecklistItem", backref="session", lazy="select", cascade="all, delete-orphan")
     unit = db.relationship("Unit", foreign_keys=[unit_id])
+    segments = db.relationship(
+        "StudySessionSegment",
+        back_populates="session",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="StudySessionSegment.segment_start",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -109,8 +122,50 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "unit_id": self.unit_id,
             "unit_name": self.unit.name if self.unit else None,
             "unit_code": self.unit.code if self.unit else None,
+            "status": self.status,
+            "accumulated_seconds": self.accumulated_seconds,
+            "continued_as_session_id": self.continued_as_session_id,
             "repeat_type": self.repeat_type,
             "repeat_until": self.repeat_until.isoformat() if self.repeat_until else "",
+        }
+
+
+class StudySessionSegment(db.Model):  # type: ignore[name-defined]
+    """One logged sitting (wall-clock interval + timer seconds) for calendar accuracy."""
+
+    __tablename__ = "study_session_segments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    segment_start = db.Column(db.DateTime, nullable=False)
+    segment_end = db.Column(db.DateTime, nullable=False)
+    elapsed_seconds = db.Column(db.Integer, nullable=False, default=0)
+
+    session = db.relationship("StudySession", back_populates="segments")
+
+    def to_calendar_dict(self):
+        s = self.session
+        dur_min = max(1, (int(self.elapsed_seconds) + 59) // 60)
+        return {
+            "id": self.id,
+            "type": "session_segment",
+            "session_id": s.id,
+            "title": s.subject,
+            "start": self.segment_start.isoformat(),
+            "duration": dur_min,
+            "notes": s.notes or "",
+            "color": s.color,
+            "timer_mode": s.timer_mode,
+            "unit_id": s.unit_id,
+            "unit_name": s.unit.name if s.unit else None,
+            "unit_code": s.unit.code if s.unit else None,
+            "readonly": True,
+            "segment_end": self.segment_end.isoformat(),
         }
 
 
