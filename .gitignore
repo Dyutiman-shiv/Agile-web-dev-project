@@ -210,5 +210,16 @@ __marimo__/
 .DS_Store
 
 #App.db
+<<<<<<< HEAD
 *.db
 Backend/app.db
+=======
+
+Backend/app.db
+# App / local DB
+Backend/app.db
+*.db
+
+# Local DB seed scripts (not tracked)
+Backend/seed/
+>>>>>>> main
