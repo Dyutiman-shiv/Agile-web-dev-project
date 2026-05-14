@@ -25,7 +25,10 @@ class Config:
 
     # File uploads
     UPLOAD_FOLDER = os.path.join(BASE_DIR, os.pardir, "Frontend", "static", "uploads")
-    MAX_CONTENT_LENGTH = 20 * 1024 * 1024  # 2 MB
+    # Whole request body cap (multipart overhead needs headroom below this).
+    MAX_CONTENT_LENGTH = 21 * 1024 * 1024
+    # Per-file limit for post images/videos (enforced in group_routes.create_post).
+    MAX_POST_MEDIA_BYTES = 20 * 1024 * 1024
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"}
 
     # Google OAuth
