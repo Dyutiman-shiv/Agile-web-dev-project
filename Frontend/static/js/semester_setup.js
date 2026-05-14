@@ -90,10 +90,10 @@ $(function () {
             contentType: "application/json",
             data: JSON.stringify(valid),
             success: function () {
-                window.location.href = "/home";
+                window.location.href = "/dashboard";
             },
             error: function (xhr) {
-                const msg = "Something went wrong.";
+                let msg = "Something went wrong.";
                 try { msg = xhr.responseJSON.message || msg; } catch (e) {}
                 showAlert(msg, "danger");
                 $("#save-spinner").addClass("hidden");

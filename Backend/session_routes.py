@@ -289,4 +289,3 @@ def update_checklist_item(session_id, item_id):
     
     return jsonify({"success": False, "message": "No valid fields to update."}), 400
 
-

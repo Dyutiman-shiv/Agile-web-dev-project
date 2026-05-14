@@ -127,8 +127,16 @@ def create_app(testing=False):
     from stats_routes import stats_bp
     app.register_blueprint(stats_bp)
 
+
+    from dashboard_routes import dashboard_bp
+    app.register_blueprint(dashboard_bp)
+
     from notification_routes import notif_bp
     app.register_blueprint(notif_bp)
+
+    from group_routes import groups_bp
+    app.register_blueprint(groups_bp)
+
 
     # Ensure uploads folder exists
     os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
@@ -147,6 +155,11 @@ def create_app(testing=False):
 
     from calendar_api import calendar_api
     app.register_blueprint(calendar_api)
+
+
+    from scores_route import scores_bp
+    app.register_blueprint(scores_bp)
+    
 
     # Start background scheduler (guard against double-start in debug reloader)
     scheduler_enabled = os.environ.get("SCHEDULER_ENABLED", "1") != "0"

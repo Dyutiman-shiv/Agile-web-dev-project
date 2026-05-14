@@ -44,11 +44,11 @@
                     <!-- Timer Mode -->
                     <div class="mb-4">
                         <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Timer Mode</label>
-                        <div class="inline-flex rounded-xl bg-gray-100 p-1">
-                            <button type="button" class="timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium bg-primary_purp text-white" data-mode="stopwatch">
+                        <div class="flex w-full sm:inline-flex rounded-xl bg-gray-100 p-1">
+                            <button type="button" class="timer-mode-btn flex-1 sm:flex-none px-4 py-2 text-sm rounded-lg transition-all montserrat-medium bg-primary_purp text-white" data-mode="stopwatch">
                                 Stopwatch
                             </button>
-                            <button type="button" class="timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium text-gray-500 hover:text-gray-700" data-mode="countdown">
+                            <button type="button" class="timer-mode-btn flex-1 sm:flex-none px-4 py-2 text-sm rounded-lg transition-all montserrat-medium text-gray-500 hover:text-gray-700" data-mode="countdown">
                                 Countdown
                             </button>
                         </div>
@@ -75,13 +75,13 @@
                         <div id="checklist-builder" class="space-y-2 mb-3">
                             <!-- Items rendered by JS -->
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 w-full">
                             <input type="text" id="new-checklist-item" placeholder="Add a task…" maxlength="200"
                                    class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-sm
                                           focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
                                           transition-all duration-200 roboto-regular">
                             <button type="button" id="add-checklist-btn"
-                                    class="px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                                    class="shrink-0 px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                             </button>
                         </div>
@@ -132,8 +132,7 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <!-- Session header -->
-                    <!-- Session header -->
-                    <div class="flex items-center justify-between mb-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                         <div>
                             <!-- ADDED: In Progress Indicator moved above session name -->
                             <div class="mb-2">
@@ -182,7 +181,7 @@
                         </div>
 
                         <!-- Digital Timer -->
-                        <div id="digital-timer" class="text-5xl montserrat-bold text-gray-800 tracking-wider tabular-nums">
+                        <div id="digital-timer" class="text-4xl sm:text-5xl montserrat-bold text-gray-800 tracking-wider tabular-nums">
                             00:00:00
                         </div>
 
@@ -223,13 +222,13 @@
                     </div>
 
                     <!-- Inline add task -->
-                    <div class="flex gap-2 mt-3">
+                    <div class="flex gap-2 mt-3 w-full">
                         <input type="text" id="live-new-item" placeholder="Add a task…" maxlength="200"
                                class="flex-1 px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 text-xs
                                       focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
                                       transition-all duration-200 roboto-regular">
                         <button type="button" id="live-add-item-btn"
-                                class="px-3 py-2 rounded-xl bg-primary_purp text-white text-xs montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                                class="shrink-0 px-3 py-2 rounded-xl bg-primary_purp text-white text-xs montserrat-semi-bold hover:bg-indigo-600 transition-colors">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                         </button>
                     </div>
@@ -312,11 +311,11 @@
         <!-- Timer Mode -->
         <div class="mb-4">
             <label class="block text-sm montserrat-medium text-gray-600 mb-1.5">Timer Mode</label>
-            <div class="inline-flex rounded-xl bg-gray-100 p-1">
-                <button type="button" class="edit-timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="stopwatch">
+            <div class="flex w-full sm:inline-flex rounded-xl bg-gray-100 p-1">
+                <button type="button" class="edit-timer-mode-btn flex-1 sm:flex-none px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="stopwatch">
                     Stopwatch
                 </button>
-                <button type="button" class="edit-timer-mode-btn px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="countdown">
+                <button type="button" class="edit-timer-mode-btn flex-1 sm:flex-none px-4 py-2 text-sm rounded-lg transition-all montserrat-medium" data-mode="countdown">
                     Countdown
                 </button>
             </div>
@@ -350,7 +349,7 @@
                               focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white
                               transition-all duration-200 roboto-regular">
                 <button type="button" id="edit-add-item-btn"
-                        class="px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
+                        class="shrink-0 px-4 py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-semi-bold hover:bg-indigo-600 transition-colors">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                 </button>
             </div>
