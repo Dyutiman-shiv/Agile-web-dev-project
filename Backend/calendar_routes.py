@@ -2,7 +2,9 @@ from datetime import datetime, timedelta, date
 import calendar 
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task, ICalCalendar
+from sqlalchemy import exists
+from sqlalchemy.orm import joinedload
+from models import StudySession, Task, ICalCalendar, StudySessionSegment
 from app import db
 
 cal_bp = Blueprint("cal", __name__)
@@ -110,10 +112,27 @@ def get_events():
     start_dt = datetime.fromisoformat(start)
     end_dt = datetime.fromisoformat(end)
 
-    sessions = StudySession.query.filter(
-        StudySession.user_id == current_user.id,
-        StudySession.start_time < end_dt,
-    ).all()
+    has_segments = exists().where(StudySessionSegment.session_id == StudySession.id)
+
+    sessions = (
+        StudySession.query.filter(
+            StudySession.user_id == current_user.id,
+            StudySession.start_time >= start_dt,
+            StudySession.start_time < end_dt,
+            ~has_segments,
+        ).all()
+    )
+
+    segments = (
+        StudySessionSegment.query.options(
+            joinedload(StudySessionSegment.session).joinedload(StudySession.unit)
+        )
+        .join(StudySession, StudySessionSegment.session_id == StudySession.id)
+        .filter(StudySession.user_id == current_user.id)
+        .filter(StudySessionSegment.segment_start < end_dt)
+        .filter(StudySessionSegment.segment_end > start_dt)
+        .all()
+    )
 
     tasks = Task.query.filter(
         Task.user_id == current_user.id,
@@ -124,9 +143,11 @@ def get_events():
     for session in sessions:
         events.extend(add_repeat_occurrences(session, start_dt, end_dt, "start_time"))
 
+    events.extend(seg.to_calendar_dict() for seg in segments)
+
     for task in tasks:
         events.extend(add_repeat_occurrences(task, start_dt, end_dt, "due_date"))
-    
+
     return jsonify(events)
 
 
