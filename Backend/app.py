@@ -31,6 +31,16 @@ def _ensure_study_session_columns():
             alters.append(
                 "ALTER TABLE study_sessions ADD COLUMN continued_as_session_id INTEGER"
             )
+        if "status" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN status VARCHAR(20) DEFAULT 'active'"
+            )
+        if "repeat_type" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN repeat_type VARCHAR(20) DEFAULT 'none'"
+            )
+        if "repeat_until" not in cols:
+            alters.append("ALTER TABLE study_sessions ADD COLUMN repeat_until DATE")
         if not alters:
             return
         with engine.begin() as conn:
