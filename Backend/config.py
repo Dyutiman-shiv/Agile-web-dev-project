@@ -9,9 +9,12 @@ class Config:
     # Flask
     SECRET_KEY = os.environ.get("SECRET_KEY", os.urandom(32).hex())
 
-    # Database - SQLite stored in Backend/
+    # Database - SQLite stored in Backend/ (overridable via env for testing)
     BASE_DIR = BASE_DIR
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "app.db")
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "SQLALCHEMY_DATABASE_URI",
+        "sqlite:///" + os.path.join(BASE_DIR, "app.db"),
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Secure cookie settings

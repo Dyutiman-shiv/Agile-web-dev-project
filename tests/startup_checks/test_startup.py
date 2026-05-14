@@ -6,7 +6,7 @@ These wrap the preflight checks module as proper pytest assertions.
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "Backend"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "Backend"))
 
 
 def test_app_creates(app):
