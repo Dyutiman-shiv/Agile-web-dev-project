@@ -156,13 +156,13 @@ def hourly_heatmap():
         hour = s.start_time.hour
         grid[dow][hour] += s.duration_minutes
 
-    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    # Flat rows {day, hour, minutes} with day 0=Mon — matches Frontend/static/js/stats.js loadHeatmap
     result = []
-    for d_idx, day_name in enumerate(days):
-        row = {"day": day_name, "data": []}
+    for d in range(7):
         for h in range(24):
-            row["data"].append({"hour": h, "minutes": grid[d_idx][h]})
-        result.append(row)
+            minutes = grid[d][h]
+            if minutes:
+                result.append({"day": d, "hour": h, "minutes": int(minutes)})
     return jsonify(result)
 
 
