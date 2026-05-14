@@ -210,8 +210,5 @@ __marimo__/
 .DS_Store
 
 #App.db
-<<<<<<< HEAD
+
 Backend/app.db
-=======
-*.db
->>>>>>> main
