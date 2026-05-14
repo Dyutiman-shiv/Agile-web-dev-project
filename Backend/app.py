@@ -1,5 +1,6 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import RequestEntityTooLarge
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -159,6 +160,16 @@ def create_app(testing=False):
 
     with app.app_context():
         db.create_all()
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def handle_request_entity_too_large(exc):
+        """Multipart/post body exceeded MAX_CONTENT_LENGTH — return JSON for API clients."""
+        if request.path.startswith("/api/"):
+            return jsonify({
+                "success": False,
+                "message": "File or request is too large. Maximum upload size is 20 MB.",
+            }), 413
+        return exc.get_response()
         if not testing:
             _ensure_study_session_columns()
             _ensure_study_session_segments_table()

@@ -35,6 +35,9 @@
         semesters: [],
         icals: [],
         events: [],
+        groups: [],
+        invitesReceived: [],
+        invitesSent: [],
         loadedAt: 0
     };
 
@@ -103,14 +106,177 @@
         var p3 = jsonFetch("/api/semesters").catch(function () { return []; });
         var p4 = jsonFetch("/api/ical-calendars").catch(function () { return []; });
         var p5 = jsonFetch(eventsUrlRange()).catch(function () { return []; });
-        return Promise.all([p1, p2, p3, p4, p5]).then(function (arr) {
+        var p6 = jsonFetch("/api/groups").catch(function () { return []; });
+        var p7 = jsonFetch("/api/groups/invitations/pending").catch(function () { return []; });
+        var p8 = jsonFetch("/api/groups/invitations/sent").catch(function () { return []; });
+        return Promise.all([p1, p2, p3, p4, p5, p6, p7, p8]).then(function (arr) {
             cache.sessions = Array.isArray(arr[0]) ? arr[0] : [];
             cache.units = Array.isArray(arr[1]) ? arr[1] : [];
             cache.semesters = Array.isArray(arr[2]) ? arr[2] : [];
             cache.icals = Array.isArray(arr[3]) ? arr[3] : [];
             cache.events = Array.isArray(arr[4]) ? dedupeCalendarEvents(arr[4]) : [];
+            cache.groups = Array.isArray(arr[5]) ? arr[5] : [];
+            cache.invitesReceived = Array.isArray(arr[6]) ? arr[6] : [];
+            cache.invitesSent = Array.isArray(arr[7]) ? arr[7] : [];
             cache.loadedAt = Date.now();
         });
+    }
+
+    // ── Group helpers ──────────────────────────────────────────────────────────
+
+    function groupsWhere(predicate) {
+        var out = [];
+        for (var i = 0; i < cache.groups.length; i++) {
+            if (predicate(cache.groups[i])) out.push(cache.groups[i]);
+        }
+        return out;
+    }
+
+    function isOwnerOrAdmin(g) {
+        return g.is_owner || g.my_role === "admin";
+    }
+
+    function ownedGroups() {
+        return groupsWhere(function (g) { return g.is_owner; });
+    }
+
+    function adminOrOwnerGroups() {
+        return groupsWhere(isOwnerOrAdmin);
+    }
+
+    function nonOwnerGroups() {
+        return groupsWhere(function (g) { return !g.is_owner; });
+    }
+
+    function buildGroupActionItems(filter) {
+        var items = [];
+        var hasGroups = cache.groups.length > 0;
+        var hasOwned = ownedGroups().length > 0;
+        var hasAdminish = adminOrOwnerGroups().length > 0;
+        var hasNonOwner = nonOwnerGroups().length > 0;
+        var hasReceived = cache.invitesReceived.length > 0;
+        var hasSent = cache.invitesSent.length > 0;
+
+        function add(row) {
+            var blob = row.label + " " + (row.keywords || "");
+            if (!blobMatch(blob, filter)) return;
+            items.push(row);
+        }
+
+        add({
+            label: "Go to Groups hub",
+            category: "Groups",
+            kind: "group-nav-hub",
+            keywords: "navigate open page list"
+        });
+
+        if (hasGroups) {
+            add({
+                label: "Open a group…",
+                category: "Groups",
+                kind: "action-panel",
+                action: "panel-group-open",
+                keywords: "navigate jump enter feed"
+            });
+        }
+
+        add({
+            label: "Create new group",
+            category: "Group actions",
+            kind: "action-panel",
+            action: "panel-group-create",
+            keywords: "new add make"
+        });
+
+        if (hasReceived) {
+            add({
+                label: "Pending invites you received (" + cache.invitesReceived.length + ")",
+                category: "Group invites",
+                kind: "action-panel",
+                action: "panel-group-invites-received",
+                keywords: "accept decline incoming inbox"
+            });
+        }
+
+        if (hasSent) {
+            add({
+                label: "Pending invites you sent (" + cache.invitesSent.length + ")",
+                category: "Group invites",
+                kind: "action-panel",
+                action: "panel-group-invites-sent",
+                keywords: "cancel withdraw outgoing"
+            });
+        }
+
+        if (hasAdminish) {
+            add({
+                label: "Invite someone by friend code",
+                category: "Group actions",
+                kind: "action-panel",
+                action: "panel-group-invite",
+                keywords: "add member friend code send"
+            });
+            add({
+                label: "Remove a member",
+                category: "Group actions",
+                kind: "action-panel",
+                action: "panel-group-remove-member",
+                keywords: "kick boot delete moderation"
+            });
+            add({
+                label: "View group audit log",
+                category: "Group actions",
+                kind: "action-panel",
+                action: "panel-group-audit",
+                keywords: "moderation history actions log"
+            });
+        }
+
+        if (hasOwned) {
+            add({
+                label: "Promote / demote admin",
+                category: "Owner",
+                kind: "action-panel",
+                action: "panel-group-role",
+                keywords: "role admin member"
+            });
+            add({
+                label: "Edit group (name / description)",
+                category: "Owner",
+                kind: "action-panel",
+                action: "panel-group-edit",
+                keywords: "rename update settings"
+            });
+            add({
+                label: "Delete a group",
+                category: "Owner",
+                kind: "action-panel",
+                action: "panel-group-delete",
+                keywords: "destroy remove permanent"
+            });
+        }
+
+        if (hasGroups) {
+            add({
+                label: "Quick post to a group",
+                category: "Group actions",
+                kind: "action-panel",
+                action: "panel-group-post",
+                keywords: "share message text feed write"
+            });
+        }
+
+        if (hasNonOwner) {
+            add({
+                label: "Leave a group",
+                category: "Group actions",
+                kind: "action-panel",
+                action: "panel-group-leave",
+                keywords: "quit exit unjoin"
+            });
+        }
+
+        return items;
     }
 
     function buildResultItems(query) {
@@ -212,6 +378,33 @@
             return sortItems(aItems);
         }
 
+        // /gr - <name>  → search groups by name (open feed)
+        var grName = raw.match(/^\/gr\s*-\s*(.*)$/i);
+        if (grName) {
+            var nameFilter = (grName[1] || "").trim();
+            var nItems = [];
+            for (var gx = 0; gx < cache.groups.length; gx++) {
+                var grp = cache.groups[gx];
+                var blob = grp.name + " " + (grp.description || "");
+                if (!blobMatch(blob, nameFilter)) continue;
+                var roleSuffix = grp.is_owner ? " · owner" : (grp.my_role === "admin" ? " · admin" : " · member");
+                nItems.push({
+                    label: "Open group: " + grp.name + roleSuffix,
+                    category: "Groups",
+                    kind: "group-open",
+                    groupId: grp.id
+                });
+            }
+            return sortItems(nItems);
+        }
+
+        // /gr [filter]  → group actions, role-aware
+        var grAction = raw.match(/^\/gr\s*(.*)$/i);
+        if (grAction) {
+            var gFilter = (grAction[1] || "").trim();
+            return buildGroupActionItems(gFilter);
+        }
+
         // Global search: any text, match config + entities
         var gFilter = raw.replace(/^\/+/, "").trim();
         if (gFilter === "") return [];
@@ -304,6 +497,7 @@
             '<ul class="list-disc pl-5 space-y-2 text-slate-700">' +
             '<li><span class="font-mono text-primary_purp font-medium">/n</span> — Navigation: pages, settings, open sessions, units, semesters, calendar. Narrow after the space, e.g. <span class="font-mono text-slate-600">/n scores</span>, <span class="font-mono text-slate-600">/n calendar settings</span>.</li>' +
             '<li><span class="font-mono text-primary_purp font-medium">/a</span> — Actions: quick forms. e.g. <span class="font-mono text-slate-600">/a add unit</span></li>' +
+            '<li><span class="font-mono text-primary_purp font-medium">/gr</span> — Groups: actions filtered by your role (create, invite, audit, leave…). Use <span class="font-mono text-slate-600">/gr - name</span> to jump straight to a group by name.</li>' +
             '<li><span class="font-mono text-primary_purp font-medium">/help</span> — Show this help.</li>' +
             "<li>Or search without a prefix to match commands and your data together.</li>" +
             "</ul>" +
@@ -389,7 +583,7 @@
             resultsEl.innerHTML =
                 '<div class="px-6 py-12 text-center">' +
                 '<p class="text-sm font-medium text-slate-800">No matches</p>' +
-                '<p class="text-xs text-slate-500 mt-2 max-w-sm mx-auto">Try <span class="font-mono text-slate-600">/n</span> for navigation, <span class="font-mono text-slate-600">/a</span> for actions, or <span class="font-mono text-slate-600">/help</span>.</p>' +
+                '<p class="text-xs text-slate-500 mt-2 max-w-sm mx-auto">Try <span class="font-mono text-slate-600">/n</span> for navigation, <span class="font-mono text-slate-600">/a</span> for actions, <span class="font-mono text-slate-600">/gr</span> for groups, or <span class="font-mono text-slate-600">/help</span>.</p>' +
                 "</div>";
             return;
         }
@@ -485,6 +679,18 @@
             var navC = (CONFIG.nav || []).filter(function (n) { return n.id === "go-calendar"; })[0];
             closePalette();
             window.location.href = navC ? navC.url : "/calendar";
+            return;
+        }
+
+        if (it.kind === "group-nav-hub") {
+            closePalette();
+            window.location.href = "/groups";
+            return;
+        }
+
+        if (it.kind === "group-open" && it.groupId != null) {
+            closePalette();
+            window.location.href = "/api/groups/" + encodeURIComponent(String(it.groupId));
             return;
         }
 
@@ -866,6 +1072,250 @@
             return;
         }
 
+        if (action === "panel-group-create") {
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Create new group</h3>' +
+                '<form id="cp-form-group-create" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group name</label><input required name="name" maxlength="120" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" placeholder="e.g. Algorithms Study Group" /></div>' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Description (optional)</label><textarea name="description" rows="2" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"></textarea></div>' +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Create group</button>' +
+                "</form>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-open") {
+            if (!cache.groups.length) {
+                showPanel('<p class="text-sm text-gray-500">You have no groups yet. Use Create new group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Open a group</h3>' +
+                '<form id="cp-form-group-open" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", cache.groups) +
+                "</div>" +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Open</button>' +
+                "</form>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-invite") {
+            var inviteGroups = adminOrOwnerGroups();
+            if (!inviteGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You are not an admin or owner of any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Invite by friend code</h3>' +
+                '<form id="cp-form-group-invite" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", inviteGroups) +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">Friend code</label><input required name="friend_code" maxlength="8" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm uppercase tracking-widest" placeholder="ABCD1234" /></div>' +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Send invite</button>' +
+                "</form>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-invites-received") {
+            if (!cache.invitesReceived.length) {
+                showPanel('<p class="text-sm text-gray-500">No pending invites.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Invites you received</h3>' +
+                '<div id="cp-invites-received-list" class="space-y-2">' +
+                renderReceivedInvites(cache.invitesReceived) +
+                "</div>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-invites-sent") {
+            if (!cache.invitesSent.length) {
+                showPanel('<p class="text-sm text-gray-500">No outgoing invites.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Invites you sent</h3>' +
+                '<div id="cp-invites-sent-list" class="space-y-2">' +
+                renderSentInvites(cache.invitesSent) +
+                "</div>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-audit") {
+            var auditGroups = adminOrOwnerGroups();
+            if (!auditGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You are not an admin or owner of any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Group audit log</h3>' +
+                '<form id="cp-form-group-audit" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", auditGroups) +
+                "</div>" +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">View log</button>' +
+                "</form>" +
+                '<div id="cp-audit-result" class="mt-3"></div>'
+            );
+            return;
+        }
+
+        if (action === "panel-group-remove-member") {
+            var rmGroups = adminOrOwnerGroups();
+            if (!rmGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You are not an admin or owner of any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Remove a member</h3>' +
+                '<form id="cp-form-group-remove" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", rmGroups, "cp-rm-group") +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">Member</label>' +
+                '<select required name="user_id" id="cp-rm-member" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"><option value="">Loading…</option></select>' +
+                "</div>" +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-red-600 text-white py-2.5 text-sm font-medium">Remove member</button>' +
+                "</form>"
+            );
+            wireMemberPicker("cp-rm-group", "cp-rm-member", { excludeOwner: true, excludeSelf: true });
+            return;
+        }
+
+        if (action === "panel-group-role") {
+            var roleGroups = ownedGroups();
+            if (!roleGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You do not own any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Promote / demote admin</h3>' +
+                '<form id="cp-form-group-role" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", roleGroups, "cp-role-group") +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">Member</label>' +
+                '<select required name="user_id" id="cp-role-member" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"><option value="">Loading…</option></select>' +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">New role</label>' +
+                '<select required name="role" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">' +
+                '<option value="admin">Admin</option><option value="member">Member</option>' +
+                "</select></div>" +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Save role</button>' +
+                "</form>"
+            );
+            wireMemberPicker("cp-role-group", "cp-role-member", { excludeOwner: true, excludeSelf: true });
+            return;
+        }
+
+        if (action === "panel-group-edit") {
+            var editGroups = ownedGroups();
+            if (!editGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You do not own any group.</p>');
+                return;
+            }
+            var first = editGroups[0];
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Edit group</h3>' +
+                '<form id="cp-form-group-edit" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", editGroups, "cp-edit-group") +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">Name</label><input required name="name" maxlength="120" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" value="' +
+                escapeHtml(first.name) +
+                '" /></div>' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Description</label><textarea name="description" rows="2" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">' +
+                escapeHtml(first.description || "") +
+                "</textarea></div>" +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Save changes</button>' +
+                "</form>"
+            );
+            var pickEdit = document.getElementById("cp-edit-group");
+            if (pickEdit) {
+                pickEdit.addEventListener("change", function () {
+                    var id = parseInt(pickEdit.value, 10);
+                    var found = cache.groups.filter(function (x) { return x.id === id; })[0];
+                    if (!found) return;
+                    var f = document.getElementById("cp-form-group-edit");
+                    if (!f) return;
+                    f.name.value = found.name;
+                    f.description.value = found.description || "";
+                });
+            }
+            return;
+        }
+
+        if (action === "panel-group-delete") {
+            var delGroups = ownedGroups();
+            if (!delGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">You do not own any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Delete group</h3>' +
+                '<form id="cp-form-group-delete" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", delGroups) +
+                "</div>" +
+                '<div><label class="flex items-start gap-2 text-xs text-gray-700"><input required type="checkbox" name="confirm" class="mt-0.5" /> Yes, permanently delete this group, its posts, comments and memberships.</label></div>' +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-red-600 text-white py-2.5 text-sm font-medium">Delete permanently</button>' +
+                "</form>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-leave") {
+            var leaveGroups = nonOwnerGroups();
+            if (!leaveGroups.length) {
+                showPanel('<p class="text-sm text-gray-500">No groups to leave (owners must delete instead).</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Leave a group</h3>' +
+                '<form id="cp-form-group-leave" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", leaveGroups) +
+                "</div>" +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-red-600 text-white py-2.5 text-sm font-medium">Leave group</button>' +
+                "</form>"
+            );
+            return;
+        }
+
+        if (action === "panel-group-post") {
+            if (!cache.groups.length) {
+                showPanel('<p class="text-sm text-gray-500">You are not a member of any group.</p>');
+                return;
+            }
+            showPanel(
+                '<h3 class="text-sm font-semibold text-gray-800 mb-3">Quick post to a group</h3>' +
+                '<p class="text-xs text-gray-500 mb-3">Text only — for media, open the group page.</p>' +
+                '<form id="cp-form-group-post" class="space-y-3">' +
+                '<div><label class="block text-xs text-gray-600 mb-1">Group</label>' +
+                renderGroupSelect("group_id", cache.groups) +
+                "</div>" +
+                '<div><label class="block text-xs text-gray-600 mb-1">Message</label><textarea required name="content" rows="3" maxlength="2000" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" placeholder="Share something with the group…"></textarea></div>' +
+                '<div id="cp-panel-alert" class="text-sm text-red-600 hidden"></div>' +
+                '<button type="submit" class="w-full rounded-xl bg-primary_purp text-white py-2.5 text-sm font-medium">Post</button>' +
+                "</form>"
+            );
+            return;
+        }
+
         if (action === "panel-event-delete") {
             if (!cache.events.length) {
                 showPanel('<p class="text-sm text-gray-500">Nothing to delete in the synced range.</p>');
@@ -906,6 +1356,79 @@
         if (isNaN(d.getTime())) return "";
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         return d.toISOString().slice(0, 16);
+    }
+
+    function renderGroupSelect(name, groups, id) {
+        var html = '<select required name="' + name + '"' + (id ? ' id="' + id + '"' : "") + ' class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">';
+        for (var i = 0; i < groups.length; i++) {
+            var g = groups[i];
+            var role = g.is_owner ? "owner" : g.my_role;
+            html += '<option value="' + g.id + '">' + escapeHtml(g.name) + " (" + escapeHtml(role) + ")</option>";
+        }
+        html += "</select>";
+        return html;
+    }
+
+    function renderReceivedInvites(invites) {
+        var html = "";
+        for (var i = 0; i < invites.length; i++) {
+            var inv = invites[i];
+            html +=
+                '<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50" data-cp-invite-id="' + inv.id + '">' +
+                '<div class="flex-1 min-w-0">' +
+                '<p class="text-sm font-medium text-gray-800 truncate">' + escapeHtml(inv.group_name) + "</p>" +
+                '<p class="text-xs text-gray-500 truncate">from ' + escapeHtml(inv.sender_username || "") + "</p>" +
+                "</div>" +
+                '<div class="flex gap-2 shrink-0">' +
+                '<button type="button" data-cp-invite-action="accept" class="px-3 py-1.5 rounded-lg bg-primary_purp text-white text-xs font-medium hover:bg-indigo-600">Accept</button>' +
+                '<button type="button" data-cp-invite-action="decline" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-100">Decline</button>' +
+                "</div></div>";
+        }
+        return html;
+    }
+
+    function renderSentInvites(invites) {
+        var html = "";
+        for (var i = 0; i < invites.length; i++) {
+            var inv = invites[i];
+            html +=
+                '<div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50" data-cp-sent-invite-id="' + inv.id + '">' +
+                '<div class="flex-1 min-w-0">' +
+                '<p class="text-sm font-medium text-gray-800 truncate">' + escapeHtml(inv.group_name) + "</p>" +
+                '<p class="text-xs text-gray-500 truncate">to ' + escapeHtml(inv.receiver_username || "user") + "</p>" +
+                "</div>" +
+                '<button type="button" data-cp-sent-cancel class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-100 shrink-0">Cancel</button>' +
+                "</div>";
+        }
+        return html;
+    }
+
+    function loadMembersFor(groupId, selectEl, opts) {
+        opts = opts || {};
+        if (!selectEl) return;
+        selectEl.innerHTML = '<option value="">Loading…</option>';
+        jsonFetch("/api/groups/" + encodeURIComponent(groupId) + "/members")
+            .then(function (members) {
+                var html = "";
+                for (var i = 0; i < members.length; i++) {
+                    var m = members[i];
+                    if (opts.excludeOwner && m.role === "owner") continue;
+                    if (opts.excludeSelf && window.__CURRENT_USER_ID && m.user_id === window.__CURRENT_USER_ID) continue;
+                    html += '<option value="' + m.user_id + '">' + escapeHtml(m.username) + " (" + escapeHtml(m.role) + ")</option>";
+                }
+                selectEl.innerHTML = html || '<option value="">No eligible members</option>';
+            })
+            .catch(function () {
+                selectEl.innerHTML = '<option value="">Failed to load members</option>';
+            });
+    }
+
+    function wireMemberPicker(groupSelectId, memberSelectId, opts) {
+        var gs = document.getElementById(groupSelectId);
+        var ms = document.getElementById(memberSelectId);
+        if (!gs || !ms) return;
+        if (gs.value) loadMembersFor(gs.value, ms, opts);
+        gs.addEventListener("change", function () { loadMembersFor(gs.value, ms, opts); });
     }
 
     function wireIcalDots(container, hiddenId) {
@@ -1187,6 +1710,265 @@
                     .catch(function (err) {
                         panelAlert(err.message || "Failed.");
                     });
+            });
+        }
+
+        var fgo = panelInner.querySelector("#cp-form-group-open");
+        if (fgo) {
+            fgo.addEventListener("submit", function (e) {
+                e.preventDefault();
+                var gid = (new FormData(fgo).get("group_id") || "").toString();
+                if (!gid) return;
+                closePalette();
+                window.location.href = "/api/groups/" + encodeURIComponent(gid);
+            });
+        }
+
+        var fgc = panelInner.querySelector("#cp-form-group-create");
+        if (fgc) {
+            fgc.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fgc);
+                jsonFetch("/api/groups", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        name: (fd.get("name") || "").toString().trim(),
+                        description: (fd.get("description") || "").toString().trim()
+                    })
+                })
+                    .then(function (data) {
+                        closePalette();
+                        if (data && data.id != null) {
+                            window.location.href = "/api/groups/" + encodeURIComponent(data.id);
+                        } else {
+                            window.location.href = "/groups";
+                        }
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Could not create group."); });
+            });
+        }
+
+        var fgi = panelInner.querySelector("#cp-form-group-invite");
+        if (fgi) {
+            fgi.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fgi);
+                var gid = (fd.get("group_id") || "").toString();
+                var code = (fd.get("friend_code") || "").toString().trim().toUpperCase();
+                if (code.length !== 8) {
+                    panelAlert("Friend codes are 8 characters.");
+                    return;
+                }
+                jsonFetch("/api/groups/" + encodeURIComponent(gid) + "/invite-by-code", {
+                    method: "POST",
+                    body: JSON.stringify({ friend_code: code })
+                })
+                    .then(function () {
+                        closePalette();
+                        window.location.href = "/groups";
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to send invite."); });
+            });
+        }
+
+        panelInner.querySelectorAll("[data-cp-invite-action]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var row = btn.closest("[data-cp-invite-id]");
+                if (!row) return;
+                var id = row.getAttribute("data-cp-invite-id");
+                var action = btn.getAttribute("data-cp-invite-action");
+                row.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+                jsonFetch("/api/groups/invitations/" + encodeURIComponent(id) + "/" + action, { method: "POST" })
+                    .then(function () {
+                        row.remove();
+                        var list = panelInner.querySelector("#cp-invites-received-list");
+                        if (list && !list.children.length) {
+                            list.innerHTML = '<p class="text-sm text-gray-500">No pending invites.</p>';
+                        }
+                    })
+                    .catch(function () {
+                        row.querySelectorAll("button").forEach(function (b) { b.disabled = false; });
+                    });
+            });
+        });
+
+        panelInner.querySelectorAll("[data-cp-sent-cancel]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var row = btn.closest("[data-cp-sent-invite-id]");
+                if (!row) return;
+                var id = row.getAttribute("data-cp-sent-invite-id");
+                btn.disabled = true;
+                jsonFetch("/api/groups/invitations/" + encodeURIComponent(id) + "/cancel", { method: "POST" })
+                    .then(function () {
+                        row.remove();
+                        var list = panelInner.querySelector("#cp-invites-sent-list");
+                        if (list && !list.children.length) {
+                            list.innerHTML = '<p class="text-sm text-gray-500">No outgoing invites.</p>';
+                        }
+                    })
+                    .catch(function () { btn.disabled = false; });
+            });
+        });
+
+        var fga = panelInner.querySelector("#cp-form-group-audit");
+        if (fga) {
+            fga.addEventListener("submit", function (e) {
+                e.preventDefault();
+                var gid = (new FormData(fga).get("group_id") || "").toString();
+                var out = panelInner.querySelector("#cp-audit-result");
+                if (!out) return;
+                out.innerHTML = '<p class="text-xs text-gray-500">Loading…</p>';
+                jsonFetch("/api/groups/" + encodeURIComponent(gid) + "/audit-log")
+                    .then(function (logs) {
+                        if (!logs.length) {
+                            out.innerHTML = '<p class="text-xs text-gray-500">No moderation actions yet.</p>';
+                            return;
+                        }
+                        var html = '<ul class="space-y-1.5 text-xs text-gray-700 max-h-56 overflow-y-auto pr-1">';
+                        for (var i = 0; i < logs.length; i++) {
+                            var l = logs[i];
+                            var when = l.created_at ? new Date(l.created_at).toLocaleString() : "";
+                            html +=
+                                '<li class="p-2 rounded-lg bg-slate-50">' +
+                                '<span class="font-medium">' + escapeHtml(l.action) + "</span>" +
+                                (l.actor_username ? ' by <span class="text-gray-600">' + escapeHtml(l.actor_username) + "</span>" : "") +
+                                (l.target_username ? ' → <span class="text-gray-600">' + escapeHtml(l.target_username) + "</span>" : "") +
+                                '<div class="text-[10px] text-gray-400 mt-0.5">' + escapeHtml(when) + "</div>" +
+                                "</li>";
+                        }
+                        html += "</ul>";
+                        out.innerHTML = html;
+                    })
+                    .catch(function (err) {
+                        out.innerHTML = '<p class="text-xs text-red-600">' + escapeHtml(err.message || "Failed to load log.") + "</p>";
+                    });
+            });
+        }
+
+        var fgr = panelInner.querySelector("#cp-form-group-remove");
+        if (fgr) {
+            fgr.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fgr);
+                var gid = (fd.get("group_id") || "").toString();
+                var uid = (fd.get("user_id") || "").toString();
+                if (!uid) { panelAlert("Pick a member."); return; }
+                jsonFetch("/api/groups/" + encodeURIComponent(gid) + "/members/" + encodeURIComponent(uid), { method: "DELETE" })
+                    .then(function () {
+                        closePalette();
+                        window.location.href = "/api/groups/" + encodeURIComponent(gid);
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to remove member."); });
+            });
+        }
+
+        var fgrole = panelInner.querySelector("#cp-form-group-role");
+        if (fgrole) {
+            fgrole.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fgrole);
+                var gid = (fd.get("group_id") || "").toString();
+                var uid = (fd.get("user_id") || "").toString();
+                var role = (fd.get("role") || "").toString();
+                if (!uid) { panelAlert("Pick a member."); return; }
+                jsonFetch("/api/groups/" + encodeURIComponent(gid) + "/members/" + encodeURIComponent(uid) + "/role", {
+                    method: "PATCH",
+                    body: JSON.stringify({ role: role })
+                })
+                    .then(function () {
+                        closePalette();
+                        window.location.href = "/api/groups/" + encodeURIComponent(gid);
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to change role."); });
+            });
+        }
+
+        var fge = panelInner.querySelector("#cp-form-group-edit");
+        if (fge) {
+            fge.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fge);
+                var gid = (fd.get("group_id") || "").toString();
+                var body = new FormData();
+                body.append("name", (fd.get("name") || "").toString().trim());
+                body.append("description", (fd.get("description") || "").toString());
+                fetch("/api/groups/" + encodeURIComponent(gid), {
+                    method: "PUT",
+                    credentials: "same-origin",
+                    body: body
+                })
+                    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+                    .then(function (res) {
+                        if (!res.ok) {
+                            panelAlert((res.body && res.body.message) || "Failed to update.");
+                            return;
+                        }
+                        closePalette();
+                        window.location.href = "/api/groups/" + encodeURIComponent(gid);
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to update group."); });
+            });
+        }
+
+        var fgd = panelInner.querySelector("#cp-form-group-delete");
+        if (fgd) {
+            fgd.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var gid = (new FormData(fgd).get("group_id") || "").toString();
+                jsonFetch("/api/groups/" + encodeURIComponent(gid), { method: "DELETE" })
+                    .then(function () {
+                        closePalette();
+                        window.location.href = "/groups";
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to delete group."); });
+            });
+        }
+
+        var fgl = panelInner.querySelector("#cp-form-group-leave");
+        if (fgl) {
+            fgl.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var gid = (new FormData(fgl).get("group_id") || "").toString();
+                jsonFetch("/api/groups/" + encodeURIComponent(gid) + "/leave", { method: "POST" })
+                    .then(function () {
+                        closePalette();
+                        window.location.href = "/groups";
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to leave."); });
+            });
+        }
+
+        var fgp = panelInner.querySelector("#cp-form-group-post");
+        if (fgp) {
+            fgp.addEventListener("submit", function (e) {
+                e.preventDefault();
+                panelAlert("");
+                var fd = new FormData(fgp);
+                var gid = (fd.get("group_id") || "").toString();
+                var body = new FormData();
+                body.append("content", (fd.get("content") || "").toString().trim());
+                fetch("/api/groups/" + encodeURIComponent(gid) + "/posts", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    body: body
+                })
+                    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, body: d }; }); })
+                    .then(function (res) {
+                        if (!res.ok) {
+                            panelAlert((res.body && res.body.message) || "Failed to post.");
+                            return;
+                        }
+                        closePalette();
+                        window.location.href = "/api/groups/" + encodeURIComponent(gid);
+                    })
+                    .catch(function (err) { panelAlert(err.message || "Failed to post."); });
             });
         }
 

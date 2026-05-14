@@ -1,10 +1,17 @@
 let itemToDelete = { id: null, type: null, element: null };
 
+/** Must match Backend/config.py MAX_POST_MEDIA_BYTES (20 MB). */
+const POST_MEDIA_MAX_BYTES = 20 * 1024 * 1024;
+
 $(document).ready(function () {
   "use strict";
   const group_id = $("#group-data").data("group-id");
   loadGroupPosts(group_id);
+  loadGroupMembers(group_id);
   initSidebar();
+  initGroupSettings(group_id);
+  initInviteModal(group_id);
+  initLeaveGroup(group_id);
 
   $("#edit-group-cover").on("change", function () {
     const file = this.files[0];
@@ -153,29 +160,46 @@ $(document).ready(function () {
 
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
-
-    let previewHTML = "";
-
-    if (file.type.startsWith("image")) {
-      previewHTML = `
-      <img
-        src="${url}"
-        class="w-auto h-auto max-h-[300px] object-contain rounded-md"
-      />
-    `;
-    } else if (file.type.startsWith("video")) {
-      previewHTML = `
-      <video
-        controls
-        class="w-full max-h-80 rounded-2xl"
-      >
-        <source src="${url}">
-      </video>
-    `;
+    if (file.size > POST_MEDIA_MAX_BYTES) {
+      $("#post-alert").empty().append(
+        $("<p>", {
+          class: "text-red-500 text-sm roboto-regular",
+          text: "This file is too large. Maximum size for photos and videos is 20 MB.",
+        }),
+      );
+      event.target.value = "";
+      return;
     }
 
+    $("#post-alert").empty();
+
+    const url = URL.createObjectURL(file);
+
+    let mediaHTML = "";
+
+    if (file.type.startsWith("image")) {
+      mediaHTML = `<img src="${url}" class="w-auto h-auto max-h-[300px] object-contain rounded-md" />`;
+    } else if (file.type.startsWith("video")) {
+      mediaHTML = `<video controls class="w-full max-h-80 rounded-2xl"><source src="${url}"></video>`;
+    }
+
+    const previewHTML = `
+      <div class="relative inline-block w-full">
+        ${mediaHTML}
+        <button
+          id="remove-media-btn"
+          type="button"
+          title="Remove media"
+          class="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full bg-gray-900/60 hover:bg-gray-900/80 text-white text-sm leading-none transition-colors"
+        >✕</button>
+      </div>`;
+
     $("#media-preview-container").html(previewHTML).removeClass("hidden");
+  });
+
+  $(document).on("click", "#remove-media-btn", function () {
+    $("#post-media-input").val("");
+    $("#media-preview-container").html("").addClass("hidden");
   });
   $("#submit-post-btn").on("click", createPost);
 });
@@ -543,9 +567,22 @@ function createPost() {
   const content = $("#post-content").val().trim();
   const group_id = $("#group-data").data("group-id");
 
+  $("#post-alert").empty();
+
   if (!content) {
     $("#post-alert").html(
       '<p class="text-red-500 text-sm roboto-regular">Please tell us what this post is about.</p>',
+    );
+    return;
+  }
+
+  const mediaFile = $("#post-media-input")[0].files[0];
+  if (mediaFile && mediaFile.size > POST_MEDIA_MAX_BYTES) {
+    $("#post-alert").empty().append(
+      $("<p>", {
+        class: "text-red-500 text-sm roboto-regular",
+        text: "This file is too large. Maximum size for photos and videos is 20 MB.",
+      }),
     );
     return;
   }
@@ -555,8 +592,6 @@ function createPost() {
   formData.append("content", content);
 
   formData.append("article_url", $("#article-url").val());
-
-  const mediaFile = $("#post-media-input")[0].files[0];
 
   if (mediaFile) {
     formData.append("media", mediaFile);
@@ -574,10 +609,20 @@ function createPost() {
     },
 
     error: function (xhr) {
-      const errorMsg = xhr.responseJSON
-        ? xhr.responseJSON.message
-        : "Unkown error";
-      alert("Error: " + errorMsg);
+      let errorMsg = "Something went wrong. Please try again.";
+      const body = xhr.responseJSON;
+      if (body && typeof body.message === "string" && body.message.trim()) {
+        errorMsg = body.message;
+      } else if (xhr.status === 413) {
+        errorMsg =
+          "File or request is too large. Maximum upload size is 20 MB.";
+      }
+      $("#post-alert").empty().append(
+        $("<p>", {
+          class: "text-red-500 text-sm roboto-regular",
+          text: errorMsg,
+        }),
+      );
     },
   });
 }
@@ -590,6 +635,8 @@ function resetPostForm() {
   $("#post-media-input").val("");
 
   $("#media-preview-container").html("").addClass("hidden");
+
+  $("#post-alert").empty();
 }
 
 function openDeleteModal(id, type, element = null) {
@@ -617,4 +664,612 @@ function openEditGroupModal() {
 function closeEditGroupModal() {
   $("#edit-group-modal").addClass("hidden").removeClass("flex");
   $("#edit-group-alert").empty();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MEMBERS, INVITES, SETTINGS, LEAVE
+// ═══════════════════════════════════════════════════════════════════
+
+function _escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function _myRole() {
+  return $("#user-data").data("my-role");
+}
+
+function _isOwner() {
+  return $("#user-data").data("is-owner") === true ||
+         $("#user-data").data("is-owner") === "true";
+}
+
+function _myUserId() {
+  return $("#user-data").data("user-id");
+}
+
+function _ownerId() {
+  // Owner is the member whose role === "owner". Cached per render.
+  return window.__ownerId || null;
+}
+
+function _avatarHtml(member) {
+  if (member.profile_picture) {
+    const src = member.profile_picture.startsWith("http") ||
+                member.profile_picture.startsWith("/")
+      ? member.profile_picture
+      : "/static/" + member.profile_picture;
+    return `<img src="${_escapeHtml(src)}" class="w-9 h-9 rounded-full object-cover shrink-0" alt="">`;
+  }
+  const initial = (member.username || "?")[0].toUpperCase();
+  return `<div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm montserrat-semi-bold shrink-0">${_escapeHtml(initial)}</div>`;
+}
+
+function _roleBadge(role) {
+  const styles = {
+    owner:  "bg-indigo-100 text-indigo-600",
+    admin:  "bg-purple-100 text-purple-600",
+    member: "bg-gray-100 text-gray-500",
+  };
+  const cls = styles[role] || styles.member;
+  const label = role.charAt(0).toUpperCase() + role.slice(1);
+  return `<span class="text-[10px] montserrat-medium px-2 py-0.5 rounded-full ${cls}">${label}</span>`;
+}
+
+// ── Sidebar member list (compact) ──────────────────────────────────────────
+function loadGroupMembers(groupId) {
+  $.getJSON(`/api/groups/${groupId}/members`, function (members) {
+    // Cache owner id for downstream logic
+    const owner = members.find((m) => m.role === "owner");
+    window.__ownerId = owner ? owner.user_id : null;
+
+    renderSidebarMembers(members);
+    $("#member-count").text(members.length);
+
+    // If the settings modal is open, refresh that list too
+    if (!$("#settings-modal").hasClass("hidden") &&
+        !$("#settings-tab-members").hasClass("hidden")) {
+      renderSettingsMembers(members);
+    }
+  });
+}
+
+function renderSidebarMembers(members) {
+  const myId = _myUserId();
+  const isOwner = _isOwner();
+  const isAdmin = _myRole() === "admin" || isOwner;
+
+  let html = "";
+  members.forEach((m) => {
+    const canRemove = isAdmin && m.role !== "owner" && m.user_id !== myId;
+    const removeBtn = canRemove
+      ? `<button class="member-remove-btn opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-1"
+                  data-user-id="${m.user_id}" data-username="${_escapeHtml(m.username)}"
+                  title="Remove from group">
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+           </svg>
+         </button>`
+      : "";
+
+    html += `
+      <div class="group flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50">
+        ${_avatarHtml(m)}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm montserrat-medium text-gray-800 truncate">${_escapeHtml(m.username)}</p>
+          <div class="mt-0.5">${_roleBadge(m.role)}</div>
+        </div>
+        ${removeBtn}
+      </div>
+    `;
+  });
+
+  $("#members-list").html(html);
+}
+
+// Sidebar inline remove button -> reuses the confirm flow via a small custom modal
+$(document).on("click", ".member-remove-btn", function (e) {
+  e.stopPropagation();
+  const userId = $(this).data("user-id");
+  const username = $(this).data("username");
+  if (!confirm(`Remove ${username} from this group?`)) return;
+  removeMember(userId, username);
+});
+
+function removeMember(userId, username) {
+  const groupId = $("#group-data").data("group-id");
+  $.ajax({
+    url: `/api/groups/${groupId}/members/${userId}`,
+    type: "DELETE",
+    success: function (resp) {
+      if (resp.success) {
+        loadGroupMembers(groupId);
+      }
+    },
+    error: function (xhr) {
+      alert(xhr.responseJSON?.message || `Could not remove ${username}.`);
+    },
+  });
+}
+
+// ── Settings modal ────────────────────────────────────────────────────────
+function initGroupSettings(groupId) {
+  $("#open-settings-btn").on("click", function () {
+    openSettings("members");
+  });
+  $("#settings-modal-close").on("click", closeSettings);
+
+  $(".settings-tab").on("click", function () {
+    const tab = $(this).data("tab");
+    selectSettingsTab(tab);
+  });
+}
+
+function openSettings(tab) {
+  $("#settings-modal").removeClass("hidden");
+  selectSettingsTab(tab || "members");
+}
+
+function closeSettings() {
+  $("#settings-modal").addClass("hidden");
+}
+
+function selectSettingsTab(tab) {
+  $(".settings-tab").each(function () {
+    const isActive = $(this).data("tab") === tab;
+    if (isActive) {
+      $(this)
+        .removeClass("border-transparent text-gray-500 hover:text-gray-700 text-red-500 hover:text-red-600")
+        .addClass(
+          tab === "danger"
+            ? "border-red-500 text-red-600"
+            : "border-primary_purp text-primary_purp"
+        );
+    } else {
+      $(this)
+        .removeClass("border-primary_purp text-primary_purp border-red-500 text-red-600")
+        .addClass(
+          $(this).data("tab") === "danger"
+            ? "border-transparent text-red-500 hover:text-red-600"
+            : "border-transparent text-gray-500 hover:text-gray-700"
+        );
+    }
+  });
+
+  $(".settings-pane").addClass("hidden");
+  $(`#settings-tab-${tab}`).removeClass("hidden");
+
+  const groupId = $("#group-data").data("group-id");
+  if (tab === "members") loadSettingsMembers(groupId);
+  if (tab === "audit") loadSettingsAudit(groupId);
+}
+
+function loadSettingsMembers(groupId) {
+  $("#settings-members-list").html(
+    `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">Loading...</p>`
+  );
+  $.getJSON(`/api/groups/${groupId}/members`, function (members) {
+    const owner = members.find((m) => m.role === "owner");
+    window.__ownerId = owner ? owner.user_id : null;
+    renderSettingsMembers(members);
+  });
+}
+
+function renderSettingsMembers(members) {
+  const myId = _myUserId();
+  const isOwner = _isOwner();
+  const isAdmin = _myRole() === "admin" || isOwner;
+
+  let html = "";
+  members.forEach((m) => {
+    const isMe = m.user_id === myId;
+    const isMemberOwner = m.role === "owner";
+
+    // Action buttons
+    const actions = [];
+    if (isOwner && !isMemberOwner && !isMe) {
+      if (m.role === "member") {
+        actions.push(
+          `<button class="role-change-btn px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 text-xs montserrat-medium hover:bg-indigo-100"
+                   data-user-id="${m.user_id}" data-new-role="admin">Promote</button>`
+        );
+      } else if (m.role === "admin") {
+        actions.push(
+          `<button class="role-change-btn px-3 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs montserrat-medium hover:bg-gray-200"
+                   data-user-id="${m.user_id}" data-new-role="member">Demote</button>`
+        );
+      }
+    }
+    if (isAdmin && !isMemberOwner && !isMe) {
+      actions.push(
+        `<button class="settings-remove-btn px-3 py-1 rounded-lg bg-red-50 text-red-600 text-xs montserrat-medium hover:bg-red-100"
+                 data-user-id="${m.user_id}" data-username="${_escapeHtml(m.username)}">Remove</button>`
+      );
+    }
+
+    html += `
+      <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+        ${_avatarHtml(m)}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm montserrat-medium text-gray-800 truncate">
+            ${_escapeHtml(m.username)} ${isMe ? '<span class="text-xs text-gray-400 ml-1">(you)</span>' : ""}
+          </p>
+          <div class="mt-0.5">${_roleBadge(m.role)}</div>
+        </div>
+        <div class="flex gap-2 flex-wrap justify-end">${actions.join("")}</div>
+      </div>
+    `;
+  });
+
+  if (!html) {
+    html = `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">No members.</p>`;
+  }
+  $("#settings-members-list").html(html);
+}
+
+$(document).on("click", ".role-change-btn", function () {
+  const userId = $(this).data("user-id");
+  const newRole = $(this).data("new-role");
+  const groupId = $("#group-data").data("group-id");
+
+  $.ajax({
+    url: `/api/groups/${groupId}/members/${userId}/role`,
+    type: "PATCH",
+    contentType: "application/json",
+    data: JSON.stringify({ role: newRole }),
+    success: function () {
+      loadSettingsMembers(groupId);
+      loadGroupMembers(groupId);
+    },
+    error: function (xhr) {
+      alert(xhr.responseJSON?.message || "Could not change role.");
+    },
+  });
+});
+
+$(document).on("click", ".settings-remove-btn", function () {
+  const userId = $(this).data("user-id");
+  const username = $(this).data("username");
+  if (!confirm(`Remove ${username} from this group?`)) return;
+  removeMember(userId, username);
+  // The modal list refresh happens because removeMember calls loadGroupMembers
+  // which also refreshes the open settings panel.
+  setTimeout(() => loadSettingsMembers($("#group-data").data("group-id")), 200);
+});
+
+// ── Audit log tab ─────────────────────────────────────────────────────────
+function loadSettingsAudit(groupId) {
+  $("#settings-audit-list").html(
+    `<p class="text-sm text-gray-400 text-center py-4 roboto-regular">Loading...</p>`
+  );
+  $.getJSON(`/api/groups/${groupId}/audit-log`, function (logs) {
+    if (!logs.length) {
+      $("#settings-audit-list").html(
+        `<p class="text-sm text-gray-400 text-center py-6 roboto-regular">No moderation actions yet.</p>`
+      );
+      return;
+    }
+
+    const verbs = {
+      remove_member:  "removed",
+      promote_admin:  "promoted",
+      demote_admin:   "demoted",
+      delete_post:    "deleted a post by",
+    };
+
+    let html = "";
+    logs.forEach((log) => {
+      const actor = _escapeHtml(log.actor_username || "Someone");
+      const target = _escapeHtml(log.target_username || "");
+      const verb = verbs[log.action] || log.action.replace("_", " ");
+      const when = formatMyCustomDate(log.created_at);
+
+      html += `
+        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+          <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke-width="2" stroke="currentColor" class="w-4 h-4">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-700 roboto-regular">
+              <span class="montserrat-semi-bold text-gray-800">${actor}</span>
+              ${verb}
+              ${target ? `<span class="montserrat-semi-bold text-gray-800">${target}</span>` : ""}
+            </p>
+            <p class="text-xs text-gray-400 mt-0.5">${when}</p>
+          </div>
+        </div>
+      `;
+    });
+
+    $("#settings-audit-list").html(html);
+  }).fail(function () {
+    $("#settings-audit-list").html(
+      `<p class="text-sm text-red-500 text-center py-6 roboto-regular">Failed to load audit log.</p>`
+    );
+  });
+}
+
+// ── Invite modal (mass invite by friend code) ─────────────────────────────
+const MAX_INVITE_CODES_DETAIL = 15;
+
+function inviteRowTemplateDetail() {
+  return (
+    `<div class="invite-code-row">
+      <div class="flex gap-2 items-center">
+        <input type="text" maxlength="8" autocomplete="off" spellcheck="false"
+          placeholder="Friend code"
+          class="invite-code-field flex-1 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none uppercase tracking-widest" />
+        <button type="button" class="invite-code-remove shrink-0 w-9 h-9 rounded-xl border border-gray-200 text-gray-400 hover:bg-gray-100 montserrat-medium text-lg leading-none disabled:opacity-30" title="Remove row" aria-label="Remove row" disabled>×</button>
+      </div>
+      <div class="invite-user-preview"></div>
+    </div>`
+  );
+}
+
+function resetInviteRowsDetail($container) {
+  $container.empty().append(inviteRowTemplateDetail());
+  syncInviteRemoveButtonsDetail($container);
+}
+
+function syncInviteRemoveButtonsDetail($container) {
+  const $rows = $container.find(".invite-code-row");
+  const many = $rows.length > 1;
+  $rows
+    .find(".invite-code-remove")
+    .prop("disabled", !many)
+    .toggleClass("opacity-30 pointer-events-none", !many);
+}
+
+function collectFriendCodesDetail($container) {
+  const codes = [];
+  const seen = new Set();
+  $container.find(".invite-code-field").each(function () {
+    const c = ($(this).val() || "").trim().toUpperCase();
+    if (c.length === 8 && !seen.has(c)) {
+      seen.add(c);
+      codes.push(c);
+    }
+  });
+  return codes;
+}
+
+function sendMassInvitesDetail(groupId, $container, $alert) {
+  const codes = collectFriendCodesDetail($container);
+  if (codes.length === 0) {
+    $alert
+      .text("Enter at least one complete 8-character friend code.")
+      .css("color", "#ef4444");
+    return;
+  }
+
+  $alert.text("Sending...").css("color", "#6b7280");
+  $("#invite-mass-btn-detail").prop("disabled", true);
+
+  $.ajax({
+    url: `/api/groups/${groupId}/invite-bulk`,
+    type: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({ friend_codes: codes }),
+    success: function (res) {
+      const sent = res.sent != null ? res.sent : 0;
+      $alert
+        .text(
+          res.message ||
+            (sent ? `Sent ${sent} invitation(s).` : "No invitations were sent."),
+        )
+        .css("color", sent > 0 ? "#16a34a" : "#ef4444");
+      resetInviteRowsDetail($container);
+    },
+    error: function (xhr) {
+      const msg = xhr.responseJSON?.message || "Failed to send invitations.";
+      $alert.text(msg).css("color", "#ef4444");
+    },
+    complete: function () {
+      $("#invite-mass-btn-detail").prop("disabled", false);
+    },
+  });
+}
+
+// ── Friend-code user preview (group detail) ───────────────────────────────
+const _detailLookupXHRMap = new WeakMap();
+
+function _detailEscapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function _detailPreviewAvatarHtml(username, profilePicture) {
+  if (profilePicture) {
+    return `<img src="${profilePicture}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0" referrerpolicy="no-referrer" alt="avatar" />`;
+  }
+  const initial = (username || "?")[0].toUpperCase();
+  return `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm montserrat-medium shrink-0">${initial}</div>`;
+}
+
+function _detailShowPreviewLoading($preview) {
+  $preview.html(
+    `<div class="flex items-center gap-2.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100">
+      <div class="invite-preview-spinner"></div>
+      <span class="text-xs roboto-regular text-gray-400">Looking up…</span>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailShowPreviewFound($preview, username, profilePicture) {
+  $preview.html(
+    `<div class="flex items-center gap-2.5 px-3 py-2 bg-indigo-50 rounded-xl border border-indigo-100">
+      ${_detailPreviewAvatarHtml(username, profilePicture)}
+      <div class="min-w-0">
+        <p class="text-xs montserrat-medium text-gray-800 truncate">${_detailEscapeHtml(username)}</p>
+        <p class="text-[10px] roboto-regular text-indigo-500">Ready to invite ✓</p>
+      </div>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailShowPreviewNotFound($preview) {
+  $preview.html(
+    `<div class="flex items-center gap-2 px-3 py-2 bg-red-50 rounded-xl border border-red-100">
+      <svg class="w-4 h-4 text-red-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span class="text-xs roboto-regular text-red-500">No user found with this code</span>
+    </div>`
+  );
+  $preview.addClass("is-visible");
+}
+
+function _detailHidePreview($preview) {
+  $preview.removeClass("is-visible");
+  setTimeout(function () {
+    if (!$preview.hasClass("is-visible")) $preview.html("");
+  }, 320);
+}
+
+function triggerFriendCodeLookupDetail($input) {
+  const code = ($input.val() || "").trim().toUpperCase();
+  const $row = $input.closest(".invite-code-row");
+  const $preview = $row.find(".invite-user-preview");
+  const rowEl = $row[0];
+
+  if (_detailLookupXHRMap.has(rowEl)) {
+    _detailLookupXHRMap.get(rowEl).abort();
+    _detailLookupXHRMap.delete(rowEl);
+  }
+
+  if (code.length < 8) {
+    _detailHidePreview($preview);
+    return;
+  }
+
+  _detailShowPreviewLoading($preview);
+
+  const xhr = $.ajax({
+    url: `/api/users/lookup-by-friend-code?friend_code=${encodeURIComponent(code)}`,
+    method: "GET",
+    success: function (res) {
+      if (res.success) {
+        _detailShowPreviewFound($preview, res.username, res.profile_picture);
+      } else {
+        _detailShowPreviewNotFound($preview);
+      }
+    },
+    error: function (jqXHR, status) {
+      if (status === "abort") return;
+      _detailShowPreviewNotFound($preview);
+    },
+    complete: function () {
+      _detailLookupXHRMap.delete(rowEl);
+    },
+  });
+
+  _detailLookupXHRMap.set(rowEl, xhr);
+}
+
+function initInviteModal(groupId) {
+  const $root = $("#invite-code-rows-detail");
+
+  $("#invite-member-btn").on("click", function () {
+    $("#invite-alert").text("");
+    resetInviteRowsDetail($root);
+    $("#invite-modal").removeClass("hidden");
+  });
+
+  $("#invite-modal-close").on("click", function () {
+    $("#invite-modal").addClass("hidden");
+  });
+
+  $root.on("input", ".invite-code-field", function () {
+    const input = this;
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (input.value.length > 8) input.value = input.value.slice(0, 8);
+    if (typeof pos === "number") {
+      const p = Math.min(pos, input.value.length);
+      input.setSelectionRange(p, p);
+    }
+    const $rows = $root.find(".invite-code-row");
+    const $row = $(input).closest(".invite-code-row");
+    if (
+      $row.is($rows.last()) &&
+      (input.value || "").trim().length >= 8 &&
+      $rows.length < MAX_INVITE_CODES_DETAIL
+    ) {
+      $root.append(inviteRowTemplateDetail());
+      syncInviteRemoveButtonsDetail($root);
+    }
+    triggerFriendCodeLookupDetail($(input));
+  });
+
+  $root.on("click", ".invite-code-remove", function (e) {
+    e.preventDefault();
+    const $rows = $root.find(".invite-code-row");
+    if ($rows.length <= 1) return;
+    const $row = $(this).closest(".invite-code-row");
+    const rowEl = $row[0];
+    if (_detailLookupXHRMap.has(rowEl)) {
+      _detailLookupXHRMap.get(rowEl).abort();
+      _detailLookupXHRMap.delete(rowEl);
+    }
+    $row.remove();
+    syncInviteRemoveButtonsDetail($root);
+  });
+
+  $root.on("keydown", ".invite-code-field", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMassInvitesDetail(groupId, $root, $("#invite-alert"));
+    }
+  });
+
+  $("#invite-mass-btn-detail").on("click", function () {
+    sendMassInvitesDetail(groupId, $root, $("#invite-alert"));
+  });
+
+  resetInviteRowsDetail($root);
+}
+
+// ── Leave group ───────────────────────────────────────────────────────────
+function initLeaveGroup(groupId) {
+  $("#leave-group-btn").on("click", function () {
+    $("#leave-modal").removeClass("hidden");
+  });
+  $("#leave-cancel-btn").on("click", function () {
+    $("#leave-modal").addClass("hidden");
+  });
+  $("#leave-confirm-btn").on("click", function () {
+    $.ajax({
+      url: `/api/groups/${groupId}/leave`,
+      type: "POST",
+      success: function () {
+        window.location.href = "/groups";
+      },
+      error: function (xhr) {
+        alert(xhr.responseJSON?.message || "Could not leave group.");
+        $("#leave-modal").addClass("hidden");
+      },
+    });
+  });
+}
+
+// ── Helper for the "Delete Group" button in the danger zone ────────────────
+function openDeleteGroupModal() {
+  // Reuse the existing delete-confirm modal. type=null falls through to /api/groups/<id>.
+  itemToDelete = { id: null, type: null, element: null };
+  $("#delete-modal").removeClass("hidden").addClass("flex");
 }

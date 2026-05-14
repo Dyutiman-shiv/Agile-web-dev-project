@@ -1,7 +1,14 @@
+import secrets
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timezone
 from app import db
+
+FRIEND_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def _gen_friend_code():
+    return "".join(secrets.choice(FRIEND_CODE_ALPHABET) for _ in range(8))
 
 
 class User(db.Model):  # type: ignore[name-defined]
@@ -13,6 +20,7 @@ class User(db.Model):  # type: ignore[name-defined]
     password_hash = db.Column(db.String(256), nullable=True)   # nullable for Google-only users
     google_id = db.Column(db.String(256), unique=True, nullable=True)
     profile_picture = db.Column(db.String(512), nullable=True)
+    friend_code = db.Column(db.String(8), unique=True, nullable=False, index=True, default=_gen_friend_code)
 
     # Relationships
     study_sessions = db.relationship("StudySession", backref="user", lazy="dynamic", cascade="all, delete-orphan")
@@ -35,6 +43,15 @@ class User(db.Model):  # type: ignore[name-defined]
         if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "profile_picture": self.profile_picture,
+            "friend_code": self.friend_code,
+        }
 
     # Flask-Login integration
     @property
@@ -432,9 +449,10 @@ class GroupMembership(db.Model):
     group = db.relationship("Group", back_populates="members")
 
     def to_dict(self):
-
-        return{
+        return {
             "user_id": self.user_id,
+            "username": self.user.username,
+            "profile_picture": self.user.profile_picture,
             "group_id": self.group_id,
             "role": self.role,
             "joined_at": self.joined_at.isoformat(),
@@ -539,10 +557,57 @@ class GroupInvitation(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    status = db.Column(db.String(20), default="pending")  # pending / accepted / declined
+    status = db.Column(db.String(20), default="pending")  # pending / accepted / declined / cancelled
     created_at = db.Column(db.DateTime, default=db.func.now())
 
     # Relationships
     group = db.relationship("Group")
     sender = db.relationship("User", foreign_keys=[sender_id])
     receiver = db.relationship("User", foreign_keys=[receiver_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "group_id": self.group_id,
+            "group_name": self.group.name,
+            "group_cover": self.group.cover_picture,
+            "sender_id": self.sender_id,
+            "sender_username": self.sender.username,
+            "sender_picture": self.sender.profile_picture,
+            "receiver_id": self.receiver_id,
+            "receiver_username": self.receiver.username,
+            "receiver_picture": self.receiver.profile_picture,
+            "status": self.status,
+            "created_at": self.created_at.isoformat(),
+        }
+
+
+class GroupModerationLog(db.Model):
+    __tablename__ = "group_moderation_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
+    actor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # remove_member / delete_post / promote_admin / demote_admin
+    target_user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    target_post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=True)
+    reason = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    group = db.relationship("Group")
+    actor = db.relationship("User", foreign_keys=[actor_id])
+    target_user = db.relationship("User", foreign_keys=[target_user_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "group_id": self.group_id,
+            "actor_id": self.actor_id,
+            "actor_username": self.actor.username,
+            "action": self.action,
+            "target_user_id": self.target_user_id,
+            "target_username": self.target_user.username if self.target_user else None,
+            "target_post_id": self.target_post_id,
+            "reason": self.reason,
+            "created_at": self.created_at.isoformat(),
+        }
