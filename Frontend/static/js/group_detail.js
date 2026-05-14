@@ -1,4 +1,5 @@
 let itemToDelete = { id: null, type: null, element: null };
+let uploadController = null;
 
 $(document).ready(function () {
   "use strict";
@@ -153,6 +154,8 @@ $(document).ready(function () {
 
     if (!file) return;
 
+    $("#cancel-upload-btn").removeClass("hidden");
+
     const url = URL.createObjectURL(file);
 
     let previewHTML = "";
@@ -177,6 +180,18 @@ $(document).ready(function () {
 
     $("#media-preview-container").html(previewHTML).removeClass("hidden");
   });
+
+  $("#cancel-upload-btn").on("click", function () {
+    // If the network request is actively running, abort it immediately
+    if (uploadController) {
+      uploadController.abort();
+      console.log("Network upload aborted.");
+    }
+
+    // Reset the UI fields and clear the preview
+    resetContentPreview();
+  });
+
   $("#submit-post-btn").on("click", createPost);
 });
 
@@ -562,24 +577,42 @@ function createPost() {
     formData.append("media", mediaFile);
   }
 
+  uploadController = new AbortController();
+
   $.ajax({
     url: "/api/groups/" + group_id + "/posts",
     type: "POST",
     data: formData,
     processData: false,
     contentType: false,
+    signal: uploadController.signal,
     success: function () {
       resetPostForm();
       loadGroupPosts(group_id);
     },
 
     error: function (xhr) {
-      const errorMsg = xhr.responseJSON
-        ? xhr.responseJSON.message
-        : "Unkown error";
-      alert("Error: " + errorMsg);
+      if (xhr.statusText === "abort") {
+        console.log("Upload cleanly canceled by user.");
+      } else {
+        const errorMsg = xhr.responseJSON
+          ? xhr.responseJSON.message
+          : "Unknown error";
+        alert("Error: " + errorMsg);
+      }
+    },
+    complete: function () {
+      // Clear the controller reference when the request finishes either way
+      uploadController = null;
     },
   });
+}
+
+function resetContentPreview(){
+
+  $("#cancel-upload-btn").addClass("hidden");
+  $("#post-media-input").val("");
+  $("#media-preview-container").html("").addClass("hidden");
 }
 
 function resetPostForm() {
@@ -590,6 +623,7 @@ function resetPostForm() {
   $("#post-media-input").val("");
 
   $("#media-preview-container").html("").addClass("hidden");
+
 }
 
 function openDeleteModal(id, type, element = null) {
