@@ -56,8 +56,10 @@ function loadUnits() {
         }
       });
 
+      loadFromLocal();
       render();
     }).fail(function () {
+      loadFromLocal();
       render();
     });
 
@@ -130,25 +132,25 @@ function updateValue(unitId, id, field, value) {
       method: "PUT",
       contentType: "application/json",
       data: JSON.stringify({
-      name: item.name,
-      score: item.score,
-      weight: item.weight
-    })
-  });
+        name: item.name,
+        score: item.score,
+        weight: item.weight
+      })
+    });
 
-  saveToLocal();
-  return;
-}
+    saveToLocal();
+    return;
+  }
 
   let val = Number(value);
   if (isNaN(val)) {
-    showError(unitId,"Please enter a valid number for score and weight.");
+    showError(unitId, "Please enter a valid number for score and weight.");
     return;
   }
   if (val < 0 || val > 100) {
-    showError(unitId,"Value must be between 0 and 100.");
+    showError(unitId, "Value must be between 0 and 100.");
     return;
-  } 
+  }
   if (field === "weight") {
     let total = 0;
 
@@ -170,7 +172,7 @@ function updateValue(unitId, id, field, value) {
   clearError(unitId);
 
   item[field] = val;
-  
+
   $.ajax({
     url: `/api/scores/${id}`,
     method: "PUT",
@@ -231,14 +233,14 @@ function updateOverallWAM() {
   document.getElementById("overall-wam").innerText =
     count ? (sum / count).toFixed(2) : "0";
 
-    $.ajax({
-      url: `/api/semesters/${currentSemesterId}`,
-      method: "PUT",
-      contentType: "application/json",
-      data: JSON.stringify({
-        wam: count ? (sum / count) : null
-      })
-    });
+  $.ajax({
+    url: `/api/semesters/${currentSemesterId}`,
+    method: "PUT",
+    contentType: "application/json",
+    data: JSON.stringify({
+      wam: count ? (sum / count) : null
+    })
+  });
 }
 
 function render() {
@@ -250,13 +252,13 @@ function render() {
     container.innerHTML += `
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
 
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <h4 class="text-lg montserrat-bold text-gray-800">
             ${unitNames[unitId]}
           </h4>
 
           <button onclick="addAssessment('${unitId}')"
-            class="px-3 py-1 montserrat-regular text-sm rounded-lg bg-indigo-50 text-primary_purp hover:bg-indigo-100 transition">
+            class="w-full sm:w-auto px-3 py-2 montserrat-regular text-sm rounded-lg bg-indigo-50 text-primary_purp hover:bg-indigo-100 transition">
             + Add Assessment
           </button>
         </div>
@@ -286,12 +288,12 @@ function render() {
 
     units[unitId].forEach(a => {
       list.innerHTML += `
-        <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 flex items-center gap-3">
+        <div class="bg-gray-50 rounded-xl border border-gray-100 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
 
           <input type="text"
             placeholder="Assessment Name"
             value="${a.name || ''}"
-            class="flex-1 px-3 py-2 rounded-lg  roboto-regular border border-gray-200 text-sm focus:ring-1 focus:ring-primary_purp"
+            class="w-full sm:flex-1 px-3 py-2 rounded-lg roboto-regular border border-gray-200 text-sm focus:ring-1 focus:ring-primary_purp"
             oninput="updateValue('${unitId}', ${a.id}, 'name', this.value)">
 
           <input type="number"
@@ -299,7 +301,7 @@ function render() {
             min = "0"
             max = "100"
             value="${a.score || ''}"
-            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
+            class="w-full sm:w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
             oninput="updateValue('${unitId}', ${a.id}, 'score', this.value)">
 
           <input type="number"
@@ -307,14 +309,18 @@ function render() {
             max = "100"
             placeholder="%"
             value="${a.weight || ''}"
-            class="w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
+            class="w-full sm:w-20 px-3 py-2 text-center rounded-lg border border-gray-200 text-sm roboto-regular"
             oninput="updateValue('${unitId}', ${a.id}, 'weight', this.value)">
 
           <button onclick="deleteAssessment('${unitId}', ${a.id})"
-            class="text-gray-300 hover:text-red-500 text-lg roboto-regular transition">
-            ✕
+          class="self-end sm:self-auto w-9 h-9 flex items-center justify-center rounded-lg
+          text-gray-400 bg-white border border-gray-200
+          hover:text-red-500 hover:bg-red-50 hover:border-red-200
+          active:text-red-600 active:bg-red-100 active:border-red-300
+          focus:text-red-500 focus:bg-red-50 focus:border-red-200
+          transition-colors text-lg roboto-regular">
+          ✕
           </button>
-
         </div>
       `;
     });
@@ -326,6 +332,35 @@ function render() {
 $(function () {
   loadSemesters();
 });
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem("scoresData");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return;
+
+    Object.keys(parsed).forEach((key) => {
+      if (!Object.prototype.hasOwnProperty.call(units, key)) return;
+      const localArr = parsed[key];
+      if (!Array.isArray(localArr)) return;
+      const serverArr = units[key];
+      if (!Array.isArray(serverArr)) return;
+
+      const localById = new Map();
+      localArr.forEach((a) => {
+        if (a && typeof a.id !== "undefined") localById.set(a.id, a);
+      });
+
+      units[key] = serverArr.map((a) => {
+        const loc = localById.get(a.id);
+        return loc ? Object.assign({}, a, loc) : a;
+      });
+    });
+  } catch (e) {
+    console.error("loadFromLocal failed:", e);
+  }
+}
 
 function saveToLocal() {
   localStorage.setItem("scoresData", JSON.stringify(units));
