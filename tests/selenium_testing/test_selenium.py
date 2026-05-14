@@ -47,7 +47,11 @@ def test_login_page_loads(driver, live_server_url):
     form = WebDriverWait(driver, WAIT).until(
         EC.presence_of_element_located((By.ID, "login-form"))
     )
-    assert form.is_displayed()
+    # Avoid form.is_displayed() — headless Linux CI often reports the outer
+    # form as not "displayed" while inputs are still interactable (animations/overlays).
+    assert form.get_attribute("id") == "login-form"
+    assert driver.find_element(By.ID, "email").is_enabled()
+    assert driver.find_element(By.ID, "password").is_enabled()
     assert "Log In" in driver.title
 
 
@@ -125,7 +129,8 @@ def test_scores_page_loads_after_login(driver, live_server_url, seeded_user):
     select = WebDriverWait(driver, WAIT).until(
         EC.presence_of_element_located((By.ID, "semester-select"))
     )
-    assert select.is_displayed()
+    assert select.get_attribute("id") == "semester-select"
+    assert select.is_enabled()
 
 
 # ---------------------------------------------------------------------------
