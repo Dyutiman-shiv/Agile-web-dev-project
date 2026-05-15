@@ -8,15 +8,36 @@ function loadSemesters() {
     const select = $("#semester-select");
     select.html("");
 
+    if (!data || data.length === 0) {
+      currentSemesterId = "";
+      units = {};
+      unitNames = {};
+      unitCredits = {};
+
+      select.append(`<option>No semesters found</option>`);
+      select.prop("disabled", true);
+
+      $("#units-container").html("");
+      $("#no-units-message").removeClass("hidden");
+      $("#overall-wam").text("0");
+
+      return;
+    }
+
+    select.prop("disabled", false);
+
     data.forEach(s => {
       select.append(`<option value="${s.id}">${s.name}</option>`);
     });
 
-    if (data.length > 0) {
-      currentSemesterId = data[0].id;
-      select.val(currentSemesterId);
-      loadUnits();
-    }
+    currentSemesterId = data[0].id;
+    select.val(currentSemesterId);
+    loadUnits();
+  }).fail(function () {
+    $("#semester-select").html(`<option>Failed to load semesters</option>`);
+    $("#units-container").html("");
+    $("#no-units-message").removeClass("hidden");
+    $("#overall-wam").text("0");
   });
 }
 
@@ -245,7 +266,16 @@ function updateOverallWAM() {
 
 function render() {
   const container = document.getElementById("units-container");
+  const emptyMessage = document.getElementById("no-units-message");
   container.innerHTML = "";
+
+  if (Object.keys(units).length === 0) {
+    if (emptyMessage) emptyMessage.classList.remove("hidden");
+    document.getElementById("overall-wam").innerText = "0";
+    return;
+  }
+
+  if (emptyMessage) emptyMessage.classList.add("hidden");
 
   Object.keys(units).forEach(unitId => {
 
