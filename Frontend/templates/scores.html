@@ -2,22 +2,21 @@
 {% block title %}Scores{% endblock %}
 
 {% block page_content %}
-<div class="max-w-6xl mx-auto space-y-6 p-6">
+<div class="max-w-6xl mx-auto space-y-6 p-4 sm:p-6">
 
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center">
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-3">
     <h3 class="text-lg montserrat-bold text-gray-800 flex items-center gap-2">
       📈 Calculate Your WAM for
     </h3>
-    <select id="semester-select"
-    class="ml-auto px-4 py-2 border border-gray-200 rounded-xl text-sm
+    <select id="semester-select" class="w-full sm:w-auto sm:ml-auto px-4 py-2 border border-gray-200 rounded-xl text-sm
          focus:ring-2 focus:ring-indigo-500 focus:outline-none roboto-regular
          relative z-50 bg-white">
-    <option>Loading...</option>
+      <option>Loading...</option>
     </select>
   </div>
 
-  <div id="units-container"
-       class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+  <div id="units-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
   </div>
 
   <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
