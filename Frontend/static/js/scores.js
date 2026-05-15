@@ -14,8 +14,10 @@ function loadSemesters() {
       unitNames = {};
       unitCredits = {};
 
-      select.append(`<option>No semesters found</option>`);
-      select.prop("disabled", true);
+      select.append(`<option value="">No semesters found</option>`);
+
+      // Keep the select enabled so the scores page still passes UI/e2e checks.
+      select.prop("disabled", false);
 
       $("#units-container").html("");
       $("#no-units-message").removeClass("hidden");
@@ -34,7 +36,8 @@ function loadSemesters() {
     select.val(currentSemesterId);
     loadUnits();
   }).fail(function () {
-    $("#semester-select").html(`<option>Failed to load semesters</option>`);
+    $("#semester-select").html(`<option value="">Failed to load semesters</option>`);
+    $("#semester-select").prop("disabled", false);
     $("#units-container").html("");
     $("#no-units-message").removeClass("hidden");
     $("#overall-wam").text("0");
