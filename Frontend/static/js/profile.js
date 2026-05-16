@@ -8,9 +8,10 @@ $(function () {
             success: "bg-emerald-100 text-emerald-700 border-emerald-200"
         };
         const cls = colorMap[type] || colorMap.danger;
+        const safeMessage = $("<div>").text(message || "").html();
         $("#" + containerId).html(
             '<div class="flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-sm border mb-3 ' + cls + '">' +
-            '<span>' + message + '</span>' +
+            '<span>' + safeMessage + '</span>' +
             '<button onclick="$(this).parent().fadeOut(200,function(){$(this).remove()})" class="hover:opacity-70 transition-opacity text-lg leading-none">&times;</button>' +
             '</div>'
         );

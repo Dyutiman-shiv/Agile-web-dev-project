@@ -192,7 +192,7 @@
         try {
             var n = new Notification(notification.title, {
                 body: notification.message,
-                icon: "/static/css/style.css", // fallback — no app icon
+                icon: "/static/img/avatar-placeholder.svg",
                 tag: "planify-" + notification.id,
             });
             n.onclick = function () {

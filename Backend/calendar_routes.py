@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, date
-import calendar 
+import calendar
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import exists
 from sqlalchemy.orm import joinedload
 from models import StudySession, Task, ICalCalendar, StudySessionSegment
 from app import db
+from utils import parse_client_datetime
 
 cal_bp = Blueprint("cal", __name__)
 
@@ -109,8 +110,10 @@ def get_events():
     if not start or not end:
         return jsonify({"success": False, "message": "start and end required"}), 400
 
-    start_dt = datetime.fromisoformat(start)
-    end_dt = datetime.fromisoformat(end)
+    start_dt = parse_client_datetime(start)
+    end_dt = parse_client_datetime(end)
+    if not start_dt or not end_dt:
+        return jsonify({"success": False, "message": "Invalid start/end format."}), 400
 
     has_segments = exists().where(StudySessionSegment.session_id == StudySession.id)
 
@@ -154,25 +157,27 @@ def get_events():
 @cal_bp.route("/api/events", methods=["POST"])
 @login_required
 def create_event():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     event_type = data.get("type", "session")
     repeat_type = data.get("repeat_type", "none")
     repeat_until = parse_repeat_until(data.get("repeat_until"))
 
-    if data.get("start"):
-        start_dt = datetime.fromisoformat(data["start"])
+    start_dt = parse_client_datetime(data.get("start"))
+    if data.get("start") and not start_dt:
+        return jsonify({"success": False, "message": "Invalid start time format."}), 400
+    if start_dt:
         repeat_error = validate_repeat_dates(repeat_type, repeat_until, start_dt)
         if repeat_error:
             return jsonify({"success": False, "message": repeat_error}), 400
 
     if event_type == "session":
-        if not data.get("title") or not data.get("start"):
+        if not data.get("title") or not start_dt:
             return jsonify({"success": False, "message": "Subject and start time required."}), 400
         unit_id = data.get("unit_id")
         event = StudySession(
             user_id=current_user.id,
             subject=data["title"],
-            start_time=datetime.fromisoformat(data["start"]),
+            start_time=start_dt,
             duration_minutes=int(data.get("duration", 60)),
             notes=data.get("notes", ""),
             color=data.get("color", "#6366f1"),
@@ -181,12 +186,12 @@ def create_event():
             repeat_until=repeat_until,
         )
     elif event_type == "task":
-        if not data.get("title") or not data.get("start"):
+        if not data.get("title") or not start_dt:
             return jsonify({"success": False, "message": "Title and due date required."}), 400
         event = Task(
             user_id=current_user.id,
             title=data["title"],
-            due_date=datetime.fromisoformat(data["start"]),
+            due_date=start_dt,
             description=data.get("description", ""),
             duration_minutes=int(data.get("duration", 30)),
             color=data.get("color", "#f59e0b"),
@@ -205,23 +210,27 @@ def create_event():
 @cal_bp.route("/api/events/<int:event_id>", methods=["PUT"])
 @login_required
 def update_event(event_id):
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     event_type = data.get("type", "session")
     repeat_type = data.get("repeat_type", "none")
     repeat_until = parse_repeat_until(data.get("repeat_until"))
+
+    new_start = parse_client_datetime(data.get("start")) if data.get("start") else None
+    if data.get("start") and not new_start:
+        return jsonify({"success": False, "message": "Invalid start time format."}), 400
 
     if event_type == "session":
         event = db.session.get(StudySession, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
-        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.start_time
-        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        anchor = new_start or event.start_time
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, anchor)
         if repeat_error:
             return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.subject = data["title"]
-        if data.get("start"):
-            event.start_time = datetime.fromisoformat(data["start"])
+        if new_start:
+            event.start_time = new_start
         if "duration" in data:
             event.duration_minutes = int(data["duration"])
         if "notes" in data:
@@ -238,14 +247,14 @@ def update_event(event_id):
         event = db.session.get(Task, event_id)
         if not event or event.user_id != current_user.id:
             return jsonify({"success": False, "message": "Not found."}), 404
-        new_start = datetime.fromisoformat(data["start"]) if data.get("start") else event.due_date
-        repeat_error = validate_repeat_dates(repeat_type, repeat_until, new_start)
+        anchor = new_start or event.due_date
+        repeat_error = validate_repeat_dates(repeat_type, repeat_until, anchor)
         if repeat_error:
             return jsonify({"success": False, "message": repeat_error}), 400
         if data.get("title"):
             event.title = data["title"]
-        if data.get("start"):
-            event.due_date = datetime.fromisoformat(data["start"])
+        if new_start:
+            event.due_date = new_start
         if "description" in data:
             event.description = data["description"]
         if "completed" in data:
@@ -287,21 +296,25 @@ def delete_event(event_id):
 @cal_bp.route("/api/events/bulk", methods=["POST"])
 @login_required
 def bulk_add_events():
-    data = request.get_json()
+    data = request.get_json(silent=True) or []
+    if not isinstance(data, list):
+        return jsonify({"success": False, "message": "Expected a list of events."}), 400
 
     created = []
 
     for item in data:
-        if not item.get("title") or not item.get("start"):
+        if not isinstance(item, dict) or not item.get("title") or not item.get("start"):
             continue
 
-        start_time = datetime.fromisoformat(item["start"])
-        repeat_until = parse_repeat_until(item.get("repeat_until"))
+        start_time = parse_client_datetime(item["start"])
+        if not start_time:
+            continue
+
         existing = Task.query.filter_by(
             user_id=current_user.id,
             title=item["title"],
-            due_date=start_time
-            ).first()
+            due_date=start_time,
+        ).first()
 
         if existing:
             continue
@@ -309,7 +322,7 @@ def bulk_add_events():
         event = Task(
             user_id=current_user.id,
             title=item["title"],
-            due_date=datetime.fromisoformat(item["start"]),
+            due_date=start_time,
             description="Imported from iCal",
             completed=False,
         )
@@ -319,10 +332,7 @@ def bulk_add_events():
 
     db.session.commit()
 
-    return jsonify({
-        "success": True,
-        "count": len(created)
-    })
+    return jsonify({"success": True, "count": len(created)})
 
 
 # ---------- Calendar Settings Page ----------
@@ -343,7 +353,7 @@ def list_ical_calendars():
 @cal_bp.route("/api/ical-calendars", methods=["POST"])
 @login_required
 def create_ical_calendar():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     url = (data.get("url") or "").strip()
     color = (data.get("color") or "#3b82f6").strip()
@@ -366,7 +376,7 @@ def update_ical_calendar(cal_id):
     if not cal or cal.user_id != current_user.id:
         return jsonify({"success": False, "message": "Not found."}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     if "name" in data:
         name = (data["name"] or "").strip()
         if not name:

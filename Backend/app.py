@@ -162,8 +162,18 @@ def create_app(testing=False, db_uri=None):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
+    from calendar_api import calendar_api
+    app.register_blueprint(calendar_api)
+
+    from scores_route import scores_bp
+    app.register_blueprint(scores_bp)
+
     with app.app_context():
         db.create_all()
+        # Apply lightweight SQLite migrations (no-op on fresh DBs / non-SQLite).
+        if not testing:
+            _ensure_study_session_columns()
+            _ensure_study_session_segments_table()
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_request_entity_too_large(exc):
@@ -174,17 +184,6 @@ def create_app(testing=False, db_uri=None):
                 "message": "File or request is too large. Maximum upload size is 20 MB.",
             }), 413
         return exc.get_response()
-        if not testing:
-            _ensure_study_session_columns()
-            _ensure_study_session_segments_table()
-
-    from calendar_api import calendar_api
-    app.register_blueprint(calendar_api)
-
-
-    from scores_route import scores_bp
-    app.register_blueprint(scores_bp)
-    
 
     # Start background scheduler (guard against double-start in debug reloader)
     scheduler_enabled = os.environ.get("SCHEDULER_ENABLED", "1") != "0"

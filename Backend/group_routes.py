@@ -9,6 +9,7 @@ from models import (
     GroupInvitation, User, Notification, GroupModerationLog,
 )
 from app import db
+from utils import allowed_file
 import uuid
 import os
 
@@ -96,17 +97,13 @@ def _mod_log(group_id, actor_id, action, target_user_id=None, target_post_id=Non
 
 # ── File upload helper ────────────────────────────────────────────────────────
 
-def _allowed_file(filename):
-    allowed = current_app.config.get(
-        "ALLOWED_EXTENSIONS",
-        {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"},
-    )
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
+# Group posts allow video uploads too; the rest of the app uses image-only by default.
+_GROUP_ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"}
 
 
 def _save_upload(file, subfolder):
     """Save an uploaded file and return its relative path, or None on failure."""
-    if not _allowed_file(file.filename):
+    if not allowed_file(file.filename, fallback=_GROUP_ALLOWED_EXTENSIONS):
         return None, "File format not allowed."
     ext = file.filename.rsplit(".", 1)[1].lower()
     filename = f"{uuid.uuid4()}.{ext}"
@@ -433,7 +430,8 @@ def add_comment(post_id):
     if not _is_member(current_user.id, post.group_id):
         return jsonify({"success": False, "message": "You must be a group member to comment."}), 403
 
-    content = (request.json.get("content") or "").strip()
+    data = request.get_json(silent=True) or {}
+    content = (data.get("content") or "").strip()
     if not content:
         return jsonify({"success": False, "message": "Comment cannot be empty."}), 400
 
