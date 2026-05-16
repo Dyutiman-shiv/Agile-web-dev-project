@@ -43,7 +43,13 @@ $(document).ready(function () {
   }
 
   function loadTodaysTasks() {
-    const today = new Date().toISOString().split("T")[0];
+    
+    const dateObj = new Date();
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+    const day = String(dateObj.getDate()).padStart(2, '0');
+  
+    const today = `${year}-${month}-${day}`;
 
     $.getJSON("/api/dashboard/get_today_tasks/" + today, function (tasks) {
       if (!tasks || tasks.length === 0) {
@@ -189,8 +195,87 @@ $(document).ready(function () {
       } else {
         document.getElementById("wam-worst").textContent = "";
       }
+
+      loadUpcomingAssessments(semester_id, units);
+
     });
+
   }
+
+  function loadUpcomingAssessments(semester_id, units) {
+  const upcomingCard = document.getElementById("upcoming-assessments-card");
+  const listContainer = document.getElementById("upcoming-tasks-list");
+  
+  if (!upcomingCard || !listContainer) return;
+
+  const unitMap = {};
+  units.forEach(u => { unitMap[u.id] = u.name; });
+
+  $.getJSON(`/api/scores/${semester_id}`, function (assessments) {
+    if (!assessments || assessments.length === 0) {
+      upcomingCard.classList.add("hidden");
+      return;
+    }
+
+    const now = new Date();
+
+    const futureAssessments = assessments.filter(a => {
+      if (!a.due_date) return false;
+      const dueDate = new Date(a.due_date);
+    
+      const isCompleted = parseFloat(a.score) > 0; 
+      
+      return dueDate >= now && !isCompleted;
+    });
+
+    if (futureAssessments.length === 0) {
+      upcomingCard.classList.add("hidden");
+      return;
+    }
+
+    futureAssessments.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+
+    const topThree = futureAssessments.slice(0, 3);
+
+    listContainer.innerHTML = "";
+
+    topThree.forEach(a => {
+      const dueDate = new Date(a.due_date);
+      const formattedDate = dueDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+      const unitName = unitMap[a.unit_id] || "Unknow Unit";
+
+      const isToday = 
+        dueDate.getDate() === now.getDate() &&
+        dueDate.getMonth() === now.getMonth() &&
+        dueDate.getFullYear() === now.getFullYear();
+
+      const dateBadgeText = isToday ? "Today" : dueDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+      listContainer.innerHTML += `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 hover:bg-gray-100/70 transition">
+          <div class="space-y-0.5">
+            <h4 class="text-xs font-semibold text-gray-800 roboto-medium truncate max-w-[180px] sm:max-w-xs">
+              ${a.name || 'Unnamed Assessment'}
+            </h4>
+            <p class="text-[10px] text-gray-400 font-medium tracking-wide uppercase">
+              ${unitName}
+            </p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-bold text-primary_purp bg-primary_purp/20 px-2 py-1 rounded-md">
+              ${ dateBadgeText}
+            </span>
+          </div>
+        </div>
+      `;
+    });
+
+    upcomingCard.classList.remove("hidden");
+
+  }).fail(function () {
+    upcomingCard.classList.add("hidden");
+  });
+}
 
   loadPage();
 });

@@ -59,6 +59,27 @@ overflow-hidden bg-backgroud_cal_light
         ></ul>
       </div>
 
+      <!-- Upcoming Assessments Card -->
+      <div
+        id="upcoming-assessments-card"
+        class="bg-backgroud_cal_light p-6 rounded-2xl shadow-md border border-gray-100 hidden space-y-4"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-sm font-semibold text-gray-600 montserrat-semi-bold">
+            Upcoming Assessments
+          </h3>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-medium">
+            Urgent
+          </span>
+        </div>
+
+        <!-- Contenedor donde se inyectará la lista dinámicamente -->
+        <div id="upcoming-tasks-list" class="space-y-3">
+          <!-- Items inyectados desde JS -->
+        </div>
+      </div>
+
+
       <!-- Calendar -->
       <div class="bg-backgroud_cal_light p-5 rounded-2xl shadow">
         <div id="mini-calendar"></div>
