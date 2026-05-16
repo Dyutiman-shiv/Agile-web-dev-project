@@ -329,12 +329,9 @@ def get_posts(group_id):
 
     sorted_posts = sorted(posts, key=lambda x:x['created_at'], reverse=True)
 
-<<<<<<< HEAD
     return jsonify(sorted_posts), 200
 
 
-=======
->>>>>>> main
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])
 @login_required
 def create_post(group_id):

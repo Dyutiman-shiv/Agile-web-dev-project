@@ -46,7 +46,6 @@ $(document).ready(function () {
     const today = new Date().toISOString().split("T")[0];
 
     $.getJSON("/api/dashboard/get_today_tasks/" + today, function (tasks) {
-      console.log("Today's Tasks:", tasks);
       if (!tasks || tasks.length === 0) {
         const ul = document.getElementById("task-list");
         ul.innerHTML = '<li class="text-gray-400">No tasks for today! 🎉</li>';
@@ -125,13 +124,14 @@ $(document).ready(function () {
   // Loading Curent Semester
   function loadCurrentSemester() {
     $.getJSON("/api/semesters/current", function (semester) {
-      console.log(semester);
       const wamContainer = document.getElementById("wam-card");
 
       if (!semester) {
-        wamContainer.textContent = "No active semester found.";
+        wamContainer.classList.add("hidden");
         return;
       } else {
+
+        wamContainer.classList.remove("hidden");
         document.getElementById("semester-name").textContent = semester.name;
 
         // Update the Wam Ring
@@ -142,11 +142,11 @@ $(document).ready(function () {
 
         let radius = parseFloat(ring.getAttribute("r"));
         const circumference = 2 * Math.PI * radius;
-        let wam = parseFloat(semester.wam);
+        let wam = semester.wam === null ? 0 : parseFloat(semester.wam);
 
         const offset =
           circumference -
-          (semester.wam === null ? 0 : parseFloat(wam) / 100) * circumference;
+          (semester.wam === null ? 0 : wam / 100) * circumference;
         ring.style.strokeDashoffset = offset;
 
         document.getElementById("wam-current").textContent = wam.toFixed(1);
@@ -175,8 +175,13 @@ $(document).ready(function () {
         }
       });
 
-      document.getElementById("wam-best").textContent =
+      if (parseFloat(bestUnit.score) > parseFloat(lowestUnit.score)) {
+        document.getElementById("wam-best").textContent =
         bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
+      } else {
+        document.getElementById("wam-best").textContent = "";
+      }
+      
 
       if (parseFloat(lowestUnit.score) < 60) {
         document.getElementById("wam-worst").textContent =
