@@ -10,9 +10,42 @@
 
     var POLL_INTERVAL = 15000; // 15 seconds
     var toastTimeout = 5000;
-    var knownIds = {};          // track IDs we've already seen
+    var knownIds = {};          // track IDs we've already seen this page session (avoids duplicate toasts between polls)
+    var TOAST_LS_KEY = "planify_notif_toast_shown_ids";
+    var MAX_TOAST_IDS = 500;   // cap localStorage growth
 
     // ============ Helpers ============
+    /** IDs that have already been shown as a popup toast (any page, any visit). */
+    function getToastedIdSet() {
+        try {
+            var raw = localStorage.getItem(TOAST_LS_KEY);
+            var arr = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(arr)) return new Set();
+            return new Set(arr.map(function (x) { return Number(x); }));
+        } catch (e) {
+            return new Set();
+        }
+    }
+
+    function markIdToasted(id) {
+        var num = Number(id);
+        var set = getToastedIdSet();
+        set.add(num);
+        var arr = Array.from(set);
+        if (arr.length > MAX_TOAST_IDS) {
+            arr = arr.slice(-MAX_TOAST_IDS);
+        }
+        try {
+            localStorage.setItem(TOAST_LS_KEY, JSON.stringify(arr));
+        } catch (e) {
+            // private mode / quota — ignore
+        }
+    }
+
+    function wasAlreadyToasted(id) {
+        return getToastedIdSet().has(Number(id));
+    }
+
     function escapeHtml(str) {
         return $("<div>").text(str || "").html();
     }
@@ -76,7 +109,7 @@
         $.getJSON("/api/notifications?limit=15", function (resp) {
             var newItems = [];
             resp.notifications.forEach(function (n) {
-                if (!knownIds[n.id] && !n.read) {
+                if (!knownIds[n.id] && !n.read && !wasAlreadyToasted(n.id)) {
                     newItems.push(n);
                 }
                 knownIds[n.id] = true;
@@ -85,9 +118,10 @@
             renderDropdown(resp.notifications);
             updateBadge(resp.unread);
 
-            // Toast + push for genuinely new unread notifications
+            // Toast + push only once per notification (lifetime); bell list unchanged
             newItems.forEach(function (n) {
                 showToast(n);
+                markIdToasted(n.id);
                 sendBrowserPush(n);
             });
         });

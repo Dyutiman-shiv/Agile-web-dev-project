@@ -27,9 +27,7 @@ $(function () {
         }
         const reader = new FileReader();
         reader.onload = function (e) {
-            const $img = $("#avatar-preview");
-            $img.attr("src", e.target.result).removeClass("hidden");
-            $("#avatar-preview-placeholder").addClass("hidden");
+            $("#avatar-preview").attr("src", e.target.result);
         };
         reader.readAsDataURL(file);
     });

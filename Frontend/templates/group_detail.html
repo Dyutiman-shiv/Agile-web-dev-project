@@ -4,7 +4,7 @@ endblock %} {% block page_content %}
 
 <div
   id="user-data"
-  data-user-profile-picture="{{ current_user.profile_picture }}"
+  data-user-profile-picture="{{ current_user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
   data-user-id="{{ current_user.id }}"
   data-my-role="{{ my_role }}"
   data-is-owner="{{ 'true' if is_owner else 'false' }}"

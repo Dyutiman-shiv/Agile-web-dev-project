@@ -26,15 +26,10 @@
         <ul class="divide-y divide-gray-50">
             {% for user in users %}
             <li class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
-                {% if user.profile_picture %}
-                <img src="{{ user.profile_picture }}" alt="avatar"
-                     class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-100"
+                <img src="{{ user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
+                     alt=""
+                     class="w-10 h-10 rounded-full object-cover ring-2 ring-indigo-100 bg-gray-100"
                      referrerpolicy="no-referrer">
-                {% else %}
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm ring-2 ring-indigo-100">
-                    {{ user.username[0]|upper }}
-                </div>
-                {% endif %}
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="font-medium text-gray-800 truncate">{{ user.username }}</span>

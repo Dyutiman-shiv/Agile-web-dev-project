@@ -1,0 +1,21 @@
+{
+  "password_all": "DemoSeed2026!",
+  "domain": "@seed.planify",
+  "scenario": {
+    "test_group": "Test group — you are owner; AllyOne–AllyThree are members; AllyFour and AllyFive have pending invites.",
+    "test_2_group": "Test 2 — owned by AllyOne; you have a pending invite to join.",
+    "rich_data_user": "You = owner account below (semesters, units, tasks, sessions, scores, notifications)."
+  },
+  "owner_you": {
+    "email": "student.demo@seed.planify",
+    "username": "DemoStudent",
+    "friend_code": "MNSTUDY8"
+  },
+  "peers_five": [
+    { "email": "ally.one@seed.planify", "username": "AllyOne", "friend_code": "PRSTUDY2" },
+    { "email": "ally.two@seed.planify", "username": "AllyTwo", "friend_code": "PRSTUDY3" },
+    { "email": "ally.three@seed.planify", "username": "AllyThree", "friend_code": "PRSTUDY4" },
+    { "email": "ally.four@seed.planify", "username": "AllyFour", "friend_code": "PRSTUDY5" },
+    { "email": "ally.five@seed.planify", "username": "AllyFive", "friend_code": "PRSTUDY6" }
+  ]
+}

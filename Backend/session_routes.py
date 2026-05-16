@@ -161,6 +161,12 @@ def create_session():
     if not start_iso:
         return jsonify({"success": False, "message": "Start time is required."}), 400
 
+    # Use _parse_client_datetime (not raw fromisoformat): JS often sends ...Z which
+    # Python 3.9's datetime.fromisoformat rejects; 3.11+ accepts it.
+    start_dt = _parse_client_datetime(start_iso)
+    if not start_dt:
+        return jsonify({"success": False, "message": "Invalid start time format."}), 400
+
     duration = int(data.get("duration_minutes", 0))
     timer_mode = data.get("timer_mode", "stopwatch")
     color = data.get("color", "#6366f1")
@@ -198,7 +204,7 @@ def create_session():
     session = StudySession(
         user_id=current_user.id,
         subject=name,
-        start_time=datetime.fromisoformat(start_iso),
+        start_time=start_dt,
         duration_minutes=max(1, duration),
         notes=notes,
         color=color,

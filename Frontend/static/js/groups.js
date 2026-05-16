@@ -1,6 +1,15 @@
 $(document).ready(function () {
   "use strict";
 
+  const AVATAR_PLACEHOLDER = "/static/img/avatar-placeholder.svg";
+
+  function _resolveInvitePreviewUrl(raw) {
+    if (!raw || !String(raw).trim()) return AVATAR_PLACEHOLDER;
+    const s = String(raw).trim();
+    if (s.startsWith("http") || s.startsWith("//") || s.startsWith("/")) return s;
+    return "/static/" + s;
+  }
+
   // ── State ────────────────────────────────────────────────────────────────
   let _activeInviteGroupId = null;
   let _newGroupId = null;
@@ -58,11 +67,8 @@ $(document).ready(function () {
   const _lookupXHRMap = new WeakMap();
 
   function _previewAvatarHtml(username, profilePicture) {
-    if (profilePicture) {
-      return `<img src="${profilePicture}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0" referrerpolicy="no-referrer" alt="avatar" />`;
-    }
-    const initial = (username || "?")[0].toUpperCase();
-    return `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm montserrat-medium shrink-0">${initial}</div>`;
+    const src = _resolveInvitePreviewUrl(profilePicture);
+    return `<img src="${escapeHtml(src)}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0 bg-gray-100" referrerpolicy="no-referrer" alt="" />`;
   }
 
   function _showPreviewLoading($preview) {

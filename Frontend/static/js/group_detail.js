@@ -282,20 +282,7 @@ function renderPosts(posts) {
 
           <div class="flex items-center gap-3 mb-2">
 
-            ${
-              post.author_picture
-                ? `
-                  <img
-                    src="${post.author_picture}"
-                    class="w-11 h-11 rounded-full object-cover"
-                  />
-                `
-                : `
-                  <div class="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
-                    ${post.author_name[0].toUpperCase()}
-                  </div>
-                `
-            }
+            ${_postAuthorAvatarHtml(post.author_picture)}
 
             <div>
 
@@ -478,20 +465,7 @@ function renderComment(comment) {
   return `
     <div id="comments-card-${comment.id}" class="flex gap-3">
 
-      ${
-        comment.author_picture
-          ? `
-            <img
-              src="${comment.author_picture}"
-              class="w-9 h-9 rounded-full object-cover"
-            />
-          `
-          : `
-            <div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm font-semibold">
-              ${comment.author_name}
-            </div>
-          `
-      }
+      ${_commentAuthorAvatarHtml(comment.author_picture)}
 
       <div class="flex-1 bg-white rounded-xl border border-gray-100 p-3">
 
@@ -679,6 +653,26 @@ function _escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+/** Shared default when user has no profile photo (matches templates). */
+const AVATAR_PLACEHOLDER = "/static/img/avatar-placeholder.svg";
+
+function _resolvePictureUrl(raw) {
+  if (raw == null || String(raw).trim() === "") return AVATAR_PLACEHOLDER;
+  const s = String(raw).trim();
+  if (s.startsWith("http") || s.startsWith("//") || s.startsWith("/")) return s;
+  return "/static/" + s;
+}
+
+function _postAuthorAvatarHtml(authorPicture) {
+  const src = _resolvePictureUrl(authorPicture);
+  return `<img src="${_escapeHtml(src)}" class="w-11 h-11 rounded-full object-cover bg-gray-100" alt="" referrerpolicy="no-referrer">`;
+}
+
+function _commentAuthorAvatarHtml(authorPicture) {
+  const src = _resolvePictureUrl(authorPicture);
+  return `<img src="${_escapeHtml(src)}" class="w-9 h-9 rounded-full object-cover bg-gray-100" alt="" referrerpolicy="no-referrer">`;
+}
+
 function _myRole() {
   return $("#user-data").data("my-role");
 }
@@ -698,15 +692,8 @@ function _ownerId() {
 }
 
 function _avatarHtml(member) {
-  if (member.profile_picture) {
-    const src = member.profile_picture.startsWith("http") ||
-                member.profile_picture.startsWith("/")
-      ? member.profile_picture
-      : "/static/" + member.profile_picture;
-    return `<img src="${_escapeHtml(src)}" class="w-9 h-9 rounded-full object-cover shrink-0" alt="">`;
-  }
-  const initial = (member.username || "?")[0].toUpperCase();
-  return `<div class="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-sm montserrat-semi-bold shrink-0">${_escapeHtml(initial)}</div>`;
+  const src = _resolvePictureUrl(member.profile_picture);
+  return `<img src="${_escapeHtml(src)}" class="w-9 h-9 rounded-full object-cover shrink-0 bg-gray-100" alt="">`;
 }
 
 function _roleBadge(role) {
@@ -1092,11 +1079,8 @@ function _detailEscapeHtml(str) {
 }
 
 function _detailPreviewAvatarHtml(username, profilePicture) {
-  if (profilePicture) {
-    return `<img src="${profilePicture}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0" referrerpolicy="no-referrer" alt="avatar" />`;
-  }
-  const initial = (username || "?")[0].toUpperCase();
-  return `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm montserrat-medium shrink-0">${initial}</div>`;
+  const src = _resolvePictureUrl(profilePicture);
+  return `<img src="${_detailEscapeHtml(src)}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0 bg-gray-100" referrerpolicy="no-referrer" alt="">`;
 }
 
 function _detailShowPreviewLoading($preview) {

@@ -11,8 +11,10 @@
       <!-- Left -->
       <div class="flex items-center space-x-4">
         <img
-          src="{{ current_user.profile_picture}}"
-          class="w-auto h-auto rounded-full border-[1px] border-white shadow-md"
+          src="{{ current_user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
+          class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border border-white shadow-md bg-white/20"
+          referrerpolicy="no-referrer"
+          alt=""
         />
 
         <div>
