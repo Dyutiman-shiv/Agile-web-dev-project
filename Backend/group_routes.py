@@ -9,9 +9,6 @@ from models import (
     GroupInvitation, User, Notification, GroupModerationLog,
 )
 from app import db
-from werkzeug.utils import secure_filename
-from werkzeug.exceptions import RequestEntityTooLarge
-import re, uuid, os
 import uuid
 import os
 
@@ -49,10 +46,6 @@ _INVITE_PER_MIN_IP = 30
 
 # Max friend codes per bulk-invite request (UI matches this).
 _MAX_BULK_INVITE_CODES = 15
-
-def allowed_file(filename):
-    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"})
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
 
 def _check_rate_limit(user_key: str, ip_key: str):
@@ -334,15 +327,6 @@ def get_posts(group_id):
     return jsonify([p.to_dict() for p in group.posts]), 200
 
 
-#This handles the size of the file.
-@groups_bp.errorhandler(RequestEntityTooLarge)
-def handle_file_too_large(e):
-    return jsonify({
-        "success": False,
-        "message": "The file size exceeds 20MB."
-    }), 413
-
-
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])
 @login_required
 def create_post(group_id):
@@ -359,13 +343,6 @@ def create_post(group_id):
     media_type = None
 
     if media:
-
-        if not allowed_file(media.filename):
-
-            print(allowed_file(media.filename))
-
-            return jsonify({'success': False, 'message': 'Format not allowed'}), 400
-        
         media.seek(0, os.SEEK_END)
         file_size = media.tell()
         media.seek(0)
@@ -373,24 +350,9 @@ def create_post(group_id):
         if file_size > max_media:
             return jsonify({"success": False, "message": "File size exceeds the 20 MB limit."}), 400
 
-        if file_size > current_app.config['MAX_CONTENT_LENGTH']:
-
-            print('I am inside the create_post endpoint. Max size exceeded')
-
-            return jsonify({'success': False, 'message': 'The file size exceeds 20MB.'}), 404
-        
-        file_extension = media.filename.split('.')[-1].lower()
-        filename = f"{uuid.uuid4()}.{file_extension}"
-        upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "post_media")
-
-        os.makedirs(upload_folder, exist_ok=True)
-
-        file_path = os.path.join(upload_folder, filename)
-        print(f'Media Folder: {file_path}')
-
-        media.save(file_path)
-
-        media_path = f"uploads/post_media/{filename}"
+        path, err = _save_upload(media, "post_media")
+        if err:
+            return jsonify({"success": False, "message": err}), 400
 
         media_path = path
         if media.mimetype.startswith("image"):
