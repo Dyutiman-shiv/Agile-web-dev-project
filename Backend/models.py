@@ -347,6 +347,7 @@ class Assessment(db.Model):
     name = db.Column(db.String(100))
     score = db.Column(db.Float)
     weight = db.Column(db.Float)
+    due_date = db.Column(db.DateTime)
 
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
