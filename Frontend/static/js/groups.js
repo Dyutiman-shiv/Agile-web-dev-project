@@ -365,7 +365,7 @@ $(document).ready(function () {
 
       const inviteBtn =
         group.is_owner || group.my_role === "admin"
-          ? `<button class="invite-btn text-xs montserrat-medium px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+          ? `<button class="invite-btn w-full sm:w-auto text-xs montserrat-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
                      data-group-id="${group.id}" data-group-name="${escapeHtml(group.name)}">
                + Invite
              </button>`
@@ -389,7 +389,7 @@ $(document).ready(function () {
             <p class="text-xs roboto-regular text-gray-500 line-clamp-2 flex-1">
               ${escapeHtml(group.description || "No description")}
             </p>
-            <div class="flex justify-between items-center mt-1">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-1">
               <span class="text-[11px] roboto-regular text-gray-400">
                 ${group.members.length} member${group.members.length !== 1 ? "s" : ""}
               </span>
