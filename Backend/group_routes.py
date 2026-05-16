@@ -9,9 +9,6 @@ from models import (
     GroupInvitation, User, Notification, GroupModerationLog,
 )
 from app import db
-from werkzeug.utils import secure_filename
-from werkzeug.exceptions import RequestEntityTooLarge
-import re, uuid, os
 import uuid
 import os
 
@@ -49,10 +46,6 @@ _INVITE_PER_MIN_IP = 30
 
 # Max friend codes per bulk-invite request (UI matches this).
 _MAX_BULK_INVITE_CODES = 15
-
-def allowed_file(filename):
-    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif", "webp", "mp4", "webm", "mov"})
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
 
 def _check_rate_limit(user_key: str, ip_key: str):
@@ -328,28 +321,15 @@ def get_audit_log(group_id):
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["GET"])
 @login_required
 def get_posts(group_id):
-<<<<<<< HEAD
-
-    group = Group.query.filter_by(id=group_id).first()
-    posts = [p.to_dict() for p in group.posts]
-
-    sorted_posts = sorted(posts, key=lambda x: x["created_at"], reverse=True)
-=======
     group = Group.query.get_or_404(group_id)
     if not _is_member(current_user.id, group_id):
         return jsonify({"success": False, "message": "You must be a group member to view posts."}), 403
-    return jsonify([p.to_dict() for p in group.posts]), 200
->>>>>>> main
+    
+    posts = [p.to_dict() for p in group.posts]
+
+    sorted_posts = sorted(posts, key=lambda x:x['created_at'], reverse=True)
 
     return jsonify(sorted_posts), 200
-
-#This handles the size of the file.
-@groups_bp.errorhandler(RequestEntityTooLarge)
-def handle_file_too_large(e):
-    return jsonify({
-        "success": False,
-        "message": "The file size exceeds 20MB."
-    }), 413
 
 
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])
@@ -368,13 +348,6 @@ def create_post(group_id):
     media_type = None
 
     if media:
-
-        if not allowed_file(media.filename):
-
-            print(allowed_file(media.filename))
-
-            return jsonify({'success': False, 'message': 'Format not allowed'}), 400
-        
         media.seek(0, os.SEEK_END)
         file_size = media.tell()
         media.seek(0)
@@ -382,24 +355,9 @@ def create_post(group_id):
         if file_size > max_media:
             return jsonify({"success": False, "message": "File size exceeds the 20 MB limit."}), 400
 
-        if file_size > current_app.config['MAX_CONTENT_LENGTH']:
-
-            print('I am inside the create_post endpoint. Max size exceeded')
-
-            return jsonify({'success': False, 'message': 'The file size exceeds 20MB.'}), 404
-        
-        file_extension = media.filename.split('.')[-1].lower()
-        filename = f"{uuid.uuid4()}.{file_extension}"
-        upload_folder = os.path.join(current_app.config["UPLOAD_FOLDER"], "post_media")
-
-        os.makedirs(upload_folder, exist_ok=True)
-
-        file_path = os.path.join(upload_folder, filename)
-        print(f'Media Folder: {file_path}')
-
-        media.save(file_path)
-
-        media_path = f"uploads/post_media/{filename}"
+        path, err = _save_upload(media, "post_media")
+        if err:
+            return jsonify({"success": False, "message": err}), 400
 
         media_path = path
         if media.mimetype.startswith("image"):
@@ -438,77 +396,7 @@ def edit_post(post_id):
         post.article_url = data["article_url"]
 
     db.session.commit()
-<<<<<<< HEAD
-
-    return jsonify({"message": "Invitation sent"})
-
-
-@groups_bp.route("/api/posts/<int:post_id>/comments", methods=["POST"])
-@login_required
-def add_comment(post_id):
-    content = request.json.get("content")
-    
-    if not content or not content.strip():
-        return jsonify({"success": False, "message": "Comment cannot be empty"}), 400
-
-    try:
-        comment = Comment(
-            content=content.strip(),
-            post_id=post_id,
-            user_id=current_user.id
-        )
-        db.session.add(comment)
-        db.session.commit()
-
-        #To get date in DB
-        db.session.refresh(comment)
-
-        return jsonify({"success": True,
-                        "comment": comment.to_dict()}), 201
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
-    
-@groups_bp.route("/api/posts/<int:post_id>/like", methods=["POST"])
-@login_required
-def toggle_like(post_id):
-    # if likes exist
-    like = PostLike.query.filter_by(user_id=current_user.id, post_id=post_id).first()
-
-    if like:
-        db.session.delete(like)
-        status = "unliked"
-    else:
-        new_like = PostLike(user_id=current_user.id, post_id=post_id)
-        db.session.add(new_like)
-        status = "liked"
-    
-    db.session.commit()
-    
-    total_likes = PostLike.query.filter_by(post_id=post_id).count()
-    
-    return jsonify({
-        "success": True, 
-        "status": status, 
-        "total_likes": total_likes,
-        "post_id": post_id
-    }), 200
-
-    
-@groups_bp.route("/api/groups/<int:group_id>", methods=["DELETE"])
-@login_required
-def delete_group(group_id):
-    group = Group.query.get_or_404(group_id)
-    if group.owner_id != current_user.id:
-        return jsonify({"message": "Unauthorized"}), 403
-    
-    db.session.delete(group)
-    db.session.commit()
-    return jsonify({"success": True})
-=======
     return jsonify({"success": True, "post": post.to_dict()}), 200
->>>>>>> main
 
 
 @groups_bp.route("/api/posts/<int:post_id>", methods=["DELETE"])
