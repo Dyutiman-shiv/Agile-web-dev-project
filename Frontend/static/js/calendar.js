@@ -538,11 +538,16 @@ $(function () {
         html += '<div class="grid grid-cols-8 relative" style="height:' + (hours.length * 60) + 'px">';
 
         // Hour labels + grid lines
+        const timeCol = isMobileView() ? "5rem" : "4rem";
+
         for (let hi = 0; hi < hours.length; hi++) {
             const hour = hours[hi];
             const topPx = hi * 60;
-            const label = hour === 0 ? '12:00 am' : (hour < 12 ? hour + ':00 am' : (hour === 12 ? '12:00 pm' : (hour - 12) + ':00 pm'));
-            html += '<div class="absolute text-xs text-text_dark_gray roboto-regular text-right pr-2 pt-2" style="top:' + (topPx - 8) + 'px;width:4rem">' + label + '</div>';
+            const label = hour === 0
+                ? "12:00 am"
+                : (hour < 12 ? hour + ":00 am" : (hour === 12 ? "12:00 pm" : (hour - 12) + ":00 pm"));
+
+            html += '<div class="absolute text-[11px] text-text_dark_gray roboto-regular text-right pr-3 pt-2 whitespace-nowrap" style="top:' + (topPx - 8) + 'px;width:3.62rem;box-sizing:border-box;">' + label + '</div>';
             html += '<div class="absolute border-t border-gray-100" style="top:' + topPx + 'px;left:4rem;right:0"></div>';
         }
 
@@ -679,7 +684,8 @@ $(function () {
         if (currentView === "week") {
             const $grid = $("#week-scroll .grid");
             if (!$grid.length) return;
-            let line = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:4rem;right:0;pointer-events:none">';
+            const timeCol = isMobileView() ? "5rem" : "4rem";
+            let line = '<div class="current-time-line absolute z-10" style="top:' + topMin + 'px;left:' + timeCol + ';right:0;pointer-events:none">';
             line += '<div class="flex items-center"><div class="w-2 h-2 rounded-full bg-red-500 -ml-1"></div><div class="flex-1 border-t-2 border-red-500"></div></div>';
             line += '</div>';
             $grid.append(line);

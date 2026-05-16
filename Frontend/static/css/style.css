@@ -315,3 +315,8 @@ th {
         padding: 1rem;
     }
 }
+
+/* Global page background */
+main {
+    background-color: #e5e3e3 !important;
+}
