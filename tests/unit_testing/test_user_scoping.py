@@ -126,10 +126,7 @@ def test_cannot_delete_other_users_semester(app):
     sem_id = resp.get_json()["semester"]["id"]
     _logout(client)
 
-    # Bob tries to delete it
-    _login(client, "bob@test.com")
-    resp = client.delete(f"/api/semesters/{sem_id}")
-# Bob tries to delete it
+    # Bob tries to delete it — should get 404 (not found in his scope)
     _login(client, "bob@test.com")
     resp = client.delete(f"/api/semesters/{sem_id}")
     assert resp.status_code == 404

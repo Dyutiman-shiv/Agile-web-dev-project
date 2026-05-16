@@ -7,7 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
+  # ── Fast unit / API tests (no browser required) ──────────────────────────
+  unit:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,7 +22,30 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Run unit and API tests
         env:
           SCHEDULER_ENABLED: "0"
-        run: python -m pytest -v
+        run: python -m pytest -v -m "not e2e"
+
+  # ── Selenium end-to-end tests (live server + headless Chrome) ─────────────
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Selenium tests
+        env:
+          SCHEDULER_ENABLED: "0"
+        run: python -m pytest -v -m e2e
