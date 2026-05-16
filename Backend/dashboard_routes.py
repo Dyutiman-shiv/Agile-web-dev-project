@@ -19,7 +19,11 @@ def get_today_tasks(today):
     tasks = Task.query.filter(Task.due_date >= today,
                               Task.due_date < today + timedelta(days=1),
                                Task.user_id == current_user.id).all()
-    return jsonify([task.to_dict() for task in tasks])
+    
+    tasks_dict = [task.to_dict() for task in tasks]
+    
+    sorted_tasks = sorted(tasks_dict, key=lambda x: x['start'], reverse=False)
+    return jsonify(sorted_tasks), 200
 
 @dashboard_bp.route("/api/dashboard/get_current_semester", methods=["GET"])
 @login_required

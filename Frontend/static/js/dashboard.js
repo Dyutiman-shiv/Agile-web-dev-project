@@ -1,6 +1,42 @@
 $(document).ready(function () {
   "use strict";
 
+  const $sidebar = $("#dashboard-sidebar");
+  const $overlay = $("#sidebar-overlay");
+
+  // OPEN SIDEBAR
+  $("#mobile-sidebar-toggle").on("click", function () {
+    $sidebar.removeClass("-translate-x-full");
+    $overlay.removeClass("hidden");
+  });
+
+  // CLOSE BUTTON
+  $("#close-sidebar-btn").on("click", function () {
+    closeSidebar();
+  });
+
+  // CLICK OVERLAY
+  $overlay.on("click", function () {
+    closeSidebar();
+  });
+
+  // CLOSE FUNCTION
+  function closeSidebar() {
+    $sidebar.addClass("-translate-x-full");
+    $overlay.addClass("hidden");
+  }
+
+  // HANDLE RESIZE
+  $(window).on("resize", function () {
+    if ($(window).width() >= 1024) {
+      $overlay.addClass("hidden");
+
+      $sidebar.removeClass("-translate-x-full");
+    } else {
+      $sidebar.addClass("-translate-x-full");
+    }
+  });
+
   function loadPage() {
     loadTodaysTasks();
     loadCurrentSemester();
@@ -75,27 +111,27 @@ $(document).ready(function () {
     // Dynamic styling + messaging
     if (total === 0) {
       bar.style.width = "100%";
-      bar.className = "h-2 rounded-full bg-gray-300 transition-all duration-500";
+      bar.className =
+        "h-2 rounded-full bg-gray-300 transition-all duration-500";
     } else if (completed === total) {
-      bar.className = "h-2 rounded-full bg-green-500 transition-all duration-500";
+      bar.className =
+        "h-2 rounded-full bg-green-500 transition-all duration-500";
     } else {
-      bar.className = "h-2 rounded-full bg-task_green transition-all duration-500";
+      bar.className =
+        "h-2 rounded-full bg-task_green transition-all duration-500";
     }
-    
   }
 
   // Loading Curent Semester
   function loadCurrentSemester() {
     $.getJSON("/api/semesters/current", function (semester) {
-
-      console.log(semester)
+      console.log(semester);
       const wamContainer = document.getElementById("wam-card");
 
-      if (!semester) {    
+      if (!semester) {
         wamContainer.textContent = "No active semester found.";
         return;
-      }
-      else {
+      } else {
         document.getElementById("semester-name").textContent = semester.name;
 
         // Update the Wam Ring
@@ -104,67 +140,51 @@ $(document).ready(function () {
         const ring = document.getElementById("wam-ring");
         const text = document.getElementById("current-wam");
 
-        let radius = parseFloat(ring.getAttribute("r"))
-        const circumference = 2 * Math.PI * radius
+        let radius = parseFloat(ring.getAttribute("r"));
+        const circumference = 2 * Math.PI * radius;
         let wam = parseFloat(semester.wam);
 
-        const offset = circumference - (semester.wam === null ? 0 : parseFloat(wam) /100) * circumference
+        const offset =
+          circumference -
+          (semester.wam === null ? 0 : parseFloat(wam) / 100) * circumference;
         ring.style.strokeDashoffset = offset;
-
 
         document.getElementById("wam-current").textContent = wam.toFixed(1);
 
         loadUnits(semester.id);
-        
       }
     });
   }
 
-  function loadUnits(semester_id){
-
-    $.getJSON("/api/units", {semester_id: semester_id},function (units) {
-
+  function loadUnits(semester_id) {
+    $.getJSON("/api/units", { semester_id: semester_id }, function (units) {
       let max_score = 0;
       let min_score = Infinity;
       let bestUnit = units[0];
       let lowestUnit = units[0];
 
-      units.forEach((unit)=>{
-
-        if(unit.score > max_score){
-
+      units.forEach((unit) => {
+        if (unit.score > max_score) {
           max_score = parseFloat(unit.score);
           bestUnit = unit;
-
         }
 
-        if(unit.score < min_score){
-
+        if (unit.score < min_score) {
           min_score = parseFloat(unit.score);
           lowestUnit = unit;
-
         }
-
-
-
       });
 
-      document.getElementById("wam-best").textContent = bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
+      document.getElementById("wam-best").textContent =
+        bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
 
-      if (parseFloat(lowestUnit.score) < 60){
-        
-        document.getElementById("wam-worst").textContent = lowestUnit.name + " - " + parseFloat(lowestUnit.score).toFixed(2);
-
-      }
-      else{
-
+      if (parseFloat(lowestUnit.score) < 60) {
+        document.getElementById("wam-worst").textContent =
+          lowestUnit.name + " - " + parseFloat(lowestUnit.score).toFixed(2);
+      } else {
         document.getElementById("wam-worst").textContent = "";
-
       }
-    
-      
     });
-
   }
 
   loadPage();
