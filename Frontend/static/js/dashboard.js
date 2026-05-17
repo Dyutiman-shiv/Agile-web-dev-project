@@ -623,7 +623,7 @@ function loadDashboardFeed() {
     $("#posts-container").html(`
       <div class="bg-white rounded-2xl p-10 text-center border border-gray-100">
         <p class="text-red-500 roboto-regular text-sm">
-          No se pudieron cargar las publicaciones del feed en este momento.
+          Error loading feed. Please try again later.
         </p>
       </div>
     `);
@@ -663,10 +663,65 @@ function renderPosts(posts) {
   const currentUserPicture = $("#user-data").data("user-profile-picture");
   const currentUserId = $("#user-data").data("user-id");
 
-  posts.forEach((post) => {
+  //Create a map for the metrics posts
+
+  const metricPool = [
+      {
+        id: "summary",
+        html: `
+          <div class="w-full bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <div class="flex justify-between items-center">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 montserrat-semi-bold">Weekly Performance</h3>
+              <span class="text-[10px] bg-primary_purp/20 text-primary_purp px-2 py-0.5 rounded-full font-bold uppercase">Statistics</span>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center pt-2">
+              <div><p id="stat-total-hours" class="text-xl sm:text-2xl font-black text-gray-900 montserrat-bold">--</p><p class="text-[10px] uppercase font-bold text-gray-400 mt-1">Hours</p></div>
+              <div class="border-x border-gray-100"><p id="stat-current-streak" class="text-xl sm:text-2xl font-black text-primary_purp montserrat-bold">-- 🔥</p><p class="text-[10px] uppercase font-bold text-gray-400 mt-1">Streak</p></div>
+              <div><p id="stat-avg-minutes" class="text-xl sm:text-2xl font-black text-gray-900 montserrat-bold">--</p><p class="text-[10px] uppercase font-bold text-gray-400 mt-1">Average</p></div>
+            </div>
+          </div>`
+      },
+      {
+        id: "tasks",
+        html: `
+          <div class="w-full bg-white p-5 sm:p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="space-y-0.5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400 montserrat-semi-bold">This week's tasks progress.</h3>
+                <p id="task-completion-ratio" class="text-base sm:text-lg font-black text-gray-800 montserrat-bold">0 / 0</p>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-primary_purp/20 flex items-center justify-center text-primary_purp flex-shrink-0">
+                <svg xmlns="http://w3.org" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+              </div>
+            </div>
+            <div class="w-full bg-gray-50 h-2 rounded-full border border-gray-100 overflow-hidden p-0.5">
+              <div id="task-global-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>`
+      }
+    ];
+
+    let postsSinceLastMetric = 0;
+    const minSpacing = posts.length <= 3 ? 1 : 2; // Minimum number of posts between metrics
+
+  posts.forEach((post, index) => {
     const formattedDate = formatMyCustomDate(post.created_at);
     const likes = post.likes;
     const isLiked = likes.includes(currentUserId);
+
+    // Randomply insert a metric card if conditions are met
+      if (index > 0 && metricPool.length > 0 && postsSinceLastMetric >= minSpacing) {
+        const isLastChance = (index === posts.length - 1);
+        const shouldInsert = isLastChance ? true : (Math.random() < 0.35);
+
+        if (shouldInsert) {
+          const randomIndex = Math.floor(Math.random() * metricPool.length);
+          const selectedMetric = metricPool.splice(randomIndex, 1); 
+          html += selectedMetric[0].html;
+          postsSinceLastMetric = 0;
+        }
+      }
+      postsSinceLastMetric++;
 
     html += `
       <div id="post-card-${post.id}" class="w-full bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
@@ -826,4 +881,28 @@ function renderPosts(posts) {
   });
 
   container.html(html);
+
+  fetchInlineMetricsData();
 }
+
+function fetchInlineMetricsData() {
+
+    if ($("#stat-total-hours").length) {
+      $.getJSON("/api/stats/summary?period=week", function (data) {
+        if (!data) return;
+        $("#stat-total-hours").text(data.total_hours.toFixed(1));
+        $("#stat-current-streak").text(`${data.current_streak} 🔥`);
+        $("#stat-avg-minutes").text(`${data.avg_minutes}m`);
+      });
+    }
+
+    if ($("#task-completion-ratio").length) {
+      $.getJSON("/api/stats/task-completion?period=week", function (data) {
+        if (!data || data.length === 0) return;
+        let total = 0, completed = 0;
+        data.forEach(u => { total += u.total; completed += u.completed; });
+        $("#task-completion-ratio").text(`${completed} / ${total}`);
+        $("#task-global-bar").css("width", `${total > 0 ? (completed / total) * 100 : 0}%`);
+      });
+    }
+  }
