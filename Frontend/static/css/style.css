@@ -1434,3 +1434,397 @@ html.dark .apexcharts-grid line {
 html.dark .apexcharts-bar-area:hover {
     opacity: 0.8 !important;
 }
+
+/* ---------- Dark Mode: Sessions Page Overrides ---------- */
+
+/* Setup phase cards */
+html.dark #setup-phase .bg-white,
+html.dark #active-phase .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Checklist builder items hover */
+html.dark #checklist-builder > div:hover {
+    background-color: #252840 !important;
+}
+
+/* Live checklist items hover */
+html.dark #live-checklist label:hover {
+    background-color: #252840 !important;
+}
+
+/* History list dividers */
+html.dark #history-list .divide-y > * + * {
+    border-color: var(--border-color) !important;
+}
+
+/* History item hover */
+html.dark .history-item:hover {
+    background-color: #252840 !important;
+}
+
+/* Timer mode buttons in dark mode */
+html.dark .timer-mode-btn,
+html.dark .edit-timer-mode-btn {
+    color: #94a3b8 !important;
+}
+
+html.dark .timer-mode-btn:hover,
+html.dark .edit-timer-mode-btn:hover {
+    background-color: #1e2130 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Countdown input fields */
+html.dark #countdown-hours,
+html.dark #countdown-minutes,
+html.dark #edit-countdown-hours,
+html.dark #edit-countdown-minutes {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+
+/* Modal backgrounds */
+html.dark #resume-choice-modal > div,
+html.dark #edit-session-modal > div,
+html.dark #delete-session-modal > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Modal buttons */
+html.dark #resume-choice-continue-btn {
+    background-color: #4f46e5 !important;
+}
+
+html.dark #resume-choice-new-btn,
+html.dark #edit-cancel-btn,
+html.dark #delete-session-cancel {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #cbd5e1 !important;
+}
+
+html.dark #resume-choice-new-btn:hover,
+html.dark #edit-cancel-btn:hover,
+html.dark #delete-session-cancel:hover {
+    background-color: #2d3148 !important;
+}
+
+/* Edit checklist items in modal */
+html.dark #edit-checklist-list > div {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+}
+
+html.dark #edit-checklist-list span {
+    color: #f1f5f9 !important;
+}
+
+/* Unit select dropdown */
+html.dark #session-unit {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark #session-unit option {
+    background-color: #1a1d27 !important;
+}
+
+/* ---------- Dark Mode: Groups Page ---------- */
+
+/* Group cards */
+html.dark .group-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark .group-card .bg-gradient-to-br {
+    background: linear-gradient(to bottom right, #1e2130, #13151f) !important;
+}
+
+html.dark .group-card h3,
+html.dark .group-card .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+html.dark .group-card .text-gray-500,
+html.dark .group-card .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Invite button on group cards - Main fix for your issue */
+html.dark .group-card .invite-btn {
+    background-color: #1e1b4b !important;
+    color: #818cf8 !important;
+    border: 1px solid #2d3148 !important;
+}
+
+html.dark .group-card .invite-btn:hover {
+    background-color: #252870 !important;
+    color: #a78bfa !important;
+    border-color: #6366f1 !important;
+}
+
+/* Role badges */
+html.dark .group-card .bg-indigo-100 {
+    background-color: #1e1b4b !important;
+    color: #818cf8 !important;
+}
+
+html.dark .group-card .bg-purple-100 {
+    background-color: #2d1b4b !important;
+    color: #a78bfa !important;
+}
+
+html.dark .group-card .bg-gray-100 {
+    background-color: #1e2130 !important;
+    color: #94a3b8 !important;
+}
+
+/* Cover gradient overlay */
+html.dark .group-card .bg-gradient-to-t {
+    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent) !important;
+}
+
+/* Search input */
+html.dark #group-search {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #group-search::placeholder {
+    color: #64748b !important;
+}
+
+html.dark #group-search:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+}
+
+/* Invitations card */
+html.dark #invitations,
+html.dark #sent-invitations {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark #invitations h3,
+html.dark #sent-invitations h3 {
+    color: var(--text-primary) !important;
+}
+
+html.dark #invitations .bg-gray-50,
+html.dark #sent-invitations .bg-gray-50 {
+    background-color: #1e2130 !important;
+    border-color: #2d3148 !important;
+}
+
+html.dark #invitations .text-gray-700,
+html.dark #sent-invitations .text-gray-700 {
+    color: #e2e8f0 !important;
+}
+
+html.dark #invitations .text-gray-400,
+html.dark #sent-invitations .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Accept/Decline buttons in dark mode */
+html.dark .accept-invite-btn {
+    background-color: #4f46e5 !important;
+}
+
+html.dark .accept-invite-btn:hover {
+    background-color: #6366f1 !important;
+}
+
+html.dark .decline-invite-btn,
+html.dark .cancel-invite-btn {
+    background-color: transparent !important;
+    border-color: #3a3f5c !important;
+    color: #94a3b8 !important;
+}
+
+html.dark .decline-invite-btn:hover,
+html.dark .cancel-invite-btn:hover {
+    background-color: #252840 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Friend code display */
+html.dark .bg-indigo-50.rounded-xl {
+    background-color: #1e1b4b !important;
+}
+
+html.dark #friend-code-display {
+    color: #a78bfa !important;
+}
+
+html.dark #copy-friend-code {
+    background-color: #1e1b4b !important;
+    color: #818cf8 !important;
+    border-color: #2d3148 !important;
+}
+
+html.dark #copy-friend-code:hover {
+    background-color: #252870 !important;
+    color: #c4b5fd !important;
+}
+
+/* Modal styling for invite */
+html.dark #invite-modal > div,
+html.dark #group-modal > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark #invite-modal h3,
+html.dark #group-modal h3 {
+    color: var(--text-primary) !important;
+}
+
+html.dark #invite-modal .text-gray-400,
+html.dark #invite-modal .text-gray-500,
+html.dark #group-modal .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Invite code input fields in dark mode */
+html.dark .invite-code-field {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark .invite-code-field:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+}
+
+html.dark .invite-code-field::placeholder {
+    color: #64748b !important;
+}
+
+/* Remove button for invite rows */
+html.dark .invite-code-remove {
+    background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+    color: #64748b !important;
+}
+
+html.dark .invite-code-remove:hover:not(:disabled) {
+    background-color: #2d1b1b !important;
+    color: #ef4444 !important;
+    border-color: #ef4444 !important;
+}
+
+/* User preview in invite modal */
+html.dark .invite-user-preview .bg-gray-50 {
+    background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+}
+
+html.dark .invite-user-preview .bg-indigo-50 {
+    background-color: #1e1b4b !important;
+    border-color: #6366f1 !important;
+}
+
+html.dark .invite-user-preview .bg-red-50 {
+    background-color: #2d1b1b !important;
+    border-color: #ef4444 !important;
+}
+
+html.dark .invite-user-preview .text-gray-400,
+html.dark .invite-user-preview .text-gray-800,
+html.dark .invite-user-preview .text-gray-700 {
+    color: var(--text-primary) !important;
+}
+
+html.dark .invite-user-preview .text-indigo-500 {
+    color: #818cf8 !important;
+}
+
+html.dark .invite-user-preview .text-red-500 {
+    color: #f87171 !important;
+}
+
+/* Avatar in preview */
+html.dark .invite-user-preview .bg-indigo-100 {
+    background-color: #1e1b4b !important;
+    color: #a78bfa !important;
+}
+
+/* Modal invite mass button */
+html.dark #invite-mass-btn,
+html.dark #modal-invite-mass-btn {
+    background-color: #4f46e5 !important;
+}
+
+html.dark #invite-mass-btn:hover,
+html.dark #modal-invite-mass-btn:hover {
+    background-color: #6366f1 !important;
+}
+
+/* Empty state messages */
+html.dark #empty-groups p,
+html.dark #no-invitations p,
+html.dark #no-sent-invitations p {
+    color: var(--text-muted) !important;
+}
+
+/* Loading spinner */
+html.dark .invite-preview-spinner {
+    border-color: #1e2130 !important;
+    border-top-color: #6366f1 !important;
+}
+
+/* Modal close button */
+html.dark #invite-modal-close svg,
+html.dark #group-modal-close svg {
+    color: var(--text-muted) !important;
+}
+
+html.dark #invite-modal-close:hover svg,
+html.dark #group-modal-close:hover svg {
+    color: var(--text-primary) !important;
+}
+
+/* Group create modal */
+html.dark #group-name,
+html.dark #group-description {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #group-name:focus,
+html.dark #group-description:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+}
+
+html.dark #group-cancel-btn,
+html.dark #modal-done-btn {
+    background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+    color: #94a3b8 !important;
+}
+
+html.dark #group-cancel-btn:hover,
+html.dark #modal-done-btn:hover {
+    background-color: #252840 !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #group-save-btn {
+    background-color: #4f46e5 !important;
+}
+
+html.dark #group-save-btn:hover {
+    background-color: #6366f1 !important;
+}
