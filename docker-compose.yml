@@ -2,19 +2,23 @@
 #   docker compose up --build
 #   open http://localhost:5050
 #
-# Optional: create a .env beside this file with SECRET_KEY=... (and OAuth vars if needed).
+# Optional: Backend/.env (SECRET_KEY, GOOGLE_* for OAuth).
+# Compose also honours a `.env` in this folder for HOST_PORT / SECRET_KEY interpolation.
+
+# Backend/.env (SECRET_KEY, GOOGLE_* ) is merged via env_file. Do not define empty
+# GOOGLE_* keys under `environment:` — they override env_file with blank values.
 
 services:
   web:
     build: .
+    env_file:
+      - Backend/.env
     ports:
       - "${HOST_PORT:-5050}:5050"
     environment:
       SECRET_KEY: ${SECRET_KEY:-dev-docker-change-me}
       SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:-sqlite:////app/Backend/data/app.db}
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-1}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     volumes:
       - sqlite-data:/app/Backend/data
     healthcheck:

@@ -42,11 +42,25 @@ def _ensure_study_session_columns():
             )
         if "repeat_until" not in cols:
             alters.append("ALTER TABLE study_sessions ADD COLUMN repeat_until DATE")
+        added_updated_at = False
+        if "updated_at" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN updated_at DATETIME"
+            )
+            added_updated_at = True
         if not alters:
             return
         with engine.begin() as conn:
             for stmt in alters:
                 conn.execute(text(stmt))
+            # Backfill so sorts (e.g. active session) behave for existing rows.
+            if added_updated_at:
+                conn.execute(
+                    text(
+                        "UPDATE study_sessions SET updated_at = start_time "
+                        "WHERE updated_at IS NULL"
+                    )
+                )
     except Exception:
         # Non-fatal: create_all may still match models on fresh DBs
         pass
