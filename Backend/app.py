@@ -1,3 +1,4 @@
+import logging
 import os
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
@@ -9,6 +10,7 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"  # type: ignore[assignment]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
+logger = logging.getLogger(__name__)
 
 
 def _ensure_study_session_columns():
@@ -42,14 +44,27 @@ def _ensure_study_session_columns():
             )
         if "repeat_until" not in cols:
             alters.append("ALTER TABLE study_sessions ADD COLUMN repeat_until DATE")
+        added_updated_at = False
+        if "updated_at" not in cols:
+            alters.append(
+                "ALTER TABLE study_sessions ADD COLUMN updated_at DATETIME"
+            )
+            added_updated_at = True
         if not alters:
             return
         with engine.begin() as conn:
             for stmt in alters:
                 conn.execute(text(stmt))
-    except Exception:
-        # Non-fatal: create_all may still match models on fresh DBs
-        pass
+            # Backfill so sorts (e.g. active session) behave for existing rows.
+            if added_updated_at:
+                conn.execute(
+                    text(
+                        "UPDATE study_sessions SET updated_at = start_time "
+                        "WHERE updated_at IS NULL"
+                    )
+                )
+    except Exception as exc:
+        logger.warning("SQLite migrate study_sessions: %s", exc, exc_info=True)
 
 
 def _ensure_study_session_segments_table():
@@ -79,8 +94,37 @@ def _ensure_study_session_segments_table():
                 "CREATE INDEX IF NOT EXISTS ix_study_session_segments_session_id "
                 "ON study_session_segments (session_id)"
             ))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning(
+            "SQLite migrate study_session_segments: %s", exc, exc_info=True
+        )
+
+
+def _ensure_assessments_columns():
+    """Add assessments columns introduced after first deploy (SQLite)."""
+    from sqlalchemy import inspect, text
+
+    engine = db.engine
+    if engine.dialect.name != "sqlite":
+        return
+    try:
+        inspector = inspect(engine)
+        if "assessments" not in inspector.get_table_names():
+            return
+        cols = {c["name"] for c in inspector.get_columns("assessments")}
+        if "due_date" in cols:
+            return
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE assessments ADD COLUMN due_date DATETIME"))
+    except Exception as exc:
+        logger.warning("SQLite migrate assessments.due_date: %s", exc, exc_info=True)
+
+
+def apply_sqlite_light_migrations():
+    """Idempotent additive SQLite ALTERs (safe from create_app and seed)."""
+    _ensure_study_session_columns()
+    _ensure_study_session_segments_table()
+    _ensure_assessments_columns()
 
 
 def create_app(testing=False, db_uri=None):
@@ -172,8 +216,7 @@ def create_app(testing=False, db_uri=None):
         db.create_all()
         # Apply lightweight SQLite migrations (no-op on fresh DBs / non-SQLite).
         if not testing:
-            _ensure_study_session_columns()
-            _ensure_study_session_segments_table()
+            apply_sqlite_light_migrations()
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_request_entity_too_large(exc):

@@ -25,7 +25,7 @@ os.environ.setdefault("SCHEDULER_ENABLED", "0")
 
 from sqlalchemy import or_  # noqa: E402
 
-from app import create_app, db  # noqa: E402
+from app import apply_sqlite_light_migrations, create_app, db  # noqa: E402
 from models import (  # noqa: E402
     Assessment,
     ChecklistItem,
@@ -423,6 +423,7 @@ def run_seed(force: bool = False) -> None:
 
     app = create_app()
     with app.app_context():
+        apply_sqlite_light_migrations()
         existing = User.query.filter_by(email=owner_spec["email"]).first()
         if existing and not force:
             print(
