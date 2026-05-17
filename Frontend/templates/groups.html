@@ -1,8 +1,8 @@
 {% extends "layout.html" %} {% block title %}Groups{% endblock %} {% block
-main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} {% block
+main_class %}overflow-y-auto bg-backgroud_cal_light{% endblock %} {% block
 page_content %}
 
-<div class="h-[calc(100vh-80px)] max-w-7xl mx-auto px-4 py-4 flex flex-col overflow-hidden">
+<div class="min-h-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col overflow-y-auto pb-28 md:pb-6">
 
   <!-- Header -->
   <div class="mb-4">
@@ -10,33 +10,24 @@ page_content %}
   </div>
 
   <!-- Two-column layout -->
-  <div class="flex gap-5 flex-1 overflow-hidden">
+  <div class="flex flex-col lg:flex-row gap-5 flex-1 min-h-0">
 
     <!-- ── Left: Groups ── -->
-    <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <div class="flex-1 flex flex-col min-w-0">
 
       <!-- Search + Create -->
-      <div class="flex gap-3 mb-4">
-        <input
-          type="text"
-          id="group-search"
-          placeholder="Search groups..."
-          class="flex-1 py-2 px-4 rounded-xl border border-gray-200 bg-gray-50 roboto-regular text-sm focus:shadow-md focus:outline-none"
-        />
-        <button
-          id="create-group-btn"
-          class="px-4 py-2 rounded-xl bg-primary_purp text-white montserrat-regular text-sm hover:bg-indigo-600 transition whitespace-nowrap"
-        >
+      <div class="flex flex-col sm:flex-row gap-3 mb-4">
+        <input type="text" id="group-search" placeholder="Search groups..."
+          class="flex-1 py-2 px-4 rounded-xl border border-gray-200 bg-gray-50 roboto-regular text-sm focus:shadow-md focus:outline-none" />
+        <button id="create-group-btn"
+          class="w-full sm:w-auto px-4 py-2 rounded-xl bg-primary_purp text-white montserrat-regular text-sm hover:bg-indigo-600 transition whitespace-nowrap">
           + Create Group
         </button>
       </div>
 
       <!-- Groups grid -->
-      <div class="flex-1 overflow-y-auto pr-1">
-        <div
-          id="groups-container"
-          class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
-        ></div>
+      <div class="flex-1 overflow-y-auto lg:pr-1">
+        <div id="groups-container" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
         <div id="empty-groups" class="hidden text-center py-16">
           <p class="text-gray-400 text-sm roboto-regular">No groups yet — create your first group!</p>
         </div>
@@ -44,27 +35,22 @@ page_content %}
     </div>
 
     <!-- ── Right: Sidebar ── -->
-    <div class="w-72 shrink-0 flex flex-col gap-4 overflow-y-auto">
+    <div class="w-full lg:w-72 shrink-0 flex flex-col gap-4 lg:overflow-y-auto">
 
       <!-- My Friend Code -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <h3 class="text-sm montserrat-bold text-gray-700 mb-3">My Friend Code</h3>
         <div class="flex items-center gap-2">
           <div class="flex-1 bg-indigo-50 rounded-xl px-3 py-2.5 text-center">
-            <span
-              id="friend-code-display"
-              class="text-lg montserrat-bold text-primary_purp tracking-[0.25em]"
-            >···</span>
+            <span id="friend-code-display"
+              class="text-lg montserrat-bold text-primary_purp tracking-[0.25em]">···</span>
           </div>
-          <button
-            id="copy-friend-code"
-            title="Copy code"
-            class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition"
-          >
+          <button id="copy-friend-code" title="Copy code"
+            class="p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-500 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                    stroke-width="2" stroke-linecap="round"/>
+              <rect x="9" y="9" width="13" height="13" rx="2" stroke-width="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"
+                stroke-linecap="round" />
             </svg>
           </button>
         </div>
@@ -77,7 +63,8 @@ page_content %}
       </div>
 
       <!-- Pending Invitations -->
-      <div id="invitations" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col transition-shadow">
+      <div id="invitations"
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-col transition-shadow">
         <h3 class="text-sm montserrat-bold text-gray-700 mb-3">Group Invitations</h3>
         <div id="invitations-container" class="space-y-3"></div>
         <div id="no-invitations" class="hidden text-center py-4">
@@ -101,41 +88,35 @@ page_content %}
 <!-- ═══════════════════════════════════════════════════════════
      Create Group Modal
      ═══════════════════════════════════════════════════════════ -->
-<div
-  id="group-modal"
-  class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
->
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-slide-up">
-
+<div id="group-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md mx-4 p-4 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto">
     <!-- Step 1: Create -->
     <div id="modal-step-create">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-lg montserrat-bold text-gray-800">Create Group</h3>
         <button id="group-modal-close"
-                class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">✕</button>
+          class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">✕</button>
       </div>
 
       <div class="space-y-4">
         <div>
           <label class="block montserrat-regular text-gray-600 text-sm mb-1.5">Group Name</label>
-          <input type="text" id="group-name" maxlength="120"
-                 placeholder="e.g. Algorithms Study Group"
-                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none" />
+          <input type="text" id="group-name" maxlength="120" placeholder="e.g. Algorithms Study Group"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none" />
         </div>
 
         <div id="group-alert"></div>
 
         <div>
           <label class="block montserrat-regular text-gray-600 text-sm mb-1.5">Description</label>
-          <textarea id="group-description" rows="3"
-                    placeholder="What is this group about?"
-                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none"></textarea>
+          <textarea id="group-description" rows="3" placeholder="What is this group about?"
+            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm roboto-regular focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:bg-white focus:outline-none"></textarea>
         </div>
 
         <div>
           <label class="block montserrat-regular text-gray-600 text-sm mb-1.5">Cover Image</label>
           <input type="file" id="group-cover" accept="image/*"
-                 class="w-full text-gray-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:roboto-regular file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
+            class="w-full text-gray-500 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:roboto-regular file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" />
         </div>
 
         <div id="cover-preview-container" class="hidden">
@@ -144,11 +125,11 @@ page_content %}
 
         <div class="flex gap-3 pt-2">
           <button id="group-cancel-btn"
-                  class="flex-1 montserrat-medium py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
+            class="flex-1 montserrat-medium py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50">
             Cancel
           </button>
           <button id="group-save-btn"
-                  class="flex-1 montserrat-medium py-2.5 rounded-xl bg-primary_purp text-white text-sm hover:bg-indigo-600">
+            class="flex-1 montserrat-medium py-2.5 rounded-xl bg-primary_purp text-white text-sm hover:bg-indigo-600">
             Create
           </button>
         </div>
@@ -160,7 +141,7 @@ page_content %}
       <div class="text-center mb-5">
         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
           <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
           </svg>
         </div>
         <h3 class="text-lg montserrat-bold text-gray-800">Group Created!</h3>
@@ -170,16 +151,18 @@ page_content %}
       <div class="space-y-3">
         <div id="invite-code-rows-modal" class="invite-code-rows space-y-2"></div>
         <p class="text-[11px] roboto-regular text-gray-400 leading-snug">
-          Up to <span class="font-medium text-gray-500">15</span> friend codes. When a row reaches 8 characters, another row appears below. Then use <span class="font-medium text-gray-600">Send invites</span> to invite everyone in one go.
+          Up to <span class="font-medium text-gray-500">15</span> friend codes. When a row reaches 8 characters, another
+          row appears below. Then use <span class="font-medium text-gray-600">Send invites</span> to invite everyone in
+          one go.
         </p>
         <button id="modal-invite-mass-btn" type="button"
-                class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600">
+          class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600">
           Send invites
         </button>
         <div id="modal-invite-alert" class="text-xs roboto-regular min-h-[1rem]"></div>
 
         <button id="modal-done-btn"
-                class="w-full py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 montserrat-medium hover:bg-gray-50 mt-2">
+          class="w-full py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 montserrat-medium hover:bg-gray-50 mt-2">
           Done
         </button>
       </div>
@@ -191,27 +174,25 @@ page_content %}
 <!-- ═══════════════════════════════════════════════════════════
      Invite Member Modal (from group card)
      ═══════════════════════════════════════════════════════════ -->
-<div
-  id="invite-modal"
-  class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
->
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+<div id="invite-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md mx-4 p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-4">
       <div>
         <h3 class="text-base montserrat-bold text-gray-800">Invite Member</h3>
         <p id="invite-modal-group-name" class="text-xs roboto-regular text-gray-400 mt-0.5"></p>
       </div>
       <button id="invite-modal-close"
-              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">✕</button>
+        class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">✕</button>
     </div>
 
     <div class="space-y-3">
       <div id="invite-code-rows-card" class="invite-code-rows space-y-2"></div>
       <p class="text-[11px] roboto-regular text-gray-400 leading-snug">
-        Up to <span class="font-medium text-gray-500">15</span> friend codes. Fill a row completely to unlock the next. Use <span class="font-medium text-gray-600">Send invites</span> to send all at once.
+        Up to <span class="font-medium text-gray-500">15</span> friend codes. Fill a row completely to unlock the next.
+        Use <span class="font-medium text-gray-600">Send invites</span> to send all at once.
       </p>
       <button id="invite-mass-btn" type="button"
-              class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600">
+        class="w-full py-2.5 rounded-xl bg-primary_purp text-white text-sm montserrat-medium hover:bg-indigo-600">
         Send invites
       </button>
       <div id="invite-alert" class="text-xs roboto-regular min-h-[1rem]"></div>
