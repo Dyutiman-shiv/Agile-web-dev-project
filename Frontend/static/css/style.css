@@ -315,3 +315,576 @@ th {
         padding: 1rem;
     }
 }
+
+/* ---------- Dark Mode ---------- */
+:root {
+    --bg-page:       #f9fafb;
+    --bg-card:       #ffffff;
+    --text-primary:  #111827;
+    --text-muted:    #6b7280;
+    --border-color:  #e5e7eb;
+    --input-bg:      #ffffff;
+}
+
+html.dark {
+    --bg-page:       #0f1117;
+    --bg-card:       #1a1d27;
+    --text-primary:  #f1f5f9;
+    --text-muted:    #94a3b8;
+    --border-color:  #2d3148;
+    --input-bg:      #1e2130;
+}
+
+/* Page & card backgrounds */
+html.dark body,
+html.dark main {
+    background-color: var(--bg-page) !important;
+    color: var(--text-primary);
+}
+
+html.dark .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+html.dark .bg-gray-50 {
+    background-color: #13151f !important;
+}
+
+html.dark .bg-gray-100 {
+    background-color: #1e2130 !important;
+}
+
+/* Text */
+html.dark .text-gray-800,
+html.dark .text-gray-900 {
+    color: var(--text-primary) !important;
+}
+
+html.dark .text-gray-700 {
+    color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Borders */
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+/* Dropdowns (notification + user) */
+html.dark #notif-dropdown,
+html.dark #user-dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+html.dark #notif-dropdown .hover\:bg-gray-50:hover,
+html.dark #user-dropdown-menu a:hover {
+    background-color: #252840 !important;
+}
+
+/* Mobile more menu */
+html.dark #mobile-more-menu > div {
+    background-color: var(--bg-card);
+}
+
+html.dark #mobile-more-menu .bg-gray-50 {
+    background-color: #1e2130 !important;
+}
+
+html.dark #mobile-more-menu .hover\:bg-indigo-50:hover {
+    background-color: #252840 !important;
+}
+
+/* Inputs */
+html.dark input,
+html.dark select,
+html.dark textarea {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+/* Dividers */
+html.dark .divide-y > * + * {
+    border-color: var(--border-color) !important;
+}
+
+/* Scrollbars in dark mode */
+html.dark ::-webkit-scrollbar-thumb {
+    background: #3a3f5c;
+}
+
+/* Theme toggle transition */
+html, html.dark {
+    transition: background-color 0.25s ease, color 0.2s ease;
+}
+/* ---------- Dark Mode: Calendar ---------- */
+
+/* Page background */
+html.dark .bg-backgroud_cal_light {
+    background-color: #0f1117 !important;
+}
+
+/* Left panel */
+html.dark #cal-left-panel {
+    background-color: #13151f;
+    border-color: var(--border-color);
+}
+
+/* Toolbar */
+html.dark .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+html.dark #cal-title {
+    color: #ffffff;
+}
+
+html.dark #cal-today {
+    background-color: #1e2130;
+    border-color: var(--border-color);
+    color: #f1f5f9;
+}
+
+html.dark #cal-today:hover {
+    background-color: #252840;
+}
+
+html.dark #cal-prev,
+html.dark #cal-next {
+    color: #94a3b8;
+}
+
+html.dark #cal-prev:hover,
+html.dark #cal-next:hover {
+    background-color: #1e2130;
+}
+
+/* View switcher */
+html.dark .inline-flex.rounded-xl.bg-gray-100 {
+    background-color: #1e2130;
+}
+
+html.dark .cal-view-btn {
+    color: #94a3b8;
+}
+
+html.dark .cal-view-btn.active {
+    background-color: #2d3148;
+    color: #ffffff;
+}
+
+/* Main calendar grid container */
+html.dark #calendar-container {
+    background-color: #1a1d27;
+    color: #ffffff;
+}
+
+/* All text nodes rendered inside the calendar grid by JS */
+html.dark #calendar-container * {
+    color: inherit;
+}
+
+/* Day/date number cells — covers whatever classes calendar.js applies */
+html.dark #calendar-container [class*="text-gray"],
+html.dark #calendar-container [class*="text-slate"],
+html.dark #calendar-container span,
+html.dark #calendar-container p,
+html.dark #calendar-container div {
+    color: #e2e8f0;
+}
+
+/* Today highlight — keep it readable */
+html.dark #calendar-container .bg-indigo-600 span,
+html.dark #calendar-container .bg-indigo-600 div,
+html.dark #calendar-container .bg-indigo-500 span {
+    color: #ffffff !important;
+}
+
+/* Muted / out-of-month dates */
+html.dark #calendar-container .text-gray-300,
+html.dark #calendar-container .text-gray-400,
+html.dark #calendar-container .opacity-40,
+html.dark #calendar-container .opacity-50 {
+    color: #475569 !important;
+}
+
+/* Week/day view hour labels and grid lines */
+html.dark #week-scroll,
+html.dark #day-scroll {
+    background-color: #1a1d27;
+    color: #e2e8f0;
+}
+
+html.dark #week-scroll .border-gray-100,
+html.dark #day-scroll .border-gray-100,
+html.dark #week-scroll .border-gray-200,
+html.dark #day-scroll .border-gray-200 {
+    border-color: #2d3148 !important;
+}
+
+/* Mini calendar */
+html.dark #mini-calendar {
+    color: #ffffff;
+}
+
+html.dark #mini-calendar span,
+html.dark #mini-calendar div,
+html.dark #mini-calendar button {
+    color: #e2e8f0;
+}
+
+html.dark #mini-calendar .text-gray-400,
+html.dark #mini-calendar .text-gray-300 {
+    color: #475569 !important;
+}
+
+/* Mini calendar today dot / selected */
+html.dark #mini-calendar .bg-indigo-600,
+html.dark #mini-calendar .bg-indigo-500 {
+    color: #ffffff !important;
+}
+
+html.dark #mini-calendar .bg-indigo-600 span,
+html.dark #mini-calendar .bg-indigo-500 span {
+    color: #ffffff !important;
+}
+
+/* Hover states on mini calendar days */
+html.dark #mini-calendar button:hover {
+    background-color: #252840;
+}
+
+/* Agenda panels */
+html.dark #agenda-panel,
+html.dark #mobile-agenda-panel {
+    background-color: #1a1d27;
+    color: #e2e8f0;
+    border-color: var(--border-color);
+}
+
+html.dark #agenda-panel *,
+html.dark #mobile-agenda-panel * {
+    color: #e2e8f0;
+}
+
+html.dark #agenda-panel .text-gray-400,
+html.dark #mobile-agenda-panel .text-gray-400,
+html.dark #agenda-panel .text-gray-500,
+html.dark #mobile-agenda-panel .text-gray-500 {
+    color: #64748b !important;
+}
+
+/* Add event button (desktop) */
+html.dark #add-event-btn {
+    background-color: #252840;
+    color: #e2e8f0;
+}
+
+html.dark #add-event-btn:hover {
+    background-color: #2d3148;
+}
+
+/* Event modal */
+html.dark #event-modal > div,
+html.dark #event-summary-modal > div {
+    background-color: #1a1d27;
+    border-color: var(--border-color);
+}
+
+html.dark #event-modal label,
+html.dark #event-summary-modal p,
+html.dark #event-form label {
+    color: #cbd5e1 !important;
+}
+
+html.dark #event-modal h3,
+html.dark #event-summary-modal h3,
+html.dark #summary-title {
+    color: #f1f5f9 !important;
+}
+
+html.dark #event-modal input,
+html.dark #event-modal select,
+html.dark #event-modal textarea {
+    background-color: #252840;
+    border-color: #3a3f5c;
+    color: #f1f5f9;
+}
+
+html.dark #event-modal input:focus,
+html.dark #event-modal select:focus,
+html.dark #event-modal textarea:focus {
+    background-color: #2d3148;
+    border-color: #6366f1;
+}
+
+html.dark .event-type-btn {
+    border-color: #3a3f5c;
+    color: #cbd5e1;
+    background-color: #252840;
+}
+
+html.dark #event-cancel-btn {
+    background-color: #252840;
+    color: #cbd5e1;
+}
+
+html.dark #event-cancel-btn:hover {
+    background-color: #2d3148;
+}
+
+html.dark #summary-edit-btn:hover,
+html.dark #summary-close-btn:hover {
+    background-color: #252840;
+}
+
+html.dark #summary-datetime,
+html.dark #summary-duration,
+html.dark #summary-repeat,
+html.dark #summary-notes,
+html.dark #summary-description,
+html.dark #summary-completed {
+    color: #f1f5f9 !important;
+}
+
+html.dark .text-gray-500.text-sm {
+    color: #64748b !important;
+}
+
+/* ---------- Dark Mode: Dashboard ---------- */
+ 
+/* Hero section overlay text */
+html.dark .text-text_dark_gray,
+html.dark [class*="text-text_dark_gray"] {
+    color: #f1f5f9 !important;
+}
+ 
+/* Dashboard sidebar cards & feed cards */
+html.dark .bg-white.rounded-3xl,
+html.dark .bg-white.rounded-2xl,
+html.dark .bg-white.p-5,
+html.dark .bg-white.p-6 {
+    background-color: var(--bg-card) !important;
+}
+ 
+/* Card headings and body text */
+html.dark .bg-white h3,
+html.dark .bg-white .montserrat-semi-bold,
+html.dark .bg-white .montserrat-bold,
+html.dark .bg-white .montserrat-medium,
+html.dark .bg-white .roboto-regular,
+html.dark .bg-white .roboto-medium,
+html.dark .bg-white .font-semibold {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark .bg-white .roboto-light,
+html.dark .bg-white .text-gray-500,
+html.dark .bg-white .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+ 
+/* Progress bar track */
+html.dark .bg-gray-200.rounded-full {
+    background-color: #2d3148 !important;
+}
+ 
+/* Task list items */
+html.dark #task-list li,
+html.dark #task-list span,
+html.dark #task-list p {
+    color: var(--text-primary) !important;
+}
+ 
+/* Progress text */
+html.dark #progress-text {
+    color: var(--text-muted) !important;
+}
+ 
+/* WAM card */
+html.dark #wam-card {
+    background: linear-gradient(to bottom right, var(--bg-card), #13151f) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #wam-card .text-gray-600,
+html.dark #wam-card .text-gray-500,
+html.dark #wam-card .text-gray-700,
+html.dark #wam-card .text-gray-800 {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #wam-current {
+    color: #f1f5f9 !important;
+}
+ 
+html.dark #wam-best {
+    color: #cbd5e1 !important;
+}
+ 
+/* WAM ring bg track */
+html.dark #wam-card circle[stroke="#e5e7eb"] {
+    stroke: #2d3148;
+}
+ 
+/* Semester badge on WAM */
+html.dark #semester-name {
+    background-color: #1a2e22 !important;
+    color: #4ade80 !important;
+}
+ 
+/* Feed card - user name & muted text */
+html.dark .roboto-regular.text-text_dark_gray,
+html.dark .montserrat-semi-bold.text-text_dark_gray {
+    color: #f1f5f9 !important;
+}
+ 
+/* Feed card borders */
+html.dark .border-t {
+    border-color: var(--border-color) !important;
+}
+ 
+/* Feed action buttons */
+html.dark .border-t button {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark .border-t button:hover {
+    color: #818cf8 !important;
+}
+ 
+/* Urgency card — keep its own bg, fix text if needed */
+html.dark .bg-task_pink p {
+    color: #ffffff !important;
+}
+ 
+/* Streak / Study / Achievement cards */
+html.dark .text-task_yellow {
+    color: #fbbf24 !important;
+}
+ 
+html.dark .text-task_green {
+    color: #34d399 !important;
+}
+ 
+/* Current Focus card timer */
+html.dark .text-primary_purp {
+    color: #a78bfa !important;
+}
+ 
+/* ---------- Dark Mode: Stats ---------- */
+ 
+/* Filter bar */
+html.dark #period-tabs {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark .period-btn {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark .period-btn.bg-indigo-600 {
+    color: #ffffff !important;
+    background-color: #4f46e5 !important;
+}
+ 
+/* Summary cards */
+html.dark #summary-cards .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #summary-cards .text-gray-800,
+html.dark #summary-cards [id^="stat-"] {
+    color: #f1f5f9 !important;
+}
+ 
+html.dark #summary-cards .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+ 
+/* Icon badge backgrounds — keep colours, adjust opacity for dark */
+html.dark #summary-cards .bg-indigo-100  { background-color: #1e1b4b !important; }
+html.dark #summary-cards .bg-blue-100    { background-color: #172554 !important; }
+html.dark #summary-cards .bg-emerald-100 { background-color: #022c22 !important; }
+html.dark #summary-cards .bg-amber-100   { background-color: #2d1b00 !important; }
+html.dark #summary-cards .bg-rose-100    { background-color: #2d0a12 !important; }
+ 
+/* Chart containers */
+html.dark #chart-hours-by-unit,
+html.dark #chart-donut,
+html.dark #chart-daily-trend,
+html.dark #chart-heatmap,
+html.dark #chart-task-completion {
+    color: #e2e8f0;
+}
+ 
+/* Chart card wrappers */
+html.dark .bg-white.rounded-2xl.shadow-sm {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark .bg-white.rounded-2xl.shadow-sm h3,
+html.dark .bg-white.rounded-2xl.shadow-sm .montserrat-medium {
+    color: #e2e8f0 !important;
+}
+ 
+/* Empty-state messages */
+html.dark #hours-empty,
+html.dark #donut-empty,
+html.dark #trend-empty,
+html.dark #tasks-empty {
+    color: var(--text-muted) !important;
+}
+ 
+/* ApexCharts dark mode overrides
+   ApexCharts injects its own SVG text — force light colour via the wrapper */
+html.dark .apexcharts-text,
+html.dark .apexcharts-legend-text,
+html.dark .apexcharts-yaxis-label,
+html.dark .apexcharts-xaxis-label,
+html.dark .apexcharts-title-text,
+html.dark .apexcharts-datalabel,
+html.dark .apexcharts-datalabel-label,
+html.dark .apexcharts-datalabel-value,
+html.dark .apexcharts-tooltip {
+    color: #e2e8f0 !important;
+    fill: #e2e8f0 !important;
+}
+ 
+html.dark .apexcharts-gridline {
+    stroke: #2d3148 !important;
+}
+ 
+html.dark .apexcharts-tooltip {
+    background: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark .apexcharts-tooltip-title {
+    background: #1e2130 !important;
+    border-color: var(--border-color) !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark .apexcharts-tooltip-text-y-label,
+html.dark .apexcharts-tooltip-text-y-value {
+    color: #e2e8f0 !important;
+}
+ 
+/* Semester select dropdown */
+html.dark #semester-filter {
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
