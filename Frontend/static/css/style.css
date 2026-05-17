@@ -247,6 +247,206 @@ html.dark #user-dropdown-menu a:hover {
     background-color: #252840 !important;
 }
 
+/* Task-due (amber) — keep readable on dark dropdown / toasts / full page */
+html.dark #notif-list .notif-item .text-amber-500,
+html.dark #notif-toast-container .text-amber-500 {
+    color: #fcd34d !important; /* amber-300 on dark surfaces */
+}
+html.dark .notif-page-item span.inline-block.bg-amber-100,
+html.dark .notif-page-item .bg-amber-100.text-amber-700 {
+    background-color: #422006 !important;
+    color: #fde68a !important; /* amber-200 */
+    border: 1px solid #78350f;
+}
+
+/* ---------- Command palette (⌘K / Ctrl+K) — dark mode ---------- */
+html.dark #command-palette-backdrop {
+    background-color: rgb(15 23 42 / 0.65) !important;
+}
+
+html.dark #command-palette-modal {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    box-shadow:
+        0 25px 50px -12px rgb(0 0 0 / 0.45),
+        0 0 0 1px rgb(45 49 72 / 0.55) inset !important;
+}
+
+html.dark #command-palette-modal.cp-palette-visible {
+    box-shadow:
+        0 25px 50px -12px rgb(0 0 0 / 0.5),
+        0 0 0 1px rgb(55 65 94 / 0.5) inset !important;
+}
+
+html.dark #command-palette-header {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark #command-palette-search-wrap {
+    background-color: transparent !important;
+    border-color: var(--border-color) !important;
+    box-shadow: none;
+}
+
+html.dark #command-palette-search-wrap:focus-within {
+    border-color: rgba(114, 90, 234, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(114, 90, 234, 0.2);
+    background-color: transparent !important;
+}
+
+/* Global html.dark input fills this field with --input-bg; keep one flat surface with the header */
+html.dark #command-palette-input {
+    background-color: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #command-palette-input::placeholder {
+    color: #64748b !important;
+}
+
+html.dark #command-palette-header .text-slate-600 {
+    color: #94a3b8 !important;
+}
+html.dark #command-palette-header .text-slate-400,
+html.dark #command-palette-header .text-slate-300 {
+    color: #64748b !important;
+}
+
+html.dark #command-palette-results {
+    background-color: var(--bg-card) !important;
+}
+
+html.dark #command-palette-results .text-slate-900,
+html.dark #command-palette-results .text-slate-800,
+html.dark #command-palette-panel-inner .text-slate-900,
+html.dark #command-palette-panel-inner .text-slate-800 {
+    color: var(--text-primary) !important;
+}
+
+html.dark #command-palette-results .text-slate-700,
+html.dark #command-palette-results .text-slate-600,
+html.dark #command-palette-panel-inner .text-slate-700,
+html.dark #command-palette-panel-inner .text-slate-600 {
+    color: #cbd5e1 !important;
+}
+
+html.dark #command-palette-results .text-slate-500,
+html.dark #command-palette-results .text-slate-400,
+html.dark #command-palette-panel-inner .text-slate-500,
+html.dark #command-palette-panel-inner .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+html.dark #command-palette-results .command-palette-row.hover\:bg-slate-100:hover,
+html.dark #command-palette-results .command-palette-row.border-transparent:hover {
+    background-color: #252840 !important;
+}
+
+html.dark .command-palette-row-active {
+    background-color: rgba(114, 90, 234, 0.2) !important;
+    border-left-color: #a78bfa !important;
+    box-shadow: inset 0 1px 0 rgb(45 49 72 / 0.85);
+}
+
+html.dark .command-palette-cat {
+    background-color: #13151f !important;
+    color: #94a3b8 !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark .cp-kbd {
+    background: linear-gradient(180deg, #252840 0%, #1e2130 100%);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #cbd5e1;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35) inset;
+}
+
+html.dark #command-palette-panel {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+html.dark #command-palette-panel-inner {
+    background-color: var(--bg-card) !important;
+}
+
+html.dark #command-palette-panel.cp-panel-floating {
+    border-color: var(--border-color) !important;
+    box-shadow:
+        0 25px 50px -12px rgb(0 0 0 / 0.42),
+        0 0 0 1px rgb(45 49 72 / 0.55) inset !important;
+}
+
+html.dark #command-palette-panel-inner h3,
+html.dark #command-palette-panel-inner .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+html.dark #command-palette-panel-inner .text-gray-500,
+html.dark #command-palette-panel-inner .text-gray-600,
+html.dark #command-palette-panel-inner p.text-gray-500 {
+    color: var(--text-muted) !important;
+}
+
+html.dark #command-palette-panel-inner label {
+    color: #94a3b8 !important;
+}
+
+html.dark #command-palette-panel-inner input:not([type="color"]),
+html.dark #command-palette-panel-inner select,
+html.dark #command-palette-panel-inner textarea {
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark #command-palette-panel-inner .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+html.dark #command-palette-panel-inner .text-indigo-600 {
+    color: #a5b4fc !important;
+}
+html.dark #command-palette-panel-inner .border-indigo-200 {
+    border-color: rgba(79, 70, 229, 0.45) !important;
+}
+html.dark #command-palette-panel-inner .hover\:bg-indigo-50:hover {
+    background-color: #2d3148 !important;
+}
+
+html.dark #command-palette-panel-inner #cp-panel-alert,
+html.dark #command-palette-panel-inner .text-red-600 {
+    color: #f87171 !important;
+}
+
+html.dark #command-palette-results .border-slate-100,
+html.dark #command-palette-panel-inner .border-slate-100 {
+    border-color: var(--border-color) !important;
+}
+
+html.dark #command-palette-results .font-mono.text-slate-600,
+html.dark #command-palette-results .font-mono.text-gray-600 {
+    color: #cbd5e1 !important;
+}
+
+html.dark #command-palette-panel-inner .ical-palette-dot.border-gray-200 {
+    border-color: #4b5563 !important;
+}
+html.dark #command-palette-panel-inner .ical-palette-dot.ring-indigo-400 {
+    --tw-ring-color: rgb(129 140 248 / 0.95);
+}
+html.dark #command-palette-panel-inner .ring-offset-2 {
+    --tw-ring-offset-color: var(--bg-card);
+}
+
+html.dark #command-palette-results.cp-results-scroll::-webkit-scrollbar-thumb {
+    background: #3a3f5c;
+}
+html.dark #command-palette-panel-inner::-webkit-scrollbar-thumb {
+    background: #3a3f5c;
+}
+
 /* Mobile more menu */
 html.dark #mobile-more-menu > div { background-color: var(--bg-card); }
 html.dark #mobile-more-menu .bg-gray-50 { background-color: #1e2130 !important; }

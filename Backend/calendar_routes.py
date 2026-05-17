@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import calendar
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
@@ -25,6 +25,17 @@ def parse_repeat_until(value):
     except (ValueError, TypeError):
         return None
 
+def to_naive_utc(dt):
+    """Match SQLite naive datetimes: clients may send offset-aware ISO strings."""
+    if dt is None:
+        return None
+    if not isinstance(dt, datetime):
+        return dt
+    if dt.tzinfo is None:
+        return dt
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def validate_repeat_dates(repeat_type, repeat_until, start_dt):
     if repeat_type != "none":
         if not repeat_until:
@@ -35,8 +46,11 @@ def validate_repeat_dates(repeat_type, repeat_until, start_dt):
     
 def add_repeat_occurrences(event, start_dt, end_dt, date_attr):
     repeat_type = getattr(event, "repeat_type", "none") or "none"
-    original_dt = getattr(event, date_attr)
+    original_dt = to_naive_utc(getattr(event, date_attr))
     repeat_until = getattr(event, "repeat_until", None)
+
+    if original_dt is None:
+        return []
 
     if repeat_type == "none":
         if start_dt <= original_dt < end_dt:
@@ -110,8 +124,8 @@ def get_events():
     if not start or not end:
         return jsonify({"success": False, "message": "start and end required"}), 400
 
-    start_dt = parse_client_datetime(start)
-    end_dt = parse_client_datetime(end)
+    start_dt = to_naive_utc(parse_client_datetime(start))
+    end_dt = to_naive_utc(parse_client_datetime(end))
     if not start_dt or not end_dt:
         return jsonify({"success": False, "message": "Invalid start/end format."}), 400
 

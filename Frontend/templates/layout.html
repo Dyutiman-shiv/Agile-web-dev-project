@@ -4,7 +4,7 @@
 <div class="flex flex-col h-screen">
     <!-- Top navigation bar -->
     <header
-        class="bg-primary_purp text-white shrink-0 z-30 shadow-md {% if request.endpoint == 'cal.calendar_view' %}hidden sm:block{% endif %}">
+        class="bg-primary_purp text-white shrink-0 z-50 shadow-md {% if request.endpoint == 'cal.calendar_view' %}hidden sm:block{% endif %}">
         <div class="flex items-center justify-between px-4 sm:px-6 h-14">
             <!-- Left: Brand logo -->
             <a href="{{ url_for('auth.dashboard') }}"
@@ -71,7 +71,7 @@
 
                     <!-- Notification dropdown -->
                     <div id="notif-dropdown"
-                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 animate-slide-down overflow-hidden">
+                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-[100] animate-slide-down overflow-hidden">
                         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                             <span class="text-sm font-semibold text-gray-800">Notifications</span>
                             <button id="notif-mark-all-read"
@@ -99,7 +99,7 @@
                     </button>
 
                     <div id="user-dropdown-menu"
-                        class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-slide-down z-50">
+                        class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 animate-slide-down z-[100]">
                         <a href="{{ url_for('profile.profile_view') }}"
                             class="flex items-center gap-3 px-4 py-2.5 roboto-regular text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5"
@@ -460,7 +460,7 @@
             });
         }
     })();
-    // Theme toggle
+    // Theme toggle (initial class is set in base.html <head> to avoid flash)
     (function () {
         var toggleBtn = document.getElementById('theme-toggle-btn');
         var sun = document.getElementById('theme-icon-sun');
