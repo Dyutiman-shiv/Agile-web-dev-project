@@ -76,16 +76,10 @@
                 <div class="relative hidden sm:block" id="user-dropdown-wrapper">
                     <button id="user-dropdown-btn"
                         class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/10 transition-colors duration-200">
-                        {% if current_user.profile_picture %}
-                        <img src="{{ current_user.profile_picture }}"
-                            class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30" referrerpolicy="no-referrer"
-                            alt="avatar">
-                        {% else %}
-                        <div
-                            class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm">
-                            {{ current_user.username[0]|upper }}
-                        </div>
-                        {% endif %}
+                        <img src="{{ current_user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
+                            class="w-8 h-8 rounded-full object-cover ring-2 ring-white/30 bg-white/10"
+                            referrerpolicy="no-referrer"
+                            alt="">
                         <span class="text-sm montserrat-semi-bold hidden sm:block">{{ current_user.username }}</span>
                     </button>
 
@@ -161,7 +155,7 @@
     </header>
 
     <!-- Scrollable page content -->
-    <main class="flex-1 pb-20 md:pb-0 {% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}">
+    <main class="flex-1 min-h-0 pb-10 md:pb-0 {% block main_class %}overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8{% endblock %}">
         {% block page_content %}{% endblock %}
     </main>
 

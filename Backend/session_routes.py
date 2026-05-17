@@ -3,20 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from models import StudySession, ChecklistItem, StudySessionSegment
 from app import db
-
-
-def _parse_client_datetime(value):
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value
-    s = str(value).strip()
-    if s.endswith("Z"):
-        s = s[:-1] + "+00:00"
-    try:
-        return datetime.fromisoformat(s)
-    except ValueError:
-        return None
+from utils import parse_client_datetime
 
 
 def _append_study_segment_from_payload(session, data):
@@ -32,8 +19,8 @@ def _append_study_segment_from_payload(session, data):
         return
     if elapsed < 1:
         return
-    t_start = _parse_client_datetime(ss)
-    t_end = _parse_client_datetime(se)
+    t_start = parse_client_datetime(ss)
+    t_end = parse_client_datetime(se)
     if not t_start or not t_end:
         return
     if t_end < t_start:
@@ -161,6 +148,11 @@ def create_session():
     if not start_iso:
         return jsonify({"success": False, "message": "Start time is required."}), 400
 
+    # parse_client_datetime normalizes the ...Z suffix that Python 3.9 rejects.
+    start_dt = parse_client_datetime(start_iso)
+    if not start_dt:
+        return jsonify({"success": False, "message": "Invalid start time format."}), 400
+
     duration = int(data.get("duration_minutes", 0))
     timer_mode = data.get("timer_mode", "stopwatch")
     color = data.get("color", "#6366f1")
@@ -198,7 +190,7 @@ def create_session():
     session = StudySession(
         user_id=current_user.id,
         subject=name,
-        start_time=datetime.fromisoformat(start_iso),
+        start_time=start_dt,
         duration_minutes=max(1, duration),
         notes=notes,
         color=color,
@@ -280,12 +272,12 @@ def update_checklist_item(session_id, item_id):
     checklist_item = db.session.get(ChecklistItem, item_id)
     if not checklist_item or checklist_item.session_id != session_id:
         return jsonify({"success": False, "message": "Checklist item not found."}), 404
-    
-    data = request.get_json()
+
+    data = request.get_json(silent=True) or {}
     if "completed" in data:
         checklist_item.completed = bool(data["completed"])
         db.session.commit()
         return jsonify({"success": True, "completed": checklist_item.completed})
-    
+
     return jsonify({"success": False, "message": "No valid fields to update."}), 400
 

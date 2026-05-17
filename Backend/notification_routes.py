@@ -101,7 +101,7 @@ def get_preferences():
 @login_required
 def update_preferences():
     prefs = _ensure_prefs(current_user.id)
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     for field in ("session_reminders", "task_due_reminders", "task_overdue_alerts",
                   "semester_alerts", "timer_done_push", "browser_push_enabled"):
         if field in data:

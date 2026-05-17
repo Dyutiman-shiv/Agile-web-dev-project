@@ -25,7 +25,7 @@ jobs:
       - name: Run unit and API tests
         env:
           SCHEDULER_ENABLED: "0"
-        run: python -m pytest -v -m "not e2e"
+        run: python -m tests.run_tests fast -v
 
   # ── Selenium end-to-end tests (live server + headless Chrome) ─────────────
   e2e:
@@ -48,4 +48,4 @@ jobs:
       - name: Run Selenium tests
         env:
           SCHEDULER_ENABLED: "0"
-        run: python -m pytest -v -m e2e
+        run: python -m tests.run_tests e2e -v

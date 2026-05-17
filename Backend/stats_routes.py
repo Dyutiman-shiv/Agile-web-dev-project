@@ -1,9 +1,8 @@
 from datetime import datetime, date, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from models import StudySession, Task, Unit, Semester
+from models import StudySession, Task, Semester
 from app import db
-from sqlalchemy import func
 
 stats_bp = Blueprint("stats", __name__)
 
