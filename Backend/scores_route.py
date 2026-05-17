@@ -10,6 +10,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from models import Assessment, Unit
 from app import db
+from utils import parse_client_datetime
 
 scores_bp = Blueprint("scores", __name__)
 
@@ -46,6 +47,7 @@ def _serialize(a: Assessment) -> dict:
         "name": a.name or "",
         "score": a.score if a.score is not None else 0,
         "weight": a.weight if a.weight is not None else 0,
+        "due_date": a.due_date.isoformat() if a.due_date else None,
     }
 
 
@@ -54,8 +56,7 @@ def _serialize(a: Assessment) -> dict:
 def get_scores(semester_id):
     """List all assessments under the current user's units for a semester."""
     assessments = (
-        Assessment.query
-        .join(Unit, Assessment.unit_id == Unit.id)
+        Assessment.query.join(Unit, Assessment.unit_id == Unit.id)
         .filter(Unit.user_id == current_user.id, Unit.semester_id == semester_id)
         .all()
     )
@@ -71,11 +72,25 @@ def create_score():
     if not unit:
         return jsonify({"success": False, "message": "Unit not found."}), 404
 
+    due_raw = data.get("due_date")
+    parsed_due = None
+    if due_raw not in (None, ""):
+        parsed_due = parse_client_datetime(due_raw)
+        if parsed_due is None:
+            return jsonify({"success": False, "message": "Invalid due date."}), 400
+
+    try:
+        score = float(data.get("score") or 0)
+        weight = float(data.get("weight") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Score and weight must be numbers."}), 400
+
     assessment = Assessment(
         unit_id=unit.id,
         name=(data.get("name") or "Assessment"),
-        score=float(data.get("score") or 0),
-        weight=float(data.get("weight") or 0),
+        score=score,
+        weight=weight,
+        due_date=parsed_due,
     )
     db.session.add(assessment)
     db.session.commit()
@@ -102,6 +117,15 @@ def update_score(assessment_id):
             assessment.weight = float(data["weight"]) if data["weight"] is not None else 0
         except (TypeError, ValueError):
             return jsonify({"success": False, "message": "Weight must be a number."}), 400
+    if "due_date" in data:
+        dv = data["due_date"]
+        if dv in (None, ""):
+            assessment.due_date = None
+        else:
+            parsed = parse_client_datetime(dv)
+            if parsed is None:
+                return jsonify({"success": False, "message": "Invalid due date."}), 400
+            assessment.due_date = parsed
 
     db.session.commit()
     return jsonify({"success": True, "assessment": _serialize(assessment)})

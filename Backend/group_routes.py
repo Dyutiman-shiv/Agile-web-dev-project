@@ -321,7 +321,12 @@ def get_posts(group_id):
     group = Group.query.get_or_404(group_id)
     if not _is_member(current_user.id, group_id):
         return jsonify({"success": False, "message": "You must be a group member to view posts."}), 403
-    return jsonify([p.to_dict() for p in group.posts]), 200
+    
+    posts = [p.to_dict() for p in group.posts]
+
+    sorted_posts = sorted(posts, key=lambda x:x['created_at'], reverse=True)
+
+    return jsonify(sorted_posts), 200
 
 
 @groups_bp.route("/api/groups/<int:group_id>/posts", methods=["POST"])

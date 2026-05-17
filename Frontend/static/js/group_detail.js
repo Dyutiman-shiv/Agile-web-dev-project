@@ -1,4 +1,5 @@
 let itemToDelete = { id: null, type: null, element: null };
+let uploadController = null;
 
 /** Must match Backend/config.py MAX_POST_MEDIA_BYTES (20 MB). */
 const POST_MEDIA_MAX_BYTES = 20 * 1024 * 1024;
@@ -555,12 +556,15 @@ function createPost() {
     formData.append("media", mediaFile);
   }
 
+  uploadController = new AbortController();
+
   $.ajax({
     url: "/api/groups/" + group_id + "/posts",
     type: "POST",
     data: formData,
     processData: false,
     contentType: false,
+    signal: uploadController.signal,
     success: function () {
       resetPostForm();
       loadGroupPosts(group_id);
@@ -583,6 +587,13 @@ function createPost() {
       );
     },
   });
+}
+
+function resetContentPreview(){
+
+  $("#cancel-upload-btn").addClass("hidden");
+  $("#post-media-input").val("");
+  $("#media-preview-container").html("").addClass("hidden");
 }
 
 function resetPostForm() {
