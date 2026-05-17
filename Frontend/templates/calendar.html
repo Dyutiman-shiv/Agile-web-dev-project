@@ -79,12 +79,12 @@
 
         <!-- Calendar grid container -->
         <div id="calendar-container"
-            class="bg-white rounded-2xl lg:rounded-[30px] overflow-auto min-h-[520px] lg:flex-1 lg:min-h-0 mx-3 sm:mx-6 lg:ml-0 lg:mr-[20px] mb-[20px]">
+            class="shrink-0 bg-white rounded-2xl lg:rounded-[30px] overflow-hidden h-[calc(100dvh-11rem)] sm:h-[calc(100dvh-12rem)] lg:h-auto lg:flex-1 lg:min-h-0 lg:overflow-auto mx-3 sm:mx-6 lg:ml-0 lg:mr-[20px] mb-[20px]">
             <!-- Rendered by JS -->
         </div>
         <!-- Mobile / Tablet Agenda: Today & Tomorrow -->
         <div id="mobile-agenda-panel"
-            class="lg:hidden bg-white rounded-2xl mx-3 sm:mx-6 mb-22 p-5 shadow-sm border border-gray-100">
+            class="lg:hidden bg-white rounded-2xl mx-3 sm:mx-6 mb-23 p-5 shadow-sm border border-gray-100">
             <!-- Rendered by JS -->
         </div>
     </div>
@@ -92,7 +92,8 @@
 
 <!-- Event create/edit modal -->
 <div id="event-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md mx-4 p-4 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto">
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md mx-4 p-4 sm:p-6 animate-slide-up max-h-[85vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-4">
             <h3 id="event-modal-title" class="text-base sm:text-lg font-bold text-gray-800">New Event</h3>
         </div>
@@ -252,7 +253,8 @@
 <!-- Event Summary Popup -->
 <div id="event-summary-modal"
     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-sm mx-4 p-6 animate-slide-up max-h-[80vh] overflow-y-auto">
+    <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-xs sm:max-w-sm mx-4 p-6 animate-slide-up max-h-[80vh] overflow-y-auto">
         <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-2">
                 <div id="summary-color-dot" class="w-3 h-3 rounded-full"></div>
