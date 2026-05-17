@@ -316,6 +316,7 @@ th {
     }
 }
 
+
 /* ---------- Dark Mode ---------- */
 :root {
     --bg-page:       #f9fafb;
@@ -1827,4 +1828,11 @@ html.dark #group-save-btn {
 
 html.dark #group-save-btn:hover {
     background-color: #6366f1 !important;
+}
+
+/* Global page shell: light theme only (dark uses `html.dark body, html.dark main`). */
+html:not(.dark) body,
+html:not(.dark) main {
+    background-color: #e5e3e3 !important;
+    color: var(--text-primary);
 }

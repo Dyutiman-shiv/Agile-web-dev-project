@@ -18,7 +18,6 @@ $(function () {
     let editTempCountdownTotal = 25 * 60;
     let currentSessionId = null;  // Track the ID of the current session if it's from history
     let isResumedSession = false;  // Flag to track if we're resuming a session
-    let resumeChoiceSnapshot = null;  // Session JSON while resume modal is open
     let sittingWallStart = null;  // Date when current sitting's timer first ran (wall clock)
     let sittingBaselineElapsed = null;  // elapsedSeconds at sittingWallStart
 
@@ -30,33 +29,6 @@ $(function () {
         const m = Math.floor((totalSec % 3600) / 60);
         const s = totalSec % 60;
         return pad(h) + ":" + pad(m) + ":" + pad(s);
-    }
-
-    function savedSecondsFromSnapshot(s) {
-        if (!s) return 0;
-        if (s.accumulated_seconds != null && s.accumulated_seconds !== "") {
-            return Math.max(0, parseInt(s.accumulated_seconds, 10) || 0);
-        }
-        return Math.max(0, (parseInt(s.duration, 10) || 0) * 60);
-    }
-
-    function formatSavedStudyHuman(snapshot) {
-        const sec = savedSecondsFromSnapshot(snapshot);
-        if (sec <= 0) return "0 min";
-        const m = Math.round(sec / 60);
-        if (m < 1) return "under 1 min";
-        return m + " min";
-    }
-
-    function openResumeChoiceModal(snapshot) {
-        resumeChoiceSnapshot = snapshot;
-        $("#resume-choice-saved-label").text(formatSavedStudyHuman(snapshot));
-        $("#resume-choice-modal").removeClass("hidden");
-    }
-
-    function closeResumeChoiceModal() {
-        $("#resume-choice-modal").addClass("hidden");
-        resumeChoiceSnapshot = null;
     }
 
     function markSittingAnchorIfNeeded() {
@@ -1009,111 +981,33 @@ $(function () {
     }
 
     // ============ Resume Session Button Handler ============
+    // Clicking Resume always continues the same session from its saved time —
+    // no modal, no branching. Sessions stay resumable until every task is ticked off.
     $(document).on("click", ".resume-history-btn", function (e) {
         e.stopPropagation();
         const sessionId = $(this).data("id");
         const $btn = $(this);
         $btn.prop("disabled", true);
-        $.getJSON("/api/sessions/" + sessionId)
-            .done(function (data) {
-                if (data.status !== "active") {
-                    showSetupAlert("That session is no longer active.", "info");
-                    return;
-                }
-                if (data.continued_as_session_id) {
-                    showSetupAlert("This row was continued with a new timer. Use the newest session in the list to resume.", "info");
-                    return;
-                }
-                openResumeChoiceModal(data);
-            })
-            .fail(function (xhr) {
-                let msg = "Could not load session.";
-                try {
-                    const j = xhr.responseJSON;
-                    if (j && j.message) msg = j.message;
-                } catch (err) { /* ignore */ }
-                showSetupAlert(msg, "danger");
-            })
-            .always(function () {
-                $btn.prop("disabled", false);
-            });
-    });
-
-    $("#resume-choice-continue-btn").on("click", function () {
-        if (!resumeChoiceSnapshot) return;
-        const sid = resumeChoiceSnapshot.id;
-        const $m = $(this);
-        $m.prop("disabled", true);
         $.ajax({
-            url: "/api/sessions/" + sid + "/resume",
+            url: "/api/sessions/" + sessionId + "/resume",
             method: "POST",
             success: function (response) {
                 if (response.success) {
-                    closeResumeChoiceModal();
                     resumeSession(response.session, response.elapsed_seconds, { startPaused: true });
                     loadHistory();
                 } else {
-                    showSetupAlert(response.message || "Failed to resume session.", "danger");
+                    showSetupAlert(response.message || "Could not resume session.", "danger");
                 }
             },
             error: function (xhr) {
-                let msg = "Failed to resume session.";
-                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e2) {}
+                let msg = "Could not resume session.";
+                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (err) { /* ignore */ }
                 showSetupAlert(msg, "danger");
             },
             complete: function () {
-                $m.prop("disabled", false);
+                $btn.prop("disabled", false);
             }
         });
-    });
-
-    $("#resume-choice-new-btn").on("click", function () {
-        if (!resumeChoiceSnapshot) return;
-        const snap = resumeChoiceSnapshot;
-        const $m = $(this);
-        $m.prop("disabled", true);
-        const checklistPayload = (snap.checklist || []).map(function (c) {
-            return { title: c.title, completed: !!c.completed };
-        });
-        $.ajax({
-            url: "/api/sessions",
-            method: "POST",
-            contentType: "application/json",
-            data: JSON.stringify({
-                continued_from_session_id: snap.id,
-                name: snap.title,
-                start_time: new Date().toISOString(),
-                duration_minutes: 1,
-                timer_mode: snap.timer_mode || "stopwatch",
-                color: snap.color || "#6366f1",
-                notes: snap.notes || "",
-                checklist: checklistPayload,
-                unit_id: snap.unit_id || null,
-                accumulated_seconds: 0
-            }),
-            success: function (resp) {
-                if (resp.success && resp.session) {
-                    closeResumeChoiceModal();
-                    resumeSession(resp.session, 0, { startPaused: true, isNewContinuation: true });
-                    loadHistory();
-                } else {
-                    showSetupAlert((resp && resp.message) || "Could not start a new timer.", "danger");
-                }
-            },
-            error: function (xhr) {
-                let msg = "Could not start a new timer.";
-                try { msg = JSON.parse(xhr.responseText).message || msg; } catch (e3) {}
-                showSetupAlert(msg, "danger");
-            },
-            complete: function () {
-                $m.prop("disabled", false);
-            }
-        });
-    });
-
-    $("#resume-choice-cancel-btn").on("click", closeResumeChoiceModal);
-    $("#resume-choice-modal").on("click", function (e) {
-        if (e.target === this) closeResumeChoiceModal();
     });
 
     // ============ Toggle History Details ============

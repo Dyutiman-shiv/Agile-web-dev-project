@@ -1,258 +1,362 @@
-{% extends "layout.html" %} {% block title %}Dashboard{% endblock %} 
-{% block main_class %}overflow-hidden bg-backgroud_cal_light{% endblock %} 
-{% block page_content %}
-<!-- SCROLLABLE CONTAINER -->
-<div class="h-full overflow-y-auto">
-  <div class="max-w-7xl mx-auto p-6 space-y-6">
-    <!-- HERO SECTION -->
-    <div
-      class="bg-[url('https://img.freepik.com/premium-photo/cozy-study-space-with-laptop-books-stationery-illuminated-by-sunlight-streaming-through-window-creating-warm-inviting-atmosphere_42331-12732.jpg')] bg-cover bg-center text-white rounded-2xl shadow-lg p-6 flex items-center justify-between h-60"
-    >
-      <!-- Left -->
-      <div class="flex items-center space-x-4">
-        <img
-          src="{{ current_user.profile_picture}}"
-          class="w-auto h-auto rounded-full border-[1px] border-white shadow-md"
-        />
+{% extends "layout.html" %}
 
-        <div>
-          <h1 class="text-2xl montserrat-bold">
-            Welcome, {{ current_user.username }}! ☀️
-          </h1>
-        </div>
-      </div>
+{% block title %}Dashboard{% endblock %}
+
+{% block main_class %}
+overflow-hidden bg-backgroud_cal_light
+{% endblock %}
+
+{% block page_content %}
+
+<div
+  id="user-data"
+  data-user-profile-picture="{{ current_user.profile_picture }}"
+  data-user-id="{{ current_user.id }}"
+  data-my-role="{{ my_role }}"
+  data-is-owner="{{ 'true' if is_owner else 'false' }}"
+  style="display: none"
+></div>
+
+<div class="flex h-full overflow-hidden bg-backgroud_cal_light">
+
+  <!-- MOBILE SIDEBAR TOGGLE -->
+  <button
+    id="mobile-sidebar-toggle"
+    class="lg:hidden fixed top-1/2 left-0 -translate-y-1/2 z-40 bg-primary_purp text-white px-2 py-6 rounded-r-2xl shadow-lg"
+  >
+    →
+  </button>
+
+  <!-- SIDEBAR -->
+  <aside
+    id="dashboard-sidebar"
+    class="fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto
+           w-80 bg-white border-r border-gray-200
+           transform -translate-x-full lg:translate-x-0
+           transition-transform duration-300
+           shadow-xl lg:shadow-none
+           flex flex-col h-full"
+  >
+
+    <!-- MOBILE CLOSE -->
+    <div class="lg:hidden flex justify-end p-4 border-b">
+      <button id="close-sidebar-btn" class="text-gray-500 text-xl">
+        ✕
+      </button>
     </div>
 
-    <!-- MAIN GRID -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- FEED -->
-      <div class="lg:col-span-2 space-y-4">
-        <!-- Card -->
-        <div class="w-[80%] mx-auto">
+    <!-- SIDEBAR CONTENT -->
+    <div class="flex-1 overflow-y-auto min-h-0 p-5 space-y-4">
+
+      <!-- Tasks -->
+      <div class="bg-backgroud_cal_light p-5 rounded-2xl shadow">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="font-semibold text-gray-800">Today's Progress</h3>
+          <span id="progress-text" class="text-sm text-gray-500"></span>
+        </div>
+
+        <div class="w-full bg-white rounded-full h-2 mb-3 overflow-hidden">
           <div
-            class="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition flex flex-col"
-          >
-            <div class="p-5 space-y-4 flex-1 flex flex-col justify-between">
-              <!-- User Info -->
-              <div class="flex items-center space-x-3">
-                <img
-                  src="data:image/jpeg;base64,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"
-                  class="w-12 h-12 rounded-full"
-                />
-                <div>
-                  <p class="montserrat-semi-bold text-text_dark_gray">
-                    Maria Lopez
-                  </p>
-                  <p class="roboto-light text-sm text-gray-400">
-                    AI Study Group • 2h ago
-                  </p>
-                </div>
-              </div>
-
-              <!-- CONTENT -->
-
-              <!-- Message -->
-              <div>
-                <p class="roboto-regular text-text_dark_gray leading-relaxed">
-                  🎉 Just reached a milestone! Studied
-                  <span class="montserrat-bold text-primary_purp"
-                    >Deep Learning</span
-                  >
-                  for
-                  <span class="montserrat-bold text-task_green"
-                    >20 hours this week</span
-                  >.
-                </p>
-
-                <p class="roboto-light text-sm text-gray-500 mt-2">
-                  Keep pushing — you're almost at your weekly goal 🚀
-                </p>
-              </div>
-
-              <!-- IMAGE -->
-              <div class="h-[420px] w-full">
-                <img
-                  src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
-                  class="w-full h-full object-cover"
-                />
-              </div>
-
-              <!-- Achievement Badge -->
-              <div class="flex items-center justify-between">
-                <span
-                  class="bg-task_yellow/20 text-task_yellow px-3 py-1 rounded-full text-xs roboto-medium"
-                >
-                  🏆 Milestone Achieved
-                </span>
-
-                <span class="text-xs text-gray-400 roboto-light">
-                  80% of weekly goal
-                </span>
-              </div>
-
-              <!-- Actions -->
-              <div
-                class="flex justify-between border-t pt-3 text-sm roboto-medium text-gray-500"
-              >
-                <button class="hover:text-primary_purp transition">
-                  👍 Like
-                </button>
-
-                <button class="hover:text-primary_purp transition">
-                  💬 Comment
-                </button>
-
-                <button class="hover:text-primary_purp transition">
-                  🎯 View Goal
-                </button>
-              </div>
-            </div>
-          </div>
+            id="progress-bar"
+            class="h-2 rounded-full transition-all duration-500"
+          ></div>
         </div>
 
-        <!-- Urgent -->
-        <div
-          class="w-[80%] mx-auto bg-task_pink text-white p-5 rounded-2xl shadow"
-        >
-          <p class="montserrat-semi-bold">📅 Exam in 5 days!</p>
-          <p class="roboto-light text-sm">Get ready to study</p>
+        <ul
+          class="roboto-regular text-sm space-y-2"
+          id="task-list"
+        ></ul>
+      </div>
+
+      <!-- Upcoming Assessments Card -->
+      <div
+        id="upcoming-assessments-card"
+        class="bg-backgroud_cal_light p-6 rounded-2xl shadow-md border border-gray-100 hidden space-y-4"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-sm font-semibold text-gray-600 montserrat-semi-bold">
+            Upcoming Assessments
+          </h3>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-600 font-medium">
+            Urgent
+          </span>
         </div>
 
-        <!-- Streak -->
-        <div class="w-[80%] mx-auto bg-white p-5 rounded-2xl shadow">
-          <p class="montserrat-semi-bold text-task_yellow">
-            🔥 3 days in a row!
-          </p>
-          <p class="roboto-light text-sm text-gray-500">Keep it up</p>
-        </div>
-
-        <!-- Study -->
-        <div class="w-[80%] mx-auto bg-white p-5 rounded-2xl shadow">
-          <p class="montserrat-semi-bold">🍅 Completed 2 Pomodoro sessions</p>
-          <p class="roboto-light text-sm text-gray-500">1h 20min focus time</p>
-        </div>
-
-        <!-- Achievement -->
-        <div class="w-[80%] mx-auto bg-white p-5 rounded-2xl shadow">
-          <p class="montserrat-semi-bold text-task_green">🏆 Best week ever!</p>
-          <p class="roboto-light text-sm text-gray-500">12 hours studied</p>
+        <!-- Js -->
+        <div id="upcoming-tasks-list" class="space-y-3">
+          <!-- Items inyectados desde JS -->
         </div>
       </div>
 
-      <!-- SIDEBAR -->
-      <div class="space-y-4">
-        <!-- Tasks -->
-        <div class="bg-white p-5 rounded-2xl shadow">
-          <!-- Header -->
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold text-gray-800">Today's Progress</h3>
-            <span id="progress-text" class="text-sm text-gray-500"></span>
-          </div>
 
-          <!-- Progress bar -->
-          <div class="w-full bg-gray-200 rounded-full h-2 mb-3 overflow-hidden">
-            <div
-              id="progress-bar"
-              class="h-2 rounded-full transition-all duration-500"
-            ></div>
-          </div>
+      <!-- Calendar -->
+      <div class="bg-backgroud_cal_light p-5 rounded-2xl shadow">
+        <div id="mini-calendar"></div>
+      </div>
 
-          <ul class="roboto-regular text-sm space-y-2" . id="task-list"></ul>
+      <!-- Current Focus Card -->
+      <div
+        id="current-focus-card"
+        class="bg-backgroud_cal_light p-6 rounded-2xl shadow-sm border border-gray-100 hidden space-y-4 transition-all duration-300"
+      >
+        <!-- Header: Title & Live Badge -->
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold tracking-wider uppercase text-gray-400 montserrat-semi-bold">
+            Current Focus
+          </h3>
+          <span class="flex items-center gap-1.5 text-[10px] font-bold text-primary_purp bg-primary_purp/20 px-2 py-0.5 rounded-full uppercase tracking-wide">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary_purp animate-pulse"></span>
+            Live Session
+          </span>
         </div>
 
-        <!-- Calendar -->
-        <div class="bg-white p-5 rounded-2xl shadow">
-          <!-- Mini Calendar -->
-          <div id="mini-calendar" class="mb-5">
-            <!-- Rendered by JS -->
+        <!-- Session Main Info -->
+        <div class="justify-between gap-4">
+          <div class="space-y-1 min-w-0">
+            <h4 id="focus-session-title" class="text-md font-bold text-gray-800 montserrat-bold truncate">
+              <!-- js -->
+            </h4>
+            <p id="focus-unit-badge" class="text-xs font-medium text-primary_purp/90 roboto-medium truncate hidden">
+              <!-- js -->
+            </p>
           </div>
-        </div>
-
-        <!-- Focus -->
-        <div class="bg-white p-5 rounded-2xl shadow">
-          <h3 class="montserrat-semi-bold mb-3">Current Focus</h3>
-          <p class="roboto-medium">AI Research Paper</p>
-          <p class="text-2xl montserrat-bold mt-2 text-primary_purp">42:15</p>
-        </div>
-
-        <!-- WAM -->
-        <div
-          id="wam-card"
-          class="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-md border border-gray-100"
-        >
-          <!-- Header -->
-          <div class="flex justify-between items-center mb-5">
-            <h3 class="text-sm montserrat-semi-bold text-gray-600">
-              Current WAM
-            </h3>
-            <span
-              id="semester-name"
-              class="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600"
-            >
-              In Semester
+          
+          <!-- Timer Display -->
+          <div class="flex items-center justify-between mt-3 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-gray-400 roboto-medium">
+              Time Elapsed
             </span>
+            
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 animate-pulse text-indigo-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <span id="focus-accumulated-time" class="text-sm font-black text-gray-900 tracking-tight montserrat-bold">
+                00:00
+              </span>
+            </div>
           </div>
 
-          <!-- Circular WAM -->
-          <div class="flex items-center gap-5">
-            <!-- Circle -->
-            <div class="relative w-20 h-20">
-              <svg class="w-full h-full transform -rotate-90">
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="34"
-                  stroke="#e5e7eb"
-                  stroke-width="6"
-                  fill="none"
-                />
-                <circle
-                  id="wam-ring"
-                  cx="40"
-                  cy="40"
-                  r="34"
-                  stroke="#6366f1"
-                  stroke-width="6"
-                  fill="none"
+        </div>
+
+        <!-- Divider & Checklist Section -->
+        <div id="focus-checklist-container" class="pt-3 border-t border-gray-50 space-y-2 hidden">
+          <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Session Checklist
+          </p>
+          <ul id="focus-checklist-list" class="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Checklist items dynamic render -->
+          </ul>
+        </div>
+      </div>
+
+
+      <!-- WAM -->
+      <div
+        id="wam-card"
+        class="bg-backgroud_cal_light p-6 rounded-2xl shadow-md border border-gray-100 hidden"
+      >
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="text-sm montserrat-semi-bold text-gray-600">
+            Current WAM
+          </h3>
+
+          <span
+            id="semester-name"
+            class="text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600"
+          >
+            <!-- Semester Name -->
+          </span>
+        </div>
+
+        <div class="flex items-center gap-5">
+
+          <!-- Circle -->
+          <div class="relative w-20 h-20">
+
+            <svg class="w-full h-full transform -rotate-90">
+
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="#FFFFFF"
+                stroke-width="6"
+                fill="none"
+              />
+
+              <circle
+                id="wam-ring"
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="#6366f1"
+                stroke-width="6"
+                fill="none"
+                stroke-linecap="round"
+                stroke-dasharray="213"
+                stroke-dashoffset="53"
+              />
+
+            </svg>
+
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span
+                id="wam-current"
+                class="text-lg font-bold text-gray-800"
+              >
+                0
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Insights -->
+          <div class="flex-1 text-xs space-y-1">
+
+            <p class="text-gray-500">
+              Best:
+              <span id="wam-best" class="text-gray-700 font-medium">
+                <!--js-->
+              </span>
+            </p>
+
+            <p class="text-gray-500">
+              Needs Work:
+              <span id="wam-worst" class="text-red-700 font-medium">
+                <!--js-->
+              </span>
+            </p>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- OVERLAY -->
+  <div
+    id="sidebar-overlay"
+    class="hidden fixed inset-0 bg-black/40 z-40 lg:hidden"
+  ></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 h-full min-w-0 w-full min-h-0 overflow-y-auto">
+
+      <div class="flex flex-col w-full p-4 lg:p-6 space-y-6">
+
+      <!-- HERO -->
+      <div
+        class="bg-[url('https://img.freepik.com/premium-photo/cozy-study-space-with-laptop-books-stationery-illuminated-by-sunlight-streaming-through-window-creating-warm-inviting-atmosphere_42331-12732.jpg')]
+               bg-cover bg-center
+               text-white rounded-2xl shadow-lg
+               p-6
+               flex flex-col sm:flex-row
+               items-start sm:items-center
+               justify-between
+               gap-4
+               min-h-[220px]"
+      >
+
+        <div class="flex items-center gap-4">
+
+          <img
+            src="{{ current_user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
+            class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border border-white shadow-md bg-white/20"
+            referrerpolicy="no-referrer"
+            alt=""
+          />
+
+          <div>
+            <h1 class="text-2xl montserrat-bold">
+              Welcome, {{ current_user.username }}! ☀️
+            </h1>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- MAIN GRID -->
+      <div class="grid grid-cols-1 gap-6 max-w-2xl mx-auto px-4 w-full justify-center">
+
+        <!-- FEED -->
+        <div class="space-y-6 w-full min-w-0">
+
+          <div id="posts-container" class="space-y-6">
+            <!-- js -->
+            <div class="text-center py-10 text-gray-400">
+              Loading your feed...
+            </div>
+          </div>
+
+        </div>
+
+        <!--Modal to confirm deletes for posts or comments-->
+        <div
+          id="delete-modal"
+          class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4"
+        >
+          <div
+            class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all"
+          >
+            <div
+              class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4 mx-auto"
+            >
+              <svg
+                class="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
                   stroke-linecap="round"
-                  stroke-dasharray="213"
-                  stroke-dashoffset="53"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
-
-              <!-- Center value -->
-              <div class="absolute inset-0 flex items-center justify-center">
-                <span id="wam-current" class="text-lg font-bold text-gray-800"
-                  >74</span
-                >
-              </div>
             </div>
+            <h3 class="text-lg font-bold text-center text-gray-900 montserrat-bold">
+              Confirm delete action
+            </h3>
+            <p class="text-sm text-gray-500 text-center mt-2 roboto-regular">
+              This action cannot be undone. The content will be permanently deleted.
+            </p>
 
-            <!-- Insights -->
-            <div class="flex-1 text-xs space-y-1">
-              <p class="text-gray-500">
-                Best:
-                <span id="wam-best" class="text-gray-700 font-medium"
-                  >Physics ⭐</span
-                >
-              </p>
-              <p class="text-gray-500">
-                Needs Work:
-                <span id="wam-worst" class="text-task_pink font-medium"
-                  >History</span
-                >
-              </p>
+            <div class="flex gap-3 mt-6">
+              <button
+                onclick="closeDeleteModal()"
+                class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                id="confirm-delete-btn"
+                class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
 
       </div>
+
     </div>
+
   </div>
+
 </div>
 
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/calendar.js') }}"></script>
 {% endblock %}

@@ -1,6 +1,15 @@
 $(document).ready(function () {
   "use strict";
 
+  const AVATAR_PLACEHOLDER = "/static/img/avatar-placeholder.svg";
+
+  function _resolveInvitePreviewUrl(raw) {
+    if (!raw || !String(raw).trim()) return AVATAR_PLACEHOLDER;
+    const s = String(raw).trim();
+    if (s.startsWith("http") || s.startsWith("//") || s.startsWith("/")) return s;
+    return "/static/" + s;
+  }
+
   // ── State ────────────────────────────────────────────────────────────────
   let _activeInviteGroupId = null;
   let _newGroupId = null;
@@ -58,11 +67,8 @@ $(document).ready(function () {
   const _lookupXHRMap = new WeakMap();
 
   function _previewAvatarHtml(username, profilePicture) {
-    if (profilePicture) {
-      return `<img src="${profilePicture}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0" referrerpolicy="no-referrer" alt="avatar" />`;
-    }
-    const initial = (username || "?")[0].toUpperCase();
-    return `<div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm montserrat-medium shrink-0">${initial}</div>`;
+    const src = _resolveInvitePreviewUrl(profilePicture);
+    return `<img src="${escapeHtml(src)}" class="w-8 h-8 rounded-full object-cover ring-2 ring-indigo-200 shrink-0 bg-gray-100" referrerpolicy="no-referrer" alt="" />`;
   }
 
   function _showPreviewLoading($preview) {
@@ -365,7 +371,7 @@ $(document).ready(function () {
 
       const inviteBtn =
         group.is_owner || group.my_role === "admin"
-          ? `<button class="invite-btn text-xs montserrat-medium px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
+          ? `<button class="invite-btn w-full sm:w-auto text-xs montserrat-medium px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition"
                      data-group-id="${group.id}" data-group-name="${escapeHtml(group.name)}">
                + Invite
              </button>`
@@ -389,7 +395,7 @@ $(document).ready(function () {
             <p class="text-xs roboto-regular text-gray-500 line-clamp-2 flex-1">
               ${escapeHtml(group.description || "No description")}
             </p>
-            <div class="flex justify-between items-center mt-1">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-1">
               <span class="text-[11px] roboto-regular text-gray-400">
                 ${group.members.length} member${group.members.length !== 1 ? "s" : ""}
               </span>

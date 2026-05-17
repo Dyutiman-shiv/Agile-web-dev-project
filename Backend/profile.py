@@ -5,13 +5,9 @@ from flask_login import login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 from models import User
 from app import db
+from utils import allowed_file
 
 profile_bp = Blueprint("profile", __name__)
-
-
-def allowed_file(filename):
-    allowed = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "gif", "webp"})
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed
 
 
 @profile_bp.route("/profile")

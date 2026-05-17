@@ -4,10 +4,14 @@ Selenium end-to-end tests.
 These tests run against a live Werkzeug HTTP server (see conftest.py) and
 drive a headless Chrome browser via Selenium 4's Selenium Manager.
 
-Run only these tests:
+Run only these tests::
+
+    python -m tests.run_tests e2e
     pytest -m e2e
 
-Skip them (fast unit/API tests only):
+Skip them (fast suite — matches CI ``fast`` job)::
+
+    python -m tests.run_tests fast
     pytest -m "not e2e"
 """
 
