@@ -1,6 +1,6 @@
 # Planify · CITS3403 Agile Web Development
 
-**Planify** is a web application built for unit **CITS3403 Agile Web Development** at The University of Western Australia (**UWA**).  
+**Planify** is a web application built for unit **CITS3403 Agile Web Development**.  
 Repository: coursework **student planning** product — semesters, calendar, sessions, grades, notifications, and study groups.
 
 ---
