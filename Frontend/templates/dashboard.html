@@ -94,14 +94,62 @@ overflow-hidden bg-backgroud_cal_light
         <div id="mini-calendar"></div>
       </div>
 
-      <!-- Focus -->
-      <div class="bg-backgroud_cal_light p-5 rounded-2xl shadow">
-        <h3 class="montserrat-semi-bold mb-3">Current Focus</h3>
-        <p class="roboto-medium">AI Research Paper</p>
-        <p class="text-2xl montserrat-bold mt-2 text-primary_purp">
-          42:15
-        </p>
+      <!-- Current Focus Card -->
+      <div
+        id="current-focus-card"
+        class="bg-backgroud_cal_light p-6 rounded-2xl shadow-sm border border-gray-100 hidden space-y-4 transition-all duration-300"
+      >
+        <!-- Header: Title & Live Badge -->
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold tracking-wider uppercase text-gray-400 montserrat-semi-bold">
+            Current Focus
+          </h3>
+          <span class="flex items-center gap-1.5 text-[10px] font-bold text-primary_purp bg-primary_purp/20 px-2 py-0.5 rounded-full uppercase tracking-wide">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary_purp animate-pulse"></span>
+            Live Session
+          </span>
+        </div>
+
+        <!-- Session Main Info -->
+        <div class="justify-between gap-4">
+          <div class="space-y-1 min-w-0">
+            <h4 id="focus-session-title" class="text-md font-bold text-gray-800 montserrat-bold truncate">
+              <!-- js -->
+            </h4>
+            <p id="focus-unit-badge" class="text-xs font-medium text-primary_purp/90 roboto-medium truncate hidden">
+              <!-- js -->
+            </p>
+          </div>
+          
+          <!-- Timer Display -->
+          <div class="flex items-center justify-between mt-3 px-3 py-2 bg-gray-50 border border-gray-100 rounded-xl">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-gray-400 roboto-medium">
+              Time Elapsed
+            </span>
+            
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 animate-pulse text-indigo-600">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+              <span id="focus-accumulated-time" class="text-sm font-black text-gray-900 tracking-tight montserrat-bold">
+                00:00
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Divider & Checklist Section -->
+        <div id="focus-checklist-container" class="pt-3 border-t border-gray-50 space-y-2 hidden">
+          <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Session Checklist
+          </p>
+          <ul id="focus-checklist-list" class="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+            <!-- Checklist items dynamic render -->
+          </ul>
+        </div>
       </div>
+
 
       <!-- WAM -->
       <div

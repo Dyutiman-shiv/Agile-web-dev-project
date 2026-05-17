@@ -5,270 +5,352 @@ $(document).ready(function () {
     loadTodaysTasks();
     loadCurrentSemester();
     loadDashboardFeed();
+    loadActiveFocusSession();
   }
 
-    loadPage();
+  loadPage();
 });
 
-  const $sidebar = $("#dashboard-sidebar");
-  const $overlay = $("#sidebar-overlay");
+const $sidebar = $("#dashboard-sidebar");
+const $overlay = $("#sidebar-overlay");
 
-  // OPEN SIDEBAR
-  $("#mobile-sidebar-toggle").on("click", function () {
-    $sidebar.removeClass("-translate-x-full");
-    $overlay.removeClass("hidden");
-  });
+// OPEN SIDEBAR
+$("#mobile-sidebar-toggle").on("click", function () {
+  $sidebar.removeClass("-translate-x-full");
+  $overlay.removeClass("hidden");
+});
 
-  // CLOSE BUTTON
-  $("#close-sidebar-btn").on("click", function () {
-    closeSidebar();
-  });
+// CLOSE BUTTON
+$("#close-sidebar-btn").on("click", function () {
+  closeSidebar();
+});
 
-  // CLICK OVERLAY
-  $overlay.on("click", function () {
-    closeSidebar();
-  });
+// CLICK OVERLAY
+$overlay.on("click", function () {
+  closeSidebar();
+});
 
-  // CLOSE FUNCTION
-  function closeSidebar() {
-    $sidebar.addClass("-translate-x-full");
+// CLOSE FUNCTION
+function closeSidebar() {
+  $sidebar.addClass("-translate-x-full");
+  $overlay.addClass("hidden");
+}
+
+// HANDLE RESIZE
+$(window).on("resize", function () {
+  if ($(window).width() >= 1024) {
     $overlay.addClass("hidden");
+
+    $sidebar.removeClass("-translate-x-full");
+  } else {
+    $sidebar.addClass("-translate-x-full");
   }
+});
 
-  // HANDLE RESIZE
-  $(window).on("resize", function () {
-    if ($(window).width() >= 1024) {
-      $overlay.addClass("hidden");
+function loadTodaysTasks() {
+  const dateObj = new Date();
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // Los meses van de 0 a 11
+  const day = String(dateObj.getDate()).padStart(2, "0");
 
-      $sidebar.removeClass("-translate-x-full");
+  const today = `${year}-${month}-${day}`;
+
+  $.getJSON("/api/dashboard/get_today_tasks/" + today, function (tasks) {
+    if (!tasks || tasks.length === 0) {
+      const ul = document.getElementById("task-list");
+      ul.innerHTML = '<li class="text-gray-400">No tasks for today! 🎉</li>';
+      return;
+    }
+
+    const ul = document.getElementById("task-list");
+
+    // Clear existing content
+    ul.innerHTML = "";
+
+    tasks.forEach((task) => {
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+
+      span.className = getClass(task.completed);
+      span.textContent = task.title;
+
+      li.appendChild(span);
+      li.appendChild(document.createTextNode(" " + getIcon(task.completed)));
+
+      ul.appendChild(li);
+
+      //Updating the status bar
+      updateProgresBar(tasks);
+    });
+  });
+}
+
+function getIcon(status) {
+  if (status === true) {
+    return "✅";
+  } else {
+    return "⏱️";
+  }
+}
+
+function getClass(status) {
+  if (status === true) {
+    return "text-gray-500 line-through roboto-regular text-sm";
+  } else {
+    return "text-text_dark_gray roboto-regular text-sm";
+  }
+}
+
+function updateProgresBar(tasks) {
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.completed).length;
+
+  const bar = document.getElementById("progress-bar");
+  const text = document.getElementById("progress-text");
+
+  // Avoid division by zero
+  const percentage = total === 0 ? 0 : (completed / total) * 100;
+
+  // Update width
+  bar.style.width = percentage + "%";
+
+  // Update text
+  text.textContent = `${completed}/${total}`;
+
+  // Dynamic styling + messaging
+  if (total === 0) {
+    bar.style.width = "100%";
+    bar.className = "h-2 rounded-full bg-gray-300 transition-all duration-500";
+  } else if (completed === total) {
+    bar.className = "h-2 rounded-full bg-green-500 transition-all duration-500";
+  } else {
+    bar.className =
+      "h-2 rounded-full bg-task_green transition-all duration-500";
+  }
+}
+
+//Active Focus Session
+
+function loadActiveFocusSession() {
+  const card = document.getElementById("current-focus-card");
+  if (!card) return;
+
+  $.getJSON("/api/dashboard/active-session", function (session) {
+
+    if (!session) {
+      card.classList.add("hidden");
+      return;
+    }
+
+    document.getElementById("focus-session-title").textContent =
+      session.title || "Untitled Session";
+
+    const unitBadge = document.getElementById("focus-unit-badge");
+    if (session.unit_name) {
+      unitBadge.textContent = session.unit_code
+        ? `📚 ${session.unit_code} - ${session.unit_name}`
+        : `📚 ${session.unit_name}`;
+      unitBadge.classList.remove("hidden");
     } else {
-      $sidebar.addClass("-translate-x-full");
+      unitBadge.classList.add("hidden");
+    }
+
+    const totalSeconds = parseInt(session.accumulated_seconds || 0, 10);
+    document.getElementById("focus-accumulated-time").textContent =
+      formatAccumulatedTime(totalSeconds);
+
+    const checklistContainer = document.getElementById(
+      "focus-checklist-container",
+    );
+    const checklistList = document.getElementById("focus-checklist-list");
+
+    if (session.checklist && session.checklist.length > 0) {
+      checklistList.innerHTML = ""; 
+
+      session.checklist.forEach((item) => {
+        const isCompleted = item.completed === true;
+
+        checklistList.innerHTML += `
+          <li class="flex items-start gap-2 text-xs text-gray-600 roboto-regular">
+            <span class="flex-shrink-0 mt-0.5 text-sm">
+              ${isCompleted ? "✅" : "⬜"}
+            </span>
+            <span class="${isCompleted ? "line-through text-gray-400" : "text-gray-700"} break-words min-w-0 flex-1">
+              ${item.title || item.content || "Task"}
+            </span>
+          </li>
+        `;
+      });
+
+      checklistContainer.classList.remove("hidden");
+    } else {
+      checklistContainer.classList.add("hidden");
+    }
+
+    card.classList.remove("hidden");
+  }).fail(function () {
+    card.classList.add("hidden");
+  });
+}
+
+function formatAccumulatedTime(seconds) {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  const paddedMins = String(mins).padStart(2, "0");
+  const paddedSecs = String(secs).padStart(2, "0");
+
+  if (hrs > 0) {
+    return `${String(hrs).padStart(2, "0")}:${paddedMins}:${paddedSecs}`;
+  }
+  return `${paddedMins}:${paddedSecs}`;
+}
+
+// Loading Curent Semester
+function loadCurrentSemester() {
+  $.getJSON("/api/semesters/current", function (semester) {
+    const wamContainer = document.getElementById("wam-card");
+
+    if (!semester) {
+      wamContainer.classList.add("hidden");
+      return;
+    } else {
+      wamContainer.classList.remove("hidden");
+      document.getElementById("semester-name").textContent = semester.name;
+
+      // Update the Wam Ring
+
+      const wamValue = parseFloat(semester.wam || 0);
+      const ring = document.getElementById("wam-ring");
+      const text = document.getElementById("current-wam");
+
+      let radius = parseFloat(ring.getAttribute("r"));
+      const circumference = 2 * Math.PI * radius;
+      let wam = semester.wam === null ? 0 : parseFloat(semester.wam);
+
+      const offset =
+        circumference - (semester.wam === null ? 0 : wam / 100) * circumference;
+      ring.style.strokeDashoffset = offset;
+
+      document.getElementById("wam-current").textContent = wam.toFixed(1);
+
+      loadUnits(semester.id);
     }
   });
+}
 
-  function loadTodaysTasks() {
-    const dateObj = new Date();
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // Los meses van de 0 a 11
-    const day = String(dateObj.getDate()).padStart(2, "0");
+function loadUnits(semester_id) {
+  $.getJSON("/api/units", { semester_id: semester_id }, function (units) {
+    let max_score = 0;
+    let min_score = Infinity;
+    let bestUnit = units[0];
+    let lowestUnit = units[0];
 
-    const today = `${year}-${month}-${day}`;
-
-    $.getJSON("/api/dashboard/get_today_tasks/" + today, function (tasks) {
-      if (!tasks || tasks.length === 0) {
-        const ul = document.getElementById("task-list");
-        ul.innerHTML = '<li class="text-gray-400">No tasks for today! 🎉</li>';
-        return;
+    units.forEach((unit) => {
+      if (unit.score > max_score) {
+        max_score = parseFloat(unit.score);
+        bestUnit = unit;
       }
 
-      const ul = document.getElementById("task-list");
-
-      // Clear existing content
-      ul.innerHTML = "";
-
-      tasks.forEach((task) => {
-        const li = document.createElement("li");
-        const span = document.createElement("span");
-
-        span.className = getClass(task.completed);
-        span.textContent = task.title;
-
-        li.appendChild(span);
-        li.appendChild(document.createTextNode(" " + getIcon(task.completed)));
-
-        ul.appendChild(li);
-
-        //Updating the status bar
-        updateProgresBar(tasks);
-      });
+      if (unit.score < min_score) {
+        min_score = parseFloat(unit.score);
+        lowestUnit = unit;
+      }
     });
-  }
 
-  function getIcon(status) {
-    if (status === true) {
-      return "✅";
+    if (parseFloat(bestUnit.score) > parseFloat(lowestUnit.score)) {
+      document.getElementById("wam-best").textContent =
+        bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
     } else {
-      return "⏱️";
+      document.getElementById("wam-best").textContent = "";
     }
-  }
 
-  function getClass(status) {
-    if (status === true) {
-      return "text-gray-500 line-through roboto-regular text-sm";
+    if (parseFloat(lowestUnit.score) < 60) {
+      document.getElementById("wam-worst").textContent =
+        lowestUnit.name + " - " + parseFloat(lowestUnit.score).toFixed(2);
     } else {
-      return "text-text_dark_gray roboto-regular text-sm";
+      document.getElementById("wam-worst").textContent = "";
     }
-  }
 
-  function updateProgresBar(tasks) {
-    const total = tasks.length;
-    const completed = tasks.filter((t) => t.completed).length;
+    loadUpcomingAssessments(semester_id, units);
+  });
+}
 
-    const bar = document.getElementById("progress-bar");
-    const text = document.getElementById("progress-text");
+function loadUpcomingAssessments(semester_id, units) {
+  const upcomingCard = document.getElementById("upcoming-assessments-card");
+  const listContainer = document.getElementById("upcoming-tasks-list");
 
-    // Avoid division by zero
-    const percentage = total === 0 ? 0 : (completed / total) * 100;
+  if (!upcomingCard || !listContainer) return;
 
-    // Update width
-    bar.style.width = percentage + "%";
+  const unitMap = {};
+  units.forEach((u) => {
+    unitMap[u.id] = u.name;
+  });
 
-    // Update text
-    text.textContent = `${completed}/${total}`;
-
-    // Dynamic styling + messaging
-    if (total === 0) {
-      bar.style.width = "100%";
-      bar.className =
-        "h-2 rounded-full bg-gray-300 transition-all duration-500";
-    } else if (completed === total) {
-      bar.className =
-        "h-2 rounded-full bg-green-500 transition-all duration-500";
-    } else {
-      bar.className =
-        "h-2 rounded-full bg-task_green transition-all duration-500";
+  $.getJSON(`/api/scores/${semester_id}`, function (assessments) {
+    if (!assessments || assessments.length === 0) {
+      upcomingCard.classList.add("hidden");
+      return;
     }
-  }
 
-  // Loading Curent Semester
-  function loadCurrentSemester() {
-    $.getJSON("/api/semesters/current", function (semester) {
-      const wamContainer = document.getElementById("wam-card");
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
-      if (!semester) {
-        wamContainer.classList.add("hidden");
-        return;
-      } else {
-        wamContainer.classList.remove("hidden");
-        document.getElementById("semester-name").textContent = semester.name;
+    const futureAssessments = assessments.filter((a) => {
+      if (!a.due_date) return false;
+      const dueDate = new Date(a.due_date);
 
-        // Update the Wam Ring
-
-        const wamValue = parseFloat(semester.wam || 0);
-        const ring = document.getElementById("wam-ring");
-        const text = document.getElementById("current-wam");
-
-        let radius = parseFloat(ring.getAttribute("r"));
-        const circumference = 2 * Math.PI * radius;
-        let wam = semester.wam === null ? 0 : parseFloat(semester.wam);
-
-        const offset =
-          circumference -
-          (semester.wam === null ? 0 : wam / 100) * circumference;
-        ring.style.strokeDashoffset = offset;
-
-        document.getElementById("wam-current").textContent = wam.toFixed(1);
-
-        loadUnits(semester.id);
-      }
-    });
-  }
-
-  function loadUnits(semester_id) {
-    $.getJSON("/api/units", { semester_id: semester_id }, function (units) {
-      let max_score = 0;
-      let min_score = Infinity;
-      let bestUnit = units[0];
-      let lowestUnit = units[0];
-
-      units.forEach((unit) => {
-        if (unit.score > max_score) {
-          max_score = parseFloat(unit.score);
-          bestUnit = unit;
-        }
-
-        if (unit.score < min_score) {
-          min_score = parseFloat(unit.score);
-          lowestUnit = unit;
-        }
-      });
-
-      if (parseFloat(bestUnit.score) > parseFloat(lowestUnit.score)) {
-        document.getElementById("wam-best").textContent =
-          bestUnit.name + " - " + parseFloat(bestUnit.score).toFixed(2) + " ⭐";
-      } else {
-        document.getElementById("wam-best").textContent = "";
-      }
-
-      if (parseFloat(lowestUnit.score) < 60) {
-        document.getElementById("wam-worst").textContent =
-          lowestUnit.name + " - " + parseFloat(lowestUnit.score).toFixed(2);
-      } else {
-        document.getElementById("wam-worst").textContent = "";
-      }
-
-      loadUpcomingAssessments(semester_id, units);
-    });
-  }
-
-  function loadUpcomingAssessments(semester_id, units) {
-    const upcomingCard = document.getElementById("upcoming-assessments-card");
-    const listContainer = document.getElementById("upcoming-tasks-list");
-
-    if (!upcomingCard || !listContainer) return;
-
-    const unitMap = {};
-    units.forEach((u) => {
-      unitMap[u.id] = u.name;
-    });
-
-    $.getJSON(`/api/scores/${semester_id}`, function (assessments) {
-      if (!assessments || assessments.length === 0) {
-        upcomingCard.classList.add("hidden");
-        return;
-      }
-
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      const futureAssessments = assessments.filter((a) => {
-
-        if (!a.due_date) return false;
-        const dueDate = new Date(a.due_date);
-
-         const dateParts = a.due_date.split('-');
-         const parsedDueDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-
-        const isCompleted = parseFloat(a.score) > 0;
-
-        return parsedDueDate >= startOfToday && !isCompleted;
-
-      });
-
-      if (futureAssessments.length === 0) {
-        upcomingCard.classList.add("hidden");
-        return;
-      }
-
-      futureAssessments.sort(
-        (a, b) => new Date(a.due_date) - new Date(b.due_date),
+      const dateParts = a.due_date.split("-");
+      const parsedDueDate = new Date(
+        dateParts[0],
+        dateParts[1] - 1,
+        dateParts[2],
       );
 
-      const topThree = futureAssessments.slice(0, 3);
+      const isCompleted = parseFloat(a.score) > 0;
 
-      listContainer.innerHTML = "";
+      return parsedDueDate >= startOfToday && !isCompleted;
+    });
 
-      topThree.forEach((a) => {
-        const dueDate = new Date(a.due_date);
-        const formattedDate = dueDate.toLocaleDateString(undefined, {
-          day: "numeric",
-          month: "short",
-        });
-        const unitName = unitMap[a.unit_id] || "Unknow Unit";
+    if (futureAssessments.length === 0) {
+      upcomingCard.classList.add("hidden");
+      return;
+    }
 
-        const isToday =
-          dueDate.getDate() === now.getDate() &&
-          dueDate.getMonth() === now.getMonth() &&
-          dueDate.getFullYear() === now.getFullYear();
+    futureAssessments.sort(
+      (a, b) => new Date(a.due_date) - new Date(b.due_date),
+    );
 
-        const dateBadgeText = isToday
-          ? "Today"
-          : dueDate.toLocaleDateString(undefined, {
-              day: "numeric",
-              month: "short",
-            });
+    const topThree = futureAssessments.slice(0, 3);
 
-        listContainer.innerHTML += `
+    listContainer.innerHTML = "";
+
+    topThree.forEach((a) => {
+      const dueDate = new Date(a.due_date);
+      const formattedDate = dueDate.toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+      });
+      const unitName = unitMap[a.unit_id] || "Unknow Unit";
+
+      const isToday =
+        dueDate.getDate() === now.getDate() &&
+        dueDate.getMonth() === now.getMonth() &&
+        dueDate.getFullYear() === now.getFullYear();
+
+      const dateBadgeText = isToday
+        ? "Today"
+        : dueDate.toLocaleDateString(undefined, {
+            day: "numeric",
+            month: "short",
+          });
+
+      listContainer.innerHTML += `
         <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 hover:bg-gray-100/70 transition">
           <div class="space-y-0.5">
             <h4 class="text-xs font-semibold text-gray-800 roboto-medium truncate max-w-[180px] sm:max-w-xs">
@@ -285,44 +367,44 @@ $(document).ready(function () {
           </div>
         </div>
       `;
-      });
-
-      upcomingCard.classList.remove("hidden");
-    }).fail(function () {
-      upcomingCard.classList.add("hidden");
     });
-  }
 
-  // Group Actions
+    upcomingCard.classList.remove("hidden");
+  }).fail(function () {
+    upcomingCard.classList.add("hidden");
+  });
+}
 
-  function toggleLike(postId) {
-    const btn = $(`#like-btn-${postId}`);
-    const icon = $(`#like-icon-${postId}`);
-    const countSpan = $(`#like-count-${postId}`);
+// Group Actions
 
-    $.ajax({
-      url: `/api/posts/${postId}/like`,
-      type: "POST",
-      success: function (response) {
-        if (response.success) {
-          // update number of likes
-          countSpan.text(response.total_likes);
+function toggleLike(postId) {
+  const btn = $(`#like-btn-${postId}`);
+  const icon = $(`#like-icon-${postId}`);
+  const countSpan = $(`#like-count-${postId}`);
 
-          if (response.status === "liked") {
-            btn.addClass("text-red-500").removeClass("text-gray-500");
-            icon.attr("fill", "currentColor");
-            icon.addClass("scale-125");
-            setTimeout(() => icon.removeClass("scale-125"), 200);
-          } else {
-            btn.addClass("text-gray-500").removeClass("text-red-500");
-            icon.attr("fill", "none");
-          }
+  $.ajax({
+    url: `/api/posts/${postId}/like`,
+    type: "POST",
+    success: function (response) {
+      if (response.success) {
+        // update number of likes
+        countSpan.text(response.total_likes);
+
+        if (response.status === "liked") {
+          btn.addClass("text-red-500").removeClass("text-gray-500");
+          icon.attr("fill", "currentColor");
+          icon.addClass("scale-125");
+          setTimeout(() => icon.removeClass("scale-125"), 200);
+        } else {
+          btn.addClass("text-gray-500").removeClass("text-red-500");
+          icon.attr("fill", "none");
         }
-      },
-    });
-  }
+      }
+    },
+  });
+}
 
-  function toggleComments(postId) {
+function toggleComments(postId) {
   $(`#comments-section-${postId}`).toggleClass("hidden");
 }
 
@@ -466,129 +548,127 @@ function closeDeleteModal() {
 }
 
 $("#confirm-delete-btn")
-    .off("click")
-    .on("click", function (e) {
-      const { id, type, element } = itemToDelete;
-      e.preventDefault();
-      e.stopImmediatePropagation();
+  .off("click")
+  .on("click", function (e) {
+    const { id, type, element } = itemToDelete;
+    e.preventDefault();
+    e.stopImmediatePropagation();
 
-      const groupId = $("#group-data").data("group-id");
+    const groupId = $("#group-data").data("group-id");
 
-      let url = "";
+    let url = "";
 
-      if (type === "post") {
-        url = `/api/posts/${id}`;
-      } else if (type === "comment") {
-        url = `/api/comments/${id}`;
-      } else {
-        url = `/api/groups/${groupId}`;
-      }
+    if (type === "post") {
+      url = `/api/posts/${id}`;
+    } else if (type === "comment") {
+      url = `/api/comments/${id}`;
+    } else {
+      url = `/api/groups/${groupId}`;
+    }
 
-      $.ajax({
-        url: url,
-        type: "DELETE",
-        success: function (response) {
-          if (response.success) {
-            if (type === "post") {
-              $(`#post-card-${id}`).fadeOut(400, function () {
+    $.ajax({
+      url: url,
+      type: "DELETE",
+      success: function (response) {
+        if (response.success) {
+          if (type === "post") {
+            $(`#post-card-${id}`).fadeOut(400, function () {
+              $(this).remove();
+            });
+          } else {
+            $(element)
+              .closest(".flex.gap-3")
+              .fadeOut(300, function () {
                 $(this).remove();
               });
-            } else {
-              $(element)
-                .closest(".flex.gap-3")
-                .fadeOut(300, function () {
-                  $(this).remove();
-                });
-            }
-            closeDeleteModal();
-
-            if (type === "comment") {
-              $(element).closest(".flex.gap-3").fadeOut(300);
-
-              const postId = response.post_id;
-              const counterSpan = $(`#comment-count-${postId}`);
-              const currentCount = parseInt(counterSpan.text()) || 0;
-              counterSpan.text(Math.max(0, currentCount - 1));
-
-              $(`#comments-card-${id}`).remove();
-              if (parseInt($(`#comment-count-${postId}`).text()) === 0) {
-                $(`#comments-list-${postId}`).html(
-                  `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`,
-                );
-              }
-            } else if (type === "post") {
-              $(`#post-card-${id}`).fadeOut(400, function () {
-                $(this).remove();
-              });
-            } else {
-              window.location.href = "/groups";
-            }
           }
-        },
-        error: function () {
-          alert("Error trying to delete this content.");
           closeDeleteModal();
-        },
-      });
+
+          if (type === "comment") {
+            $(element).closest(".flex.gap-3").fadeOut(300);
+
+            const postId = response.post_id;
+            const counterSpan = $(`#comment-count-${postId}`);
+            const currentCount = parseInt(counterSpan.text()) || 0;
+            counterSpan.text(Math.max(0, currentCount - 1));
+
+            $(`#comments-card-${id}`).remove();
+            if (parseInt($(`#comment-count-${postId}`).text()) === 0) {
+              $(`#comments-list-${postId}`).html(
+                `<p class="text-sm text-gray-400 text-center py-4 no-comments-msg">Be the first one in comment this post.</p>`,
+              );
+            }
+          } else if (type === "post") {
+            $(`#post-card-${id}`).fadeOut(400, function () {
+              $(this).remove();
+            });
+          } else {
+            window.location.href = "/groups";
+          }
+        }
+      },
+      error: function () {
+        alert("Error trying to delete this content.");
+        closeDeleteModal();
+      },
     });
+  });
 
-  // Feed Section
+// Feed Section
 
-  function loadDashboardFeed() {
-    $.getJSON("/api/dashboard/feed", function (posts) {
-      renderPosts(posts);
-    }).fail(function () {
-      $("#posts-container").html(`
+function loadDashboardFeed() {
+  $.getJSON("/api/dashboard/feed", function (posts) {
+    renderPosts(posts);
+  }).fail(function () {
+    $("#posts-container").html(`
       <div class="bg-white rounded-2xl p-10 text-center border border-gray-100">
         <p class="text-red-500 roboto-regular text-sm">
           No se pudieron cargar las publicaciones del feed en este momento.
         </p>
       </div>
     `);
-    });
-  }
+  });
+}
 
-  function formatMyCustomDate(isoString) {
-    if (!isoString) return "";
+function formatMyCustomDate(isoString) {
+  if (!isoString) return "";
 
-    const cleanIsoString = isoString.endsWith("Z")
-      ? isoString
-      : isoString + "Z";
-    const date = new Date(cleanIsoString);
+  const cleanIsoString = isoString.endsWith("Z") ? isoString : isoString + "Z";
+  const date = new Date(cleanIsoString);
 
-    return date.toLocaleString("en-AU", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  }
+  return date.toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
-  function renderPosts(posts) {
-    const container = $("#posts-container");
+function renderPosts(posts) {
+  const container = $("#posts-container");
 
-    if (!posts.length) {
-      container.html(`
+  if (!posts.length) {
+    container.html(`
       <p class="text-gray-500 text-center [text-shadow:_2px_2px_4px_rgb(0_0_0_/_0.2)]  montserrat-regular"->
           No posts yet. Start the conversation!
         </p>
     `);
 
-      return;
-    }
+    return;
+  }
 
-    let html = "";
-    const currentUserPicture = $("#user-data").data("user-profile-picture");
-    const currentUserId = $("#user-data").data("user-id");
+  let html = "";
+  const currentUserPicture = $("#user-data").data("user-profile-picture");
+  const currentUserId = $("#user-data").data("user-id");
 
-    posts.forEach((post) => {
-      const formattedDate = formatMyCustomDate(post.created_at);
-      const likes = post.likes;
-      const isLiked = likes.includes(currentUserId);
+  posts.forEach((post) => {
+    const formattedDate = formatMyCustomDate(post.created_at);
+    const likes = post.likes;
+    const isLiked = likes.includes(currentUserId);
 
-      html += `
+    html += `
       <div id="post-card-${post.id}" class="w-full bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
 
         <!-- POST -->
@@ -743,7 +823,7 @@ $("#confirm-delete-btn")
       </div>
 
     `;
-    });
+  });
 
-    container.html(html);
-  }
+  container.html(html);
+}

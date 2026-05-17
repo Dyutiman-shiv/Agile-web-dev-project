@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from models import Task, Semester, Post
+from models import Task, Semester, Post, StudySession
 import re
 
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -59,4 +59,22 @@ def get_dashboard_feed():
     if feed_posts:
         print(f'Some posts: {feed_posts[0].to_dict()}')
     return jsonify([post.to_dict() for post in feed_posts]), 200
+
+
+@dashboard_bp.route("/api/dashboard/active-session", methods=["GET"])
+@login_required
+def get_active_session():
+    active_session = StudySession.query.filter_by(
+        user_id=current_user.id, 
+        status="active"
+    ).all()
+    
+    if not active_session:
+        return jsonify(None), 200
+    
+    sorted_sessions = sorted(active_session, key=lambda x: x.updated_at, reverse=True)
+    active_session = sorted_sessions[0] # Get the most recent active session
+        
+    return jsonify(active_session.to_dict()), 200
+
 
