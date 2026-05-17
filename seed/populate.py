@@ -50,7 +50,9 @@ from models import (  # noqa: E402
 SEED_EMAIL_SUFFIX = "@seed.planify"
 ACCOUNTS_PATH = Path(__file__).resolve().parent / "accounts.json"
 
-AVATAR = "https://api.dicebear.com/7.x/initials/svg?fontFamily=Montserrat&seed="
+# Leave profile_picture as None so both the Jinja template and _resolvePictureUrl()
+# in JS fall back to their own /static/img/avatar-placeholder.svg logic.
+AVATAR_PLACEHOLDER = None
 
 
 def _load_accounts():
@@ -124,7 +126,7 @@ def _make_user(email: str, username: str, friend_code: str, password: str) -> Us
         email=email,
         username=username,
         friend_code=friend_code,
-        profile_picture=AVATAR + username,
+        profile_picture=AVATAR_PLACEHOLDER,
     )
     u.set_password(password)
     db.session.add(u)

@@ -100,9 +100,16 @@ $(function () {
     }
 
     function getEndTime(ev) {
+        // Prefer the actual wall-clock end for session segments
+        if (ev.segment_end) return new Date(ev.segment_end);
         const start = new Date(ev.start);
         const dur = ev.duration || ((ev.type === "session" || ev.type === "session_segment") ? 60 : 30);
         return new Date(start.getTime() + dur * 60000);
+    }
+
+    // Returns the wall-clock duration in minutes, always ≥ 15 so events are clickable
+    function eventDurationMinutes(ev, evDate, evEnd) {
+        return Math.max(15, Math.round((evEnd.getTime() - evDate.getTime()) / 60000));
     }
 
     // ============ Fetch events ============
@@ -576,7 +583,7 @@ $(function () {
                 const evDate = new Date(ev.start);
                 const evEnd = getEndTime(ev);
                 let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-                const height = (ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30;
+                const height = eventDurationMinutes(ev, evDate, evEnd);
                 if (topMin < 0) { topMin = 0; }
                 const bgColor = ev.color || "#725AEA";
 
@@ -666,7 +673,7 @@ $(function () {
             const evDate = new Date(ev.start);
             const evEnd = getEndTime(ev);
             let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
-            const height = ((ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30) - 15;
+            const height = eventDurationMinutes(ev, evDate, evEnd);
             if (topMin < 0) { topMin = 0; }
             const bgColor = ev.color || "#6366f1";
 
@@ -677,7 +684,7 @@ $(function () {
             const leftStyle = 'calc(' + DAY_LEFT_REM + 'rem + (100% - ' + DAY_LEFT_REM + 'rem - ' + DAY_RIGHT_REM + 'rem) * ' + (col / totalCols) + ')';
             const widthStyle = 'calc((100% - ' + DAY_LEFT_REM + 'rem - ' + DAY_RIGHT_REM + 'rem) * ' + (span / totalCols) + ' - 4px)';
 
-            html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftStyle + ';width:' + widthStyle + ';height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
+            html += '<div class="absolute rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftStyle + ';width:' + widthStyle + ';height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
             html += '<div class="text-xs montserrat-regular" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
             html += '<div class="text-sm montserrat-semi-bold" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
             html += '</div>';

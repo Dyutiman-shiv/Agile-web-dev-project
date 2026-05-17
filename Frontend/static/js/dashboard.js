@@ -744,11 +744,11 @@ function renderPosts(posts) {
 
 
             ${
-              post.group.name
+              post.group.cover_picture
                 ? coverHtml
                 : `
                   <div class="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
-                    ${post.group.name[0].toUpperCase()}
+                    ${(post.group.name || "?")[0].toUpperCase()}
                   </div>
                 `
             }

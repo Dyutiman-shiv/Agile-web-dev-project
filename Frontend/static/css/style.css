@@ -522,9 +522,29 @@ html.dark #event-modal h3, html.dark #event-summary-modal h3,
 html.dark #summary-title { color: #f1f5f9 !important; }
 html.dark #event-modal input, html.dark #event-modal select,
 html.dark #event-modal textarea {
-    background-color: #252840;
-    border-color: #3a3f5c;
-    color: #f1f5f9;
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+html.dark #event-modal input:focus,
+html.dark #event-modal input:focus-within,
+html.dark #event-modal select:focus,
+html.dark #event-modal textarea:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+    color: #f1f5f9 !important;
+}
+html.dark #event-modal input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark #event-modal input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) brightness(1.1);
+    cursor: pointer;
+}
+html.dark #event-modal .bg-gray-50 {
+    background-color: #252840 !important;
+}
+html.dark #event-modal option {
+    background-color: #1a1d27 !important;
+    color: #f1f5f9 !important;
 }
 html.dark .event-type-btn { border-color: #3a3f5c; color: #cbd5e1; background-color: #252840; }
 html.dark #event-cancel-btn { background-color: #252840; color: #cbd5e1; }
