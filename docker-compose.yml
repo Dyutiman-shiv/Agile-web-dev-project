@@ -1,0 +1,28 @@
+# Local / team consistency: one command to run the app with persisted SQLite.
+#   docker compose up --build
+#   open http://localhost:5050
+#
+# Optional: create a .env beside this file with SECRET_KEY=... (and OAuth vars if needed).
+
+services:
+  web:
+    build: .
+    ports:
+      - "${HOST_PORT:-5050}:5050"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-docker-change-me}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI:-sqlite:////app/Backend/data/app.db}
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-1}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - sqlite-data:/app/Backend/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5050/login', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  sqlite-data:

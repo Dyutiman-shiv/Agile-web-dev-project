@@ -3,6 +3,7 @@ Shared pytest fixtures for the test suite.
 Uses an in-memory SQLite database so tests are fast and isolated.
 """
 
+from pathlib import Path
 import sys
 import os
 import uuid
@@ -10,6 +11,29 @@ import pytest
 
 # Ensure Backend/ is importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), os.pardir, "Backend"))
+
+_TESTS_ROOT = Path(__file__).resolve().parent
+
+
+def pytest_collection_modifyitems(config, items):
+    """Tag tests by top-level folder under ``tests/`` for ``-m startup|unit|integration``."""
+    for item in items:
+        raw = getattr(item, "path", None)
+        path = Path(raw) if raw is not None else Path(item.fspath)
+        try:
+            rel = path.resolve().relative_to(_TESTS_ROOT)
+        except ValueError:
+            continue
+        parts = rel.parts
+        if not parts:
+            continue
+        top = parts[0]
+        if top == "startup_checks":
+            item.add_marker(pytest.mark.startup)
+        elif top == "unit_testing":
+            item.add_marker(pytest.mark.unit)
+        elif top == "integration_testing":
+            item.add_marker(pytest.mark.integration)
 
 
 @pytest.fixture(scope="session")
