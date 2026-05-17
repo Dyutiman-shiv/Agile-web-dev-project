@@ -1,109 +1,143 @@
-from flask import Blueprint, request, jsonify, g
-import os
-import sqlite3
+"""
+Assessment scores API.
+
+All endpoints are authenticated and scoped to the current user via the
+parent Unit's `user_id`. Uses SQLAlchemy throughout — no raw sqlite3 —
+so the ORM identity map, migrations, and tests stay consistent.
+"""
+
+from flask import Blueprint, request, jsonify
+from flask_login import login_required, current_user
+from models import Assessment, Unit
+from app import db
+from utils import parse_client_datetime
 
 scores_bp = Blueprint("scores", __name__)
 
-def _scores_db_path() -> str:
-    """Return the SQLite file path for raw-sqlite scores access.
 
-    In tests, SCORES_DB_PATH (or SQLALCHEMY_DATABASE_URI) can point to the
-    session-scoped test DB so Selenium tests and unit tests share the same file.
-    """
-    env_path = os.environ.get("SCORES_DB_PATH") or os.environ.get("SQLALCHEMY_DATABASE_URI", "")
-    if env_path.startswith("sqlite:///"):
-        return env_path[len("sqlite:///"):]
-    if env_path and not env_path.startswith("sqlite"):
-        return env_path
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
+def _user_unit_or_none(unit_id):
+    """Return the Unit if it exists AND belongs to current_user, else None."""
+    if unit_id is None:
+        return None
+    try:
+        unit_id = int(unit_id)
+    except (TypeError, ValueError):
+        return None
+    unit = db.session.get(Unit, unit_id)
+    if not unit or unit.user_id != current_user.id:
+        return None
+    return unit
 
 
-def get_db():
-    if "db" not in g:
-        db_path = _scores_db_path()
-        g.db = sqlite3.connect(db_path)
-        g.db.row_factory = sqlite3.Row
-    return g.db
+def _user_assessment_or_none(assessment_id):
+    """Return the Assessment if its parent Unit belongs to current_user, else None."""
+    assessment = db.session.get(Assessment, assessment_id)
+    if not assessment:
+        return None
+    unit = db.session.get(Unit, assessment.unit_id)
+    if not unit or unit.user_id != current_user.id:
+        return None
+    return assessment
 
-def init_db():
-    conn = get_db()
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS assessments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        unit_id INTEGER,
-        name TEXT,
-        score REAL,
-        weight REAL
+
+def _serialize(a: Assessment) -> dict:
+    return {
+        "id": a.id,
+        "unit_id": a.unit_id,
+        "name": a.name or "",
+        "score": a.score if a.score is not None else 0,
+        "weight": a.weight if a.weight is not None else 0,
+        "due_date": a.due_date.isoformat() if a.due_date else None,
+    }
+
+
+@scores_bp.route("/api/scores/<int:semester_id>", methods=["GET"])
+@login_required
+def get_scores(semester_id):
+    """List all assessments under the current user's units for a semester."""
+    assessments = (
+        Assessment.query.join(Unit, Assessment.unit_id == Unit.id)
+        .filter(Unit.user_id == current_user.id, Unit.semester_id == semester_id)
+        .all()
     )
-    """)
-    conn.commit()
+    return jsonify([_serialize(a) for a in assessments])
 
-@scores_bp.route("/api/scores/<semester>", methods=["GET"])
-def get_scores(semester):
-    conn = get_db()
-    rows = conn.execute("""
-        SELECT a.*
-        FROM assessments a
-        JOIN units u ON a.unit_id = u.id
-        WHERE u.semester_id = ?
-    """, (semester,)).fetchall()
-
-    print(f'Scores: {dict(rows[0])}')
-    return jsonify([dict(row) for row in rows])
 
 @scores_bp.route("/api/scores", methods=["POST"])
+@login_required
 def create_score():
-    data = request.json
+    data = request.get_json(silent=True) or {}
 
-    conn = get_db()
-    cursor = conn.execute("""
-        INSERT INTO assessments (unit_id, name, score, weight, due_date)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        data.get("unit_id"),
-        data.get("name", "Assessment"),
-        data.get("score", 0),
-        data.get("weight", 0),
-        data.get("due_date", None)
-    ))
-    conn.commit()
+    unit = _user_unit_or_none(data.get("unit_id"))
+    if not unit:
+        return jsonify({"success": False, "message": "Unit not found."}), 404
 
-    return jsonify({
-        "id": cursor.lastrowid,
-        "unit_id": data.get("unit_id"),
-        "name": data.get("name", "Assessment"),
-        "score": data.get("score", 0),
-        "weight": data.get("weight", 0),
-        "due_date": data.get("due_date", None)
-    })
+    due_raw = data.get("due_date")
+    parsed_due = None
+    if due_raw not in (None, ""):
+        parsed_due = parse_client_datetime(due_raw)
+        if parsed_due is None:
+            return jsonify({"success": False, "message": "Invalid due date."}), 400
 
-@scores_bp.route("/api/scores/<int:id>", methods=["PUT"])
-def update_score(id):
-    data = request.json
+    try:
+        score = float(data.get("score") or 0)
+        weight = float(data.get("weight") or 0)
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Score and weight must be numbers."}), 400
 
-    conn = get_db()
-    conn.execute("""
-        UPDATE assessments
-        SET name = ?, score = ?, weight = ?, due_date = ?
-        WHERE id = ?
-    """, (
-        data.get("name"),
-        data.get("score"),
-        data.get("weight"),
-        data.get("due_date", None),
-        id
-    ))
-    conn.commit()
-
-    return jsonify({"status": "updated"})
-
-@scores_bp.route("/api/scores/<int:id>", methods=["DELETE"])
-def delete_score(id):
-    conn = get_db()
-    conn.execute(
-        "DELETE FROM assessments WHERE id = ?",
-        (id,)
+    assessment = Assessment(
+        unit_id=unit.id,
+        name=(data.get("name") or "Assessment"),
+        score=score,
+        weight=weight,
+        due_date=parsed_due,
     )
-    conn.commit()
+    db.session.add(assessment)
+    db.session.commit()
+    return jsonify(_serialize(assessment)), 201
 
-    return jsonify({"status": "deleted"})
+
+@scores_bp.route("/api/scores/<int:assessment_id>", methods=["PUT"])
+@login_required
+def update_score(assessment_id):
+    assessment = _user_assessment_or_none(assessment_id)
+    if not assessment:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    data = request.get_json(silent=True) or {}
+    if "name" in data:
+        assessment.name = data["name"] or ""
+    if "score" in data:
+        try:
+            assessment.score = float(data["score"]) if data["score"] is not None else 0
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Score must be a number."}), 400
+    if "weight" in data:
+        try:
+            assessment.weight = float(data["weight"]) if data["weight"] is not None else 0
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "Weight must be a number."}), 400
+    if "due_date" in data:
+        dv = data["due_date"]
+        if dv in (None, ""):
+            assessment.due_date = None
+        else:
+            parsed = parse_client_datetime(dv)
+            if parsed is None:
+                return jsonify({"success": False, "message": "Invalid due date."}), 400
+            assessment.due_date = parsed
+
+    db.session.commit()
+    return jsonify({"success": True, "assessment": _serialize(assessment)})
+
+
+@scores_bp.route("/api/scores/<int:assessment_id>", methods=["DELETE"])
+@login_required
+def delete_score(assessment_id):
+    assessment = _user_assessment_or_none(assessment_id)
+    if not assessment:
+        return jsonify({"success": False, "message": "Not found."}), 404
+
+    db.session.delete(assessment)
+    db.session.commit()
+    return jsonify({"success": True, "message": "Assessment deleted."})

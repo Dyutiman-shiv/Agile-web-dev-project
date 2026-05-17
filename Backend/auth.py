@@ -20,16 +20,10 @@ def index():
     return redirect(url_for("auth.login"))
 
 
-# @auth_bp.route("/home")
-# @login_required
-# def home():
-#     users = User.query.all()
-#     return render_template("home.html", users=users)
-
 @auth_bp.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", )
+    return render_template("dashboard.html")
 
 
 # ---------- Standard Login ----------

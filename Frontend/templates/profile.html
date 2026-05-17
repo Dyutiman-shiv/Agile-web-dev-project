@@ -20,14 +20,11 @@
             <!-- Avatar preview + upload -->
             <div class="flex items-center gap-5">
                 <div class="relative group">
-                    {% if current_user.profile_picture %}
-                    <img id="avatar-preview" src="{{ current_user.profile_picture }}" class="w-20 h-20 rounded-full object-cover ring-4 ring-indigo-100" referrerpolicy="no-referrer" alt="avatar">
-                    {% else %}
-                    <div id="avatar-preview-placeholder" class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl ring-4 ring-indigo-100">
-                        {{ current_user.username[0]|upper }}
-                    </div>
-                    <img id="avatar-preview" src="" class="w-20 h-20 rounded-full object-cover ring-4 ring-indigo-100 hidden" alt="avatar">
-                    {% endif %}
+                    <img id="avatar-preview"
+                         src="{{ current_user.profile_picture or url_for('static', filename='img/avatar-placeholder.svg') }}"
+                         class="w-20 h-20 rounded-full object-cover ring-4 ring-indigo-100 bg-gray-100"
+                         referrerpolicy="no-referrer"
+                         alt="">
                     <label for="profile_picture" class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>

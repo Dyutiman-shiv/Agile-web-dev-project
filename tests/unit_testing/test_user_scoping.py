@@ -130,3 +130,64 @@ def test_cannot_delete_other_users_semester(app):
     _login(client, "bob@test.com")
     resp = client.delete(f"/api/semesters/{sem_id}")
     assert resp.status_code == 404
+
+
+# ── Scores API: auth + cross-user isolation ─────────────────────────────────
+
+def test_scores_require_login(app):
+    """Unauthenticated requests to scores endpoints must be redirected to login."""
+    client = app.test_client()
+    resp = client.get("/api/scores/1", follow_redirects=False)
+    assert resp.status_code in (302, 401), f"Expected redirect/401, got {resp.status_code}"
+
+    resp = client.post("/api/scores", json={"unit_id": 1, "score": 90, "weight": 10})
+    assert resp.status_code in (302, 401)
+
+
+def test_user_cannot_create_score_on_another_users_unit(app):
+    """A score POST must be rejected when the target unit belongs to a different user."""
+    _setup_users(app)
+    client = app.test_client()
+
+    _login(client, "alice@test.com")
+    resp = client.post("/api/units", json={"name": "Alice Unit", "code": "A101"})
+    assert resp.status_code == 201
+    alice_unit_id = resp.get_json()["unit"]["id"]
+    _logout(client)
+
+    _login(client, "bob@test.com")
+    resp = client.post("/api/scores", json={
+        "unit_id": alice_unit_id,
+        "name": "Sneaky Quiz",
+        "score": 99,
+        "weight": 50,
+    })
+    assert resp.status_code == 404
+
+
+def test_user_cannot_update_or_delete_another_users_score(app):
+    """PUT/DELETE on a score linked to another user's unit must return 404."""
+    _setup_users(app)
+    client = app.test_client()
+
+    # Alice creates a unit and an assessment under it
+    _login(client, "alice@test.com")
+    resp = client.post("/api/units", json={"name": "Alice Unit", "code": "A101"})
+    assert resp.status_code == 201
+    alice_unit_id = resp.get_json()["unit"]["id"]
+    resp = client.post("/api/scores", json={
+        "unit_id": alice_unit_id,
+        "name": "Exam",
+        "score": 80,
+        "weight": 60,
+    })
+    assert resp.status_code == 201
+    score_id = resp.get_json()["id"]
+    _logout(client)
+
+    # Bob cannot edit or delete it
+    _login(client, "bob@test.com")
+    resp = client.put(f"/api/scores/{score_id}", json={"score": 1, "weight": 1})
+    assert resp.status_code == 404
+    resp = client.delete(f"/api/scores/{score_id}")
+    assert resp.status_code == 404

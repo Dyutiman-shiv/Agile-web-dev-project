@@ -8,7 +8,6 @@ session-scoped temporary SQLite file so all requests share the same DB.
 
 import os
 import sys
-import sqlite3
 import tempfile
 import threading
 import uuid
@@ -34,25 +33,11 @@ def e2e_app():
     os.close(db_fd)
     db_uri = f"sqlite:///{db_path}"
 
-    # Scores blueprint uses raw sqlite3; point it at the same file.
-    os.environ["SCORES_DB_PATH"] = db_path
     os.environ["SCHEDULER_ENABLED"] = "0"
 
     from app import create_app, db
 
     flask_app = create_app(db_uri=db_uri)
-
-    # Ensure the raw-sqlite assessments table exists in the test DB.
-    with sqlite3.connect(db_path) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS assessments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                unit_id INTEGER,
-                name TEXT,
-                score REAL,
-                weight REAL
-            )
-        """)
 
     yield flask_app
 
@@ -65,7 +50,6 @@ def e2e_app():
         os.unlink(db_path)
     except OSError:
         pass
-    os.environ.pop("SCORES_DB_PATH", None)
 
 
 @pytest.fixture(scope="session")
