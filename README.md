@@ -31,11 +31,12 @@ Typical flows:
 
 1. **Sign up / log in** → land on dashboard or semester setup if no semesters exist.  
 2. **Academic settings** → create semesters and units (required context for calendars and grades).  
-3. **Calendar** → add sessions and tasks; optional iCal subscriptions.  
-4. **Sessions** → start timers, checklists, pause/resume, history tied to calendar.  
-5. **Scores** → assessments per unit, weights, credit-weighted WAM-style views.  
-6. **Groups** → create/join groups, invite by friend code, posts and comments.  
-7. **Notifications** → unread summary and preferences.
+3. **Dashboard** → Central hub of the application, offering a unified activity feed mixed with random gamified study metrics, real-time focus session tracking, and visual progress indicators.
+4. **Calendar** → add sessions and tasks; optional iCal subscriptions.  
+5. **Sessions** → start timers, checklists, pause/resume, history tied to calendar.  
+6. **Scores** → assessments per unit, weights, credit-weighted WAM-style views.  
+7. **Groups** → create/join groups, invite by friend code, posts and comments.  
+8. **Notifications** → unread summary and preferences.
 
 Optional **seed data**: from the repo root with dependencies installed — `python -m seed.populate` — loads demo accounts and scenarios documented in **`seed/accounts.json`**.
 
