@@ -1,0 +1,24 @@
+.git
+.github
+.pytest_cache
+**/__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+.env
+.env.*
+!.env.example
+.idea
+.cursor
+
+# Local SQLite (compose uses named volume under Backend/data)
+Backend/app.db
+Backend/data/*.db
+
+# Large / local uploads — recreated by the app inside the container
+Frontend/static/uploads/*
+!Frontend/static/uploads/.gitkeep
+
+# Tests not required at runtime (keeps image smaller)
+tests

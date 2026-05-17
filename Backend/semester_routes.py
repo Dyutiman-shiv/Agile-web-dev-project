@@ -40,7 +40,7 @@ def current_semester():
 @semester_bp.route("/api/semesters", methods=["POST"])
 @login_required
 def create_semester():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     start = data.get("start_date")
     end = data.get("end_date")
@@ -75,7 +75,7 @@ def update_semester(sem_id):
     if not sem or sem.user_id != current_user.id:
         return jsonify({"success": False, "message": "Not found."}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     if "name" in data:
         name = (data["name"] or "").strip()
         if not name:
@@ -126,7 +126,7 @@ def semester_setup_view():
 @semester_bp.route("/api/setup/semesters", methods=["POST"])
 @login_required
 def bulk_create_semesters():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     semesters = data if isinstance(data, list) else data.get("semesters", [])
     created = []
 

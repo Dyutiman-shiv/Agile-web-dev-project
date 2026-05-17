@@ -5,7 +5,7 @@ All queries are scoped to individual users — notifications are account-specifi
 
 from datetime import datetime, timedelta
 from app import db
-from models import Task, StudySession, Semester, Notification, NotificationPreference, User
+from models import Task, StudySession, Semester, Notification, NotificationPreference
 
 
 def _get_prefs(user_id):
