@@ -487,7 +487,7 @@
 
     function scrollActiveIntoView() {
         var row = resultsEl.querySelector(".command-palette-row-active");
-        if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        if (row) row.scrollIntoView({ block: "nearest", behavior: "auto" });
     }
 
     function renderHelpHtml() {
@@ -589,33 +589,51 @@
         }
 
         var byCat = {};
+        var catOrder = [];
         for (var i = 0; i < flatResults.length; i++) {
             var it = flatResults[i];
             var c = it.category;
-            if (!byCat[c]) byCat[c] = [];
-            byCat[c].push({ item: it, idx: i });
+            if (!byCat[c]) {
+                byCat[c] = [];
+                catOrder.push(c);
+            }
+            byCat[c].push(it);
         }
 
+        // Re-flatten in category-grouped order so arrow-key navigation walks
+        // the same order the user sees (renderer groups by category, so the
+        // build order of flatResults can interleave categories and cause the
+        // highlight to "jump" between sections).
+        var ordered = [];
+        for (var oi = 0; oi < catOrder.length; oi++) {
+            var oc = catOrder[oi];
+            for (var oj = 0; oj < byCat[oc].length; oj++) {
+                ordered.push(byCat[oc][oj]);
+            }
+        }
+        flatResults = ordered;
+        selectedIndex = Math.min(selectedIndex, Math.max(0, flatResults.length - 1));
+
         var html = "";
-        var cats = Object.keys(byCat);
         var rowCounter = 0;
-        for (var ci = 0; ci < cats.length; ci++) {
-            var cat = cats[ci];
+        for (var ci = 0; ci < catOrder.length; ci++) {
+            var cat = catOrder[ci];
             html +=
                 '<div class="command-palette-cat px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 sticky top-0 z-[1] border-b border-slate-200/90">' +
                 escapeHtml(cat) +
                 "</div>";
             var group = byCat[cat];
             for (var gi = 0; gi < group.length; gi++) {
-                var g = group[gi];
-                var active = g.idx === selectedIndex;
+                var gItem = group[gi];
+                var gIdx = rowCounter;
+                var active = gIdx === selectedIndex;
                 var delay = Math.min(rowCounter * 24, 280);
                 rowCounter++;
                 html +=
                     '<button type="button" role="option" aria-selected="' +
                     (active ? "true" : "false") +
                     '" data-idx="' +
-                    g.idx +
+                    gIdx +
                     '" class="command-palette-row command-palette-row-in w-full text-left mx-2 pl-3 pr-3 py-2.5 mb-0.5 rounded-xl flex items-center gap-3 border-l-[3px] ' +
                     (active
                         ? "command-palette-row-active border-primary_purp text-slate-900"
@@ -624,7 +642,7 @@
                     delay +
                     'ms">' +
                     '<span class="flex-1 min-w-0 truncate roboto-regular text-sm leading-snug">' +
-                    escapeHtml(g.item.label) +
+                    escapeHtml(gItem.label) +
                     "</span>" +
                     (active
                         ? '<svg class="cp-row-chevron w-4 h-4 shrink-0 text-primary_purp/80 opacity-90" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>'
@@ -635,7 +653,7 @@
         resultsEl.innerHTML = html;
 
         var activeRow = resultsEl.querySelector(".command-palette-row-active");
-        if (activeRow) activeRow.scrollIntoView({ block: "nearest" });
+        if (activeRow) activeRow.scrollIntoView({ block: "nearest", behavior: "auto" });
     }
 
     function escapeHtml(str) {

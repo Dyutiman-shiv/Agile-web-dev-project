@@ -154,4 +154,46 @@ $(function () {
             }
         });
     });
+
+    // Add this function to handle dark mode for date inputs
+    function updateDateInputsForDarkMode() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const dateInputs = document.querySelectorAll('input[type="date"]');
+        
+        dateInputs.forEach(input => {
+            if (isDark) {
+                // Force a repaint of the date input
+                input.style.colorScheme = 'dark';
+                // Add a class for custom styling
+                input.classList.add('dark-date-input');
+            } else {
+                input.style.colorScheme = '';
+                input.classList.remove('dark-date-input');
+            }
+        });
+    }
+
+    // Watch for dark mode changes
+    const darkModeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                updateDateInputsForDarkMode();
+            }
+        });
+    });
+
+    // Start observing when document is ready
+    $(document).ready(function() {
+        darkModeObserver.observe(document.documentElement, { attributes: true });
+        updateDateInputsForDarkMode();
+        
+        // Also update date inputs when modals open (they might contain fresh inputs)
+        $(document).on('click', '.edit-sem-btn', function() {
+            setTimeout(updateDateInputsForDarkMode, 50);
+        });
+        
+        $('#add-sem-btn').on('click', function() {
+            setTimeout(updateDateInputsForDarkMode, 50);
+        });
+    });
 });

@@ -74,6 +74,27 @@ $(function () {
         );
     }
 
+    function isDarkMode() {
+        return document.documentElement.classList.contains('dark');
+    }
+
+    function getDynamicColors() {
+        const dark = isDarkMode();
+        return {
+            hoverBg: dark ? '#252840' : '#f9fafb',
+            checklistItemBg: dark ? '#1e2130' : '#f9fafb',
+            checklistBorder: dark ? '#2d3148' : '#e5e7eb',
+            checklistItemText: dark ? '#f1f5f9' : '#374151',
+            completedText: dark ? '#64748b' : '#9ca3af',
+            checkboxBorder: dark ? '#3a3f5c' : '#d1d5db',
+            historyHover: dark ? '#252840' : '#f9fafb',
+            historyItemBg: dark ? '#1a1d27' : '#ffffff',
+            badgeBg: dark ? '#1e2130' : '#f3f4f6',
+            badgeText: dark ? '#94a3b8' : '#6b7280',
+            dividerColor: dark ? '#2d3148' : '#e5e7eb'
+        };
+    }
+
     // ============ Init Clock Ticks & Numbers ============
     function initClockFace() {
         const ticksG = document.getElementById("clock-ticks");
@@ -151,14 +172,15 @@ $(function () {
     // ============ Render Checklist Builder ============
     function renderChecklistBuilder() {
         const $c = $("#checklist-builder");
+        const colors = getDynamicColors();
         $c.empty();
         checklistItems.forEach(function (item, idx) {
             $c.append(
                 '<div class="flex items-center gap-2 group" data-idx="' + idx + '">' +
-                '<span class="flex-1 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-700 roboto-regular">' +
+                '<span class="flex-1 px-4 py-2.5 rounded-xl text-sm roboto-regular" style="background-color: ' + colors.checklistItemBg + '; border: 1px solid ' + colors.checklistBorder + '; color: ' + colors.checklistItemText + '">' +
                 $("<span>").text(item.title).html() +
                 '</span>' +
-                '<button type="button" class="remove-checklist-btn p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors">' +
+                '<button type="button" class="remove-checklist-btn p-2 rounded-lg transition-colors" style="color: ' + (isDarkMode() ? '#3a3f5c' : '#d1d5db') + ';" onmouseover="this.style.color=\'#ef4444\'; this.style.backgroundColor=\'' + (isDarkMode() ? '#2d1b1b' : '#fef2f2') + '\'" onmouseout="this.style.color=\'' + (isDarkMode() ? '#3a3f5c' : '#d1d5db') + '\'; this.style.backgroundColor=\'transparent\'">' +
                 '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>' +
                 '</button>' +
                 '</div>'
@@ -170,16 +192,16 @@ $(function () {
     // ============ Render Live Checklist ============
     function renderLiveChecklist() {
         const $c = $("#live-checklist");
+        const colors = getDynamicColors();
         $c.empty();
         let done = 0;
         checklistItems.forEach(function (item, idx) {
             if (item.completed) done++;
             $c.append(
-                '<label class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors ' +
-                (item.completed ? 'bg-emerald-50' : 'hover:bg-gray-50') + '">' +
-                '<input type="checkbox" class="live-check w-4 h-4 rounded border-gray-300 text-primary_purp focus:ring-primary_purp" data-idx="' + idx + '"' +
+                '<label class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-colors" style="background-color: ' + (item.completed ? (isDarkMode() ? '#1a2e22' : '#ecfdf5') : 'transparent') + '; hover:background-color: ' + colors.hoverBg + '">' +
+                '<input type="checkbox" class="live-check w-4 h-4 rounded focus:ring-primary_purp" style="border-color: ' + colors.checkboxBorder + ';" data-idx="' + idx + '"' +
                 (item.completed ? ' checked' : '') + '>' +
-                '<span class="text-sm roboto-regular ' + (item.completed ? 'line-through text-gray-400' : 'text-gray-700') + '">' +
+                '<span class="text-sm roboto-regular ' + (item.completed ? 'line-through' : '') + '" style="color: ' + (item.completed ? colors.completedText : colors.checklistItemText) + '">' +
                 $("<span>").text(item.title).html() +
                 '</span>' +
                 '</label>'
@@ -827,34 +849,35 @@ $(function () {
                 const hasSplitChild = isActive && s.continued_as_session_id;
                 const canResume = isActive && !s.continued_as_session_id;
 
-                let html = '<div class="history-item px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer" data-id="' + s.id + '">';
+                const colors = getDynamicColors();
+                let html = '<div class="history-item px-4 sm:px-6 py-4 transition-colors cursor-pointer" style="background-color: ' + colors.historyItemBg + ';" data-id="' + s.id + '">';
                 html += '  <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">';
                 html += '    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:' + (s.color || '#6366f1') + '20">';
                 html += '      <svg class="w-5 h-5" style="color:' + (s.color || '#6366f1') + '" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
                 html += '    </div>';
                 html += '    <div class="flex-1 min-w-0">';
                 html += '      <div class="flex items-center gap-2 flex-wrap">';
-                html += '        <span class="montserrat-medium text-sm text-gray-800 truncate">' + $("<span>").text(s.title).html() + '</span>';
-                html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-500 roboto-regular shrink-0">' + (s.timer_mode || 'stopwatch') + '</span>';
+                html += '        <span class="montserrat-medium text-sm truncate" style="color: ' + (isDarkMode() ? '#f1f5f9' : '#1f2937') + '">' + $("<span>").text(s.title).html() + '</span>';
+                html += '        <span class="px-2 py-0.5 text-xs rounded-full roboto-regular" style="background-color: ' + colors.badgeBg + '; color: ' + colors.badgeText + '">' + (s.timer_mode || 'stopwatch') + '</span>';
                 if (s.unit_code) {
                     html += '        <span class="px-2 py-0.5 text-xs rounded-full text-white roboto-regular shrink-0" style="background:' + (s.color || '#6366f1') + '">' + $("<span>").text(s.unit_code).html() + '</span>';
                 }
                 if (hasSplitChild) {
-                    html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-50 text-amber-800 roboto-regular shrink-0">Continued with new timer</span>';
+                    html += '        <span class="px-2 py-0.5 text-xs rounded-full roboto-regular shrink-0" style="background-color: ' + (isDarkMode() ? '#332000' : '#fffbeb') + '; color: ' + (isDarkMode() ? '#fbbf24' : '#92400e') + '">Continued with new timer</span>';
                 } else if (isActive) {
-                    html += '        <span class="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 roboto-regular shrink-0 animate-pulse">In Progress</span>';
+                    html += '        <span class="px-2 py-0.5 text-xs rounded-full roboto-regular shrink-0 animate-pulse" style="background-color: ' + (isDarkMode() ? '#022c22' : '#ecfdf5') + '; color: ' + (isDarkMode() ? '#4ade80' : '#047857') + '">In Progress</span>';
                 }
                 html += '      </div>';
-                html += '      <p class="text-xs text-gray-400 roboto-regular mt-0.5">' + dateStr + ' at ' + timeStr + ' · ' + (isActive ? 'Still running' : formatDurationShort(s.duration)) + '</p>';
+                html += '      <p class="text-xs roboto-regular mt-0.5" style="color: ' + (isDarkMode() ? '#64748b' : '#9ca3af') + '">' + dateStr + ' at ' + timeStr + ' · ' + (isActive ? 'Still running' : formatDurationShort(s.duration)) + '</p>';
                 html += '    </div>';
                 html += '    <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 shrink-0 w-full sm:w-auto">';
-                html += '      <span class="text-xs roboto-regular ' + (done === checklist.length && checklist.length > 0 ? 'text-emerald-600' : 'text-gray-400') + '">' + done + '/' + checklist.length + ' done</span>';
+                html += '      <span class="text-xs roboto-regular" style="color: ' + (done === checklist.length && checklist.length > 0 ? (isDarkMode() ? '#34d399' : '#059669') : colors.badgeText) + '">' + done + '/' + checklist.length + ' done</span>';
                 if (canResume) {
-                    html += '      <button class="resume-history-btn p-1.5 rounded-lg text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-colors" data-id="' + s.id + '" title="Resume this session">';
+                    html += '      <button class="resume-history-btn p-1.5 rounded-lg transition-colors" data-id="' + s.id + '" title="Resume this session" style="color: ' + (isDarkMode() ? '#34d399' : '#10b981') + ';" onmouseover="this.style.color=\'' + (isDarkMode() ? '#6ee7b7' : '#059669') + '\'; this.style.backgroundColor=\'' + (isDarkMode() ? '#1a2e22' : '#ecfdf5') + '\'" onmouseout="this.style.color=\'' + (isDarkMode() ? '#34d399' : '#10b981') + '\'; this.style.backgroundColor=\'transparent\'">';
                     html += '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M18 12h2.25M12 18H9.75M5.666 6.743l-1.59-1.59M5.666 17.257l-1.59 1.59M6 12H3.75"/></svg>';
                     html += '      </button>';
                 }
-                html += '      <button class="delete-history-btn p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" data-id="' + s.id + '" title="Delete session">';
+                html += '      <button class="delete-history-btn p-1.5 rounded-lg transition-colors" data-id="' + s.id + '" title="Delete session" style="color: ' + (isDarkMode() ? '#3a3f5c' : '#d1d5db') + ';" onmouseover="this.style.color=\'#ef4444\'; this.style.backgroundColor=\'' + (isDarkMode() ? '#2d1b1b' : '#fef2f2') + '\'" onmouseout="this.style.color=\'' + (isDarkMode() ? '#3a3f5c' : '#d1d5db') + '\'; this.style.backgroundColor=\'transparent\'">';
                 html += '        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>';
                 html += '      </button>';
                 html += '    </div>';
@@ -937,19 +960,22 @@ $(function () {
     });
 
     function renderHistoryChecklist(sessionId, checklist) {
-        if (!checklist || checklist.length === 0) return '<p class="text-xs text-gray-400 roboto-regular">No checklist items.</p>';
+        const colors = getDynamicColors();
+        if (!checklist || checklist.length === 0) return '<p class="text-xs roboto-regular" style="color: ' + colors.badgeText + '">No checklist items.</p>';
         let html = '<div class="space-y-2">';
         checklist.forEach(function (item) {
-            html += '<div class="flex items-center gap-2 group hover:bg-gray-50 rounded-lg p-1 transition-colors">' +
-                '<button class="tick-checklist-item p-1 rounded-md transition-colors ' + (item.completed ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-400 hover:text-emerald-500') + '" ' +
-                'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + item.completed + '">' +
+            const isCompleted = item.completed === true;
+            html += '<div class="flex items-center gap-2 rounded-lg p-1 transition-colors checklist-item-row" style="background-color: transparent;">' +
+                '<button class="tick-checklist-item p-1 rounded-md transition-colors" ' +
+                'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + isCompleted + '" ' +
+                'style="color: ' + (isCompleted ? (isDarkMode() ? '#34d399' : '#10b981') : (isDarkMode() ? '#64748b' : '#9ca3af')) + '; background-color: transparent;">' +
                 '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
-                (item.completed 
+                (isCompleted 
                     ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' 
                     : '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>') +
                 '</svg>' +
                 '</button>' +
-                '<span class="flex-1 text-xs roboto-regular ' + (item.completed ? 'text-gray-400 line-through' : 'text-gray-600') + '">' + 
+                '<span class="flex-1 text-xs roboto-regular ' + (isCompleted ? 'line-through' : '') + '" style="color: ' + (isCompleted ? colors.completedText : colors.checklistItemText) + '">' + 
                 $("<span>").text(item.title).html() + '</span>' +
                 '</div>';
         });

@@ -16,9 +16,11 @@ venv
 Backend/app.db
 Backend/data/*.db
 
-# Large / local uploads — recreated by the app inside the container
+# User-uploaded files are recreated at runtime; committed seed assets are kept.
 Frontend/static/uploads/*
 !Frontend/static/uploads/.gitkeep
+!Frontend/static/uploads/group_covers/default-group.jpg
+!Frontend/static/uploads/group_covers/207e8e85-2a83-4144-9eed-b7ce601805cd.jpg
 
 # Tests not required at runtime (keeps image smaller)
 tests

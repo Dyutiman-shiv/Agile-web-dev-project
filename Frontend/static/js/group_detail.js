@@ -1252,3 +1252,22 @@ function openDeleteGroupModal() {
   itemToDelete = { id: null, type: null, element: null };
   $("#delete-modal").removeClass("hidden").addClass("flex");
 }
+
+function initMemberListHoverStyles() {
+    // This ensures any dynamically added members get proper hover styling
+    const style = document.createElement('style');
+    style.textContent = `
+        .dark #members-list .group:hover {
+            background-color: #252840 !important;
+        }
+        .dark #settings-members-list .flex:hover {
+            background-color: #252840 !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Call this when the page loads
+$(document).ready(function() {
+    initMemberListHoverStyles();
+});
