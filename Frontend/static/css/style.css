@@ -979,6 +979,54 @@ html.dark #semesters-list .flex.items-center.justify-between {
     border-color: var(--border-color) !important;
 }
 html.dark #semesters-list .flex.items-center.justify-between:hover { border-color: #4f46e5 !important; }
+html.dark #semesters-list .text-gray-800 { color: var(--text-primary) !important; }
+html.dark #semesters-list .text-gray-400 { color: var(--text-muted) !important; }
+
+/* Semester name pill badges (units list, dashboard, etc.) */
+html.dark .bg-indigo-50.text-indigo-600,
+html.dark span.bg-indigo-50 { background-color: #1e1b4b !important; color: #a5b4fc !important; }
+html.dark .bg-green-50.text-green-600,
+html.dark span.bg-green-50 { background-color: #052e16 !important; color: #4ade80 !important; }
+
+/* Filter selects that show semester names */
+html.dark #filter-semester {
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+html.dark #filter-semester option {
+    background-color: #1a1d27 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Scores page — unit cards and assessment rows */
+html.dark #units-container .bg-white,
+html.dark #no-units-message,
+html.dark #units-container [class*="rounded-2xl"],
+html.dark #units-container [class*="rounded-xl"] {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+html.dark #units-container .text-gray-800,
+html.dark #units-container .text-gray-600 { color: var(--text-primary) !important; }
+html.dark #units-container .text-gray-500,
+html.dark #units-container .text-gray-400 { color: var(--text-muted) !important; }
+html.dark #units-container .bg-indigo-50 {
+    background-color: #1e1b4b !important;
+    color: #a5b4fc !important;
+}
+html.dark #units-container input[type="text"],
+html.dark #units-container input[type="number"],
+html.dark #units-container input[type="date"] {
+    background-color: var(--input-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+html.dark #units-container button.bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-muted) !important;
+}
 
 /* Modals */
 html.dark #edit-sem-modal > div, html.dark #delete-sem-modal > div {
@@ -1231,6 +1279,20 @@ html.dark #no-units-message {
 /* Overall WAM display */
 html.dark #overall-wam {
     color: #a78bfa !important;
+}
+
+/* Scores page outer cards (WAM header + overall WAM card) */
+html.dark #units-container ~ div.bg-white,
+html.dark .max-w-6xl > div.bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+html.dark .max-w-6xl > div .text-gray-800,
+html.dark .max-w-6xl > div .text-gray-500 {
+    color: var(--text-primary) !important;
+}
+html.dark .max-w-6xl > div .text-gray-400 {
+    color: var(--text-muted) !important;
 }
 
 /* Semester select dropdown */

@@ -563,9 +563,14 @@ $(function () {
 
         // Events
         const firstHour = hours[0];
+        const mobile = isMobileView();
         for (let d2 = 0; d2 < 7; d2++) {
             const dayDate2 = new Date(ws); dayDate2.setDate(dayDate2.getDate() + d2);
             const dayEvts = getEventsForDate(dayDate2);
+            const layout = computeOverlapLayout(dayEvts);
+            // Column slot: each day occupies 1/8 of total width starting at (d2+1)/8
+            const dayCellLeftPct = (d2 + 1) / 8 * 100;
+            const dayCellWidthPct = 1 / 8 * 100;
             for (let ei = 0; ei < dayEvts.length; ei++) {
                 const ev = dayEvts[ei];
                 const evDate = new Date(ev.start);
@@ -573,11 +578,15 @@ $(function () {
                 let topMin = (evDate.getHours() - firstHour) * 60 + evDate.getMinutes();
                 const height = (ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30;
                 if (topMin < 0) { topMin = 0; }
-                const leftPct = ((d2 + 1) / 8 * 100);
-                const widthPct = (1 / 8 * 100);
                 const bgColor = ev.color || "#725AEA";
-                // Lighter background with colored left border
-                const mobile = isMobileView();
+
+                const totalCols = layout[ei].totalCols;
+                const col = layout[ei].col;
+                const span = layout[ei].span;
+                // Sub-divide the day's column among overlapping event columns
+                const slotW = dayCellWidthPct / totalCols;
+                const leftPct = dayCellLeftPct + col * slotW;
+                const widthPct = slotW * span;
 
                 html += '<div class="absolute rounded-lg px-2 py-1 overflow-hidden cursor-pointer event-pill shadow-sm ' +
                     (mobile ? '' : 'border-l-4') +
@@ -647,6 +656,11 @@ $(function () {
         }
 
         // Events
+        const dayLayout = computeOverlapLayout(dayEvents);
+        // Available area starts at 5.5rem from left; we work in px using a % trick
+        // by expressing left/width relative to the full container width via inline calc.
+        const DAY_LEFT_REM = 5.5;  // rem offset for the time gutter
+        const DAY_RIGHT_REM = 0.5; // rem gap on the right
         for (let ei = 0; ei < dayEvents.length; ei++) {
             const ev = dayEvents[ei];
             const evDate = new Date(ev.start);
@@ -655,7 +669,15 @@ $(function () {
             const height = ((ev.type === "session" || ev.type === "session_segment") ? (ev.duration || 60) : 30) - 15;
             if (topMin < 0) { topMin = 0; }
             const bgColor = ev.color || "#6366f1";
-            html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:5.5rem;right:0.5rem;height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
+
+            const totalCols = dayLayout[ei].totalCols;
+            const col = dayLayout[ei].col;
+            const span = dayLayout[ei].span;
+            // Divide the usable area (between gutter and right edge) equally
+            const leftStyle = 'calc(' + DAY_LEFT_REM + 'rem + (100% - ' + DAY_LEFT_REM + 'rem - ' + DAY_RIGHT_REM + 'rem) * ' + (col / totalCols) + ')';
+            const widthStyle = 'calc((100% - ' + DAY_LEFT_REM + 'rem - ' + DAY_RIGHT_REM + 'rem) * ' + (span / totalCols) + ' - 4px)';
+
+            html += '<div class="absolute my-2 rounded-lg px-3 py-1.5 overflow-hidden cursor-pointer event-pill border-l-4 shadow-sm" style="border-color:' + bgColor + ';background:' + bgColor + '20;top:' + topMin + 'px;left:' + leftStyle + ';width:' + widthStyle + ';height:' + height + 'px" data-id="' + ev.id + '" data-type="' + ev.type + '">';
             html += '<div class="text-xs montserrat-regular" style="color:' + bgColor + '">' + formatTimeShort(evDate) + ' - ' + formatTimeShort(evEnd) + '</div>';
             html += '<div class="text-sm montserrat-semi-bold" style="color:' + bgColor + '">' + escapeHtml(ev.title) + '</div>';
             html += '</div>';
@@ -730,6 +752,52 @@ $(function () {
         }).sort(function (a, b) {
             return new Date(a.start) - new Date(b.start);
         });
+    }
+
+    /**
+     * Assign each event a { col, totalCols } so overlapping events share width.
+     * Events must already be sorted by start time.
+     */
+    function computeOverlapLayout(evList) {
+        const layout = new Array(evList.length);
+        // columns: tracks the end-time of the last event placed in each column
+        const cols = [];
+
+        for (let i = 0; i < evList.length; i++) {
+            const start = new Date(evList[i].start).getTime();
+            const end = getEndTime(evList[i]).getTime();
+
+            // Find the first column whose last event has already ended
+            let placed = -1;
+            for (let c = 0; c < cols.length; c++) {
+                if (cols[c] <= start) { placed = c; break; }
+            }
+            if (placed === -1) { placed = cols.length; cols.push(0); }
+            cols[placed] = end;
+            layout[i] = { col: placed, end: end };
+        }
+
+        // Second pass: widen each event to fill as many consecutive free columns
+        // as possible (so events that don't actually conflict span more space).
+        for (let i = 0; i < evList.length; i++) {
+            const start = new Date(evList[i].start).getTime();
+            let span = 1;
+            for (let c = layout[i].col + 1; c < cols.length; c++) {
+                // Check if any earlier event occupies column c during this event's time
+                let blocked = false;
+                for (let j = 0; j < i; j++) {
+                    if (layout[j].col === c && layout[j].end > start) { blocked = true; break; }
+                }
+                for (let j = i + 1; j < evList.length; j++) {
+                    if (layout[j].col === c && new Date(evList[j].start).getTime() < layout[i].end) { blocked = true; break; }
+                }
+                if (blocked) break;
+                span++;
+            }
+            layout[i].totalCols = cols.length;
+            layout[i].span = span;
+        }
+        return layout;
     }
 
     function escapeHtml(str) {
