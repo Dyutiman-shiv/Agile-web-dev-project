@@ -48,6 +48,7 @@ def get_scores(semester):
         WHERE u.semester_id = ?
     """, (semester,)).fetchall()
 
+    print(f'Scores: {dict(rows[0])}')
     return jsonify([dict(row) for row in rows])
 
 @scores_bp.route("/api/scores", methods=["POST"])
@@ -56,13 +57,14 @@ def create_score():
 
     conn = get_db()
     cursor = conn.execute("""
-        INSERT INTO assessments (unit_id, name, score, weight)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO assessments (unit_id, name, score, weight, due_date)
+        VALUES (?, ?, ?, ?, ?)
     """, (
         data.get("unit_id"),
         data.get("name", "Assessment"),
         data.get("score", 0),
         data.get("weight", 0),
+        data.get("due_date", None)
     ))
     conn.commit()
 
@@ -72,6 +74,7 @@ def create_score():
         "name": data.get("name", "Assessment"),
         "score": data.get("score", 0),
         "weight": data.get("weight", 0),
+        "due_date": data.get("due_date", None)
     })
 
 @scores_bp.route("/api/scores/<int:id>", methods=["PUT"])
@@ -81,12 +84,13 @@ def update_score(id):
     conn = get_db()
     conn.execute("""
         UPDATE assessments
-        SET name = ?, score = ?, weight = ?
+        SET name = ?, score = ?, weight = ?, due_date = ?
         WHERE id = ?
     """, (
         data.get("name"),
         data.get("score"),
         data.get("weight"),
+        data.get("due_date", None),
         id
     ))
     conn.commit()

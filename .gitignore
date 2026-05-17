@@ -209,6 +209,9 @@ __marimo__/
 #MacOS
 .DS_Store
 
+#App.db
+
+Backend/app.db
 # App / local DB
 Backend/app.db
 *.db

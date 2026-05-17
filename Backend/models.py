@@ -79,7 +79,8 @@ class StudySession(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     subject = db.Column(db.String(120), nullable=False)
-    start_time = db.Column(db.DateTime, nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False) #Created at
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     duration_minutes = db.Column(db.Integer, nullable=False, default=60)
     notes = db.Column(db.Text, nullable=True)
     color = db.Column(db.String(20), nullable=False, default="#6366f1")
@@ -114,6 +115,7 @@ class StudySession(db.Model):  # type: ignore[name-defined]
             "type": "session",
             "title": self.subject,
             "start": self.start_time.isoformat(),
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
             "duration": self.duration_minutes,
             "notes": self.notes or "",
             "color": self.color,
@@ -347,6 +349,7 @@ class Assessment(db.Model):
     name = db.Column(db.String(100))
     score = db.Column(db.Float)
     weight = db.Column(db.Float)
+    due_date = db.Column(db.DateTime)
 
     unit_id = db.Column(db.Integer, db.ForeignKey("units.id"), nullable=False)
 
@@ -490,7 +493,8 @@ class Post(db.Model):
             "author_id": self.author.id,
             "author_picture": self.author.profile_picture,
             "comments": [c.to_dict() for c in self.comments],
-            "likes": [l.user_id for l in self.likes]
+            "likes": [l.user_id for l in self.likes],
+            "group": self.group.to_dict() if self.group else None
         }
 
 
