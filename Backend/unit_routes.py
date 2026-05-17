@@ -2,7 +2,6 @@ from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from models import Unit, StudySession
 from app import db
-from sqlalchemy import func
 
 unit_bp = Blueprint("units", __name__)
 
@@ -29,14 +28,13 @@ def list_units():
         q = q.filter_by(archived=True)
 
     units = q.order_by(Unit.name).all()
-    print([u.to_dict() for u in units])
     return jsonify([u.to_dict() for u in units])
 
 
 @unit_bp.route("/api/units", methods=["POST"])
 @login_required
 def create_unit():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     if not name:
         return jsonify({"success": False, "message": "Unit name is required."}), 400
@@ -44,7 +42,7 @@ def create_unit():
     code = (data.get("code") or "").strip() or None
     color = (data.get("color") or "#6366f1").strip()
     semester_id = data.get("semester_id")
-    
+
     if data.get("credits") is not None:
         try:
             unit_credits = int(data["credits"])
@@ -54,8 +52,6 @@ def create_unit():
             return jsonify({"success": False, "message": "Number of credits must be a non-negative integer."}), 400
     else:
         unit_credits = 6
-
-    print(unit_credits)
 
     unit = Unit(
         user_id=current_user.id,
@@ -77,7 +73,7 @@ def update_unit(unit_id):
     if not unit or unit.user_id != current_user.id:
         return jsonify({"success": False, "message": "Not found."}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     if "name" in data:
         name = (data["name"] or "").strip()
         if not name:
@@ -93,7 +89,7 @@ def update_unit(unit_id):
         unit.semester_id = data["semester_id"] if data["semester_id"] else None
     if "archived" in data:
         unit.archived = bool(data["archived"])
-    print(unit.to_dict())
+
     db.session.commit()
     return jsonify({"success": True, "unit": unit.to_dict()})
 
