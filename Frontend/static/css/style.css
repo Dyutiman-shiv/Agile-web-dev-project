@@ -1389,3 +1389,48 @@ html.dark #invite-modal p.text-\[11px\] {
 html.dark #invite-modal-group-name {
     color: var(--text-muted) !important;
 }
+
+/* Force chart background to be transparent */
+html.dark .apexcharts-canvas,
+html.dark .apexcharts-canvas svg {
+    background: transparent !important;
+}
+
+/* Fix legend text color in dark mode */
+html.dark .apexcharts-legend-text {
+    color: #cbd5e1 !important;
+}
+
+/* Fix x-axis and y-axis label colors */
+html.dark .apexcharts-xaxis-label,
+html.dark .apexcharts-yaxis-label {
+    fill: #94a3b8 !important;
+}
+
+/* Fix data labels on bars */
+html.dark .apexcharts-data-labels text {
+    fill: #f1f5f9 !important;
+}
+
+/* Fix tooltip background in dark mode */
+html.dark .apexcharts-tooltip {
+    background: #1a1d27 !important;
+    border: 1px solid #2d3148 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark .apexcharts-tooltip-title {
+    background: #13151f !important;
+    border-bottom-color: #2d3148 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Fix y-axis grid lines */
+html.dark .apexcharts-grid line {
+    stroke: #2d3148 !important;
+}
+
+/* Fix hover state for bars */
+html.dark .apexcharts-bar-area:hover {
+    opacity: 0.8 !important;
+}
