@@ -1,6 +1,10 @@
-/* ---------- Global ---------- */
 *, *::before, *::after {
     box-sizing: border-box;
+}
+
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Autofill override for glassmorphism inputs */
@@ -30,235 +34,106 @@ input:focus {
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Password strength bar (Tailwind colors) */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+
+/* Password strength bar */
 .strength-meter {
     height: 4px;
     border-radius: 9999px;
     transition: width 0.3s ease, background-color 0.3s ease;
 }
 
-/* ---------- Calendar ---------- */
-/* Mini calendar cell grid alignment */
-#mini-calendar .grid {
-    gap: 1px 0;
+/* Make media elements scale inside their containers */
+img, svg, canvas {
+    max-width: 100%;
 }
 
-/* Agenda panel scrollbar */
-#agenda-panel::-webkit-scrollbar {
-    width: 4px;
-}
-#agenda-panel::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 9999px;
+/* Make long text/URLs wrap */
+.responsive-wrap, a, td, th {
+    overflow-wrap: anywhere;
 }
 
-/* Calendar scroll containers */
-#week-scroll::-webkit-scrollbar,
-#day-scroll::-webkit-scrollbar {
-    width: 6px;
-}
-#week-scroll::-webkit-scrollbar-thumb,
-#day-scroll::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 9999px;
+/* Tables and chart containers scroll horizontally on mobile */
+.responsive-scroll {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Fade-in animation */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-}
-
+/* ============================================
+   2. TYPOGRAPHY
+   ============================================ */
 .montserrat-logo {
-  font-family: "Montserrat", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 300;
-  font-style: normal;
-}
-
-.montserrat-semi-bold{
     font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-style: normal;
-
-}
-
-.montserrat-medium{
-    font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 500;
-    font-style: normal;
-
-}
-
-.montserrat-bold{
-    font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 700;
-    font-style: normal;
-
-}
-
-.montserrat-light{
-    font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
     font-weight: 300;
     font-style: normal;
-
 }
+.montserrat-semi-bold { font-family: "Montserrat", sans-serif; font-weight: 600; font-style: normal; }
+.montserrat-medium { font-family: "Montserrat", sans-serif; font-weight: 500; font-style: normal; }
+.montserrat-bold { font-family: "Montserrat", sans-serif; font-weight: 700; font-style: normal; }
+.montserrat-light { font-family: "Montserrat", sans-serif; font-weight: 300; font-style: normal; }
+.montserrat-regular { font-family: "Montserrat", sans-serif; font-weight: 400; font-style: normal; }
 
-.montserrat-regular{
-    font-family: "Montserrat", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
+.roboto-light { font-family: "Roboto", sans-serif; font-weight: 300; font-style: normal; font-variation-settings: "wdth" 100; }
+.roboto-regular { font-family: "Roboto", sans-serif; font-weight: 400; font-style: normal; font-variation-settings: "wdth" 100; }
+.roboto-regular-italic { font-family: "Roboto", sans-serif; font-weight: 400; font-style: italic; font-variation-settings: "wdth" 100; }
+.roboto-medium { font-family: "Roboto", sans-serif; font-weight: 500; font-style: normal; font-variation-settings: "wdth" 100; }
+.roboto-semi-bold { font-family: "Roboto", sans-serif; font-weight: 600; font-style: normal; font-variation-settings: "wdth" 100; }
+.roboto-bold { font-family: "Roboto", sans-serif; font-weight: 700; font-style: normal; font-variation-settings: "wdth" 100; }
 
-}
-
-.roboto-light{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 300;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-
-}
-
-.roboto-regular{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-
-}
-
-.roboto-regular-italic{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: italic;
-  font-variation-settings:
-    "wdth" 100;
-
-}
-
-.roboto-medium{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 500;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-
-}
-
-.roboto-semi-bold{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 600;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-
-}
-
-.roboto-bold{
-
-font-family: "Roboto", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 700;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-
-}
+/* ============================================
+   3. COMPONENTS
+   ============================================ */
 
 /* ---------- Analog Clock ---------- */
 .analog-clock-wrapper {
     width: clamp(180px, 28vw, 260px);
     height: clamp(180px, 28vw, 260px);
 }
-
 .analog-clock {
     width: 100%;
     height: 100%;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
 }
-
-#clock-second {
-    transition: none;
-}
-
-#clock-minute {
-    transition: transform 0.3s ease;
-}
-
-#clock-hour {
-    transition: transform 0.3s ease;
-}
+#clock-second { transition: none; }
+#clock-minute { transition: transform 0.3s ease; }
+#clock-hour { transition: transform 0.3s ease; }
 
 /* Tabular numbers for digital timer */
-.tabular-nums {
-    font-variant-numeric: tabular-nums;
-}
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
-/* History panel scrollbar */
-#history-list::-webkit-scrollbar {
-    width: 4px;
-}
-#history-list::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 9999px;
-}
+/* ---------- Scrollbars ---------- */
+#agenda-panel::-webkit-scrollbar { width: 4px; }
+#agenda-panel::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
 
-/* Prevent accidental horizontal scrolling on small screens */
-html,
-body {
-    max-width: 100%;
-    overflow-x: hidden;
-}
+#week-scroll::-webkit-scrollbar,
+#day-scroll::-webkit-scrollbar { width: 6px; }
+#week-scroll::-webkit-scrollbar-thumb,
+#day-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
 
-/* Make media elements scale inside their containers */
-img,
-svg,
-canvas {
-    max-width: 100%;
-}
+#history-list::-webkit-scrollbar { width: 4px; }
+#history-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
 
-/* ── Friend code user preview panel ──────────────────────── */
+/* ---------- Friend Code Preview ---------- */
 .invite-user-preview {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
     margin-top: 0;
-    transition:
-        max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.25s ease,
-        margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease,
+                margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .invite-user-preview.is-visible {
     max-height: 64px;
     opacity: 1;
     margin-top: 6px;
 }
-
-@keyframes invite-preview-spin {
-    to { transform: rotate(360deg); }
-}
-
+@keyframes invite-preview-spin { to { transform: rotate(360deg); } }
 .invite-preview-spinner {
     width: 16px;
     height: 16px;
@@ -269,55 +144,34 @@ canvas {
     flex-shrink: 0;
 }
 
-/* Make long text/URLs wrap instead of breaking the layout */
-.responsive-wrap,
-a,
-td,
-th {
-    overflow-wrap: anywhere;
-}
+/* ---------- Mini Calendar ---------- */
+#mini-calendar .grid { gap: 1px 0; }
 
-/* Tables and chart containers should scroll horizontally on mobile */
-.responsive-scroll {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
+/* ---------- Session History Checklist ---------- */
+.history-details .checklist-item-row { transition: background-color 0.2s ease; }
+.history-details { padding-top: 0.5rem; }
 
-/* Make modals safer on small screens */
+/* ============================================
+   4. RESPONSIVE DESIGN (Mobile)
+   ============================================ */
 @media (max-width: 640px) {
-    .modal-panel,
-    [id$="-modal"] > div {
+    .modal-panel, [id$="-modal"] > div {
         width: calc(100% - 2rem);
         max-width: calc(100% - 2rem);
         max-height: 90vh;
         overflow-y: auto;
         padding: 1rem;
     }
-
-    input,
-    select,
-    textarea,
-    button {
-        font-size: 16px;
-    }
-
-    .mobile-stack {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .mobile-full {
-        width: 100%;
-    }
-
-    .mobile-card-padding {
-        padding: 1rem;
-    }
+    input, select, textarea, button { font-size: 16px; }
+    .mobile-stack { flex-direction: column; align-items: stretch; }
+    .mobile-full { width: 100%; }
+    .mobile-card-padding { padding: 1rem; }
+    .history-details { margin-left: 0 !important; padding-left: 2.5rem; }
 }
 
-
-/* ---------- Dark Mode ---------- */
+/* ============================================
+   5. DARK MODE - CORE VARIABLES
+   ============================================ */
 :root {
     --bg-page:       #f9fafb;
     --bg-card:       #ffffff;
@@ -336,1262 +190,949 @@ html.dark {
     --input-bg:      #1e2130;
 }
 
+/* Theme toggle transition */
+html, html.dark { transition: background-color 0.25s ease, color 0.2s ease; }
+
 /* Page & card backgrounds */
-html.dark body,
-html.dark main {
+html.dark body, html.dark main {
     background-color: var(--bg-page) !important;
     color: var(--text-primary);
 }
+html.dark .bg-white { background-color: var(--bg-card) !important; }
+html.dark .bg-gray-50 { background-color: #13151f !important; }
+html.dark .bg-gray-100 { background-color: #1e2130 !important; }
 
-html.dark .bg-white {
-    background-color: var(--bg-card) !important;
-}
-
-html.dark .bg-gray-50 {
-    background-color: #13151f !important;
-}
-
-html.dark .bg-gray-100 {
-    background-color: #1e2130 !important;
-}
-
-/* Text */
-html.dark .text-gray-800,
-html.dark .text-gray-900 {
-    color: var(--text-primary) !important;
-}
-
-html.dark .text-gray-700 {
-    color: #cbd5e1 !important;
-}
-
-html.dark .text-gray-600,
-html.dark .text-gray-500,
-html.dark .text-gray-400 {
-    color: var(--text-muted) !important;
-}
+/* Text colors */
+html.dark .text-gray-800, html.dark .text-gray-900 { color: var(--text-primary) !important; }
+html.dark .text-gray-700 { color: #cbd5e1 !important; }
+html.dark .text-gray-600, html.dark .text-gray-500, html.dark .text-gray-400 { color: var(--text-muted) !important; }
+html.dark .text-gray-300 { color: #475569 !important; }
 
 /* Borders */
-html.dark .border-gray-100,
-html.dark .border-gray-200 {
+html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-gray-300 {
     border-color: var(--border-color) !important;
 }
 
-/* Dropdowns (notification + user) */
-html.dark #notif-dropdown,
-html.dark #user-dropdown-menu {
+/* Dividers */
+html.dark .divide-y > * + *, html.dark .divide-x > * + * {
+    border-color: var(--border-color) !important;
+}
+
+/* Inputs */
+html.dark input, html.dark select, html.dark textarea {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+html.dark input::placeholder, html.dark textarea::placeholder {
+    color: #64748b !important;
+}
+
+/* Scrollbars */
+html.dark ::-webkit-scrollbar { background: #0f1117; }
+html.dark ::-webkit-scrollbar-thumb { background: #3a3f5c; border-radius: 9999px; }
+html.dark ::-webkit-scrollbar-thumb:hover { background: #4a4f6c; }
+html.dark #agenda-panel::-webkit-scrollbar-thumb,
+html.dark #week-scroll::-webkit-scrollbar-thumb,
+html.dark #day-scroll::-webkit-scrollbar-thumb,
+html.dark #history-list::-webkit-scrollbar-thumb { background: #3a3f5c; }
+
+/* Dropdowns */
+html.dark #notif-dropdown, html.dark #user-dropdown-menu {
     background-color: var(--bg-card);
     border-color: var(--border-color);
 }
-
 html.dark #notif-dropdown .hover\:bg-gray-50:hover,
 html.dark #user-dropdown-menu a:hover {
     background-color: #252840 !important;
 }
 
 /* Mobile more menu */
-html.dark #mobile-more-menu > div {
-    background-color: var(--bg-card);
-}
+html.dark #mobile-more-menu > div { background-color: var(--bg-card); }
+html.dark #mobile-more-menu .bg-gray-50 { background-color: #1e2130 !important; }
+html.dark #mobile-more-menu .hover\:bg-indigo-50:hover { background-color: #252840 !important; }
 
-html.dark #mobile-more-menu .bg-gray-50 {
-    background-color: #1e2130 !important;
-}
-
-html.dark #mobile-more-menu .hover\:bg-indigo-50:hover {
-    background-color: #252840 !important;
-}
-
-/* Inputs */
-html.dark input,
-html.dark select,
-html.dark textarea {
-    background-color: var(--input-bg);
-    color: var(--text-primary);
-    border-color: var(--border-color);
-}
-
-/* Dividers */
-html.dark .divide-y > * + * {
-    border-color: var(--border-color) !important;
-}
-
-/* Scrollbars in dark mode */
-html.dark ::-webkit-scrollbar-thumb {
-    background: #3a3f5c;
-}
-
-/* Theme toggle transition */
-html, html.dark {
-    transition: background-color 0.25s ease, color 0.2s ease;
-}
-/* ---------- Dark Mode: Calendar ---------- */
-
-/* Page background */
-html.dark .bg-backgroud_cal_light {
-    background-color: #0f1117 !important;
-}
-
-/* Left panel */
-html.dark #cal-left-panel {
-    background-color: #13151f;
-    border-color: var(--border-color);
-}
-
-/* Toolbar */
-html.dark .border-gray-200 {
-    border-color: var(--border-color) !important;
-}
-
-html.dark #cal-title {
-    color: #ffffff;
-}
-
-html.dark #cal-today {
-    background-color: #1e2130;
-    border-color: var(--border-color);
-    color: #f1f5f9;
-}
-
-html.dark #cal-today:hover {
-    background-color: #252840;
-}
-
-html.dark #cal-prev,
-html.dark #cal-next {
-    color: #94a3b8;
-}
-
-html.dark #cal-prev:hover,
-html.dark #cal-next:hover {
-    background-color: #1e2130;
-}
+/* ============================================
+   6. DARK MODE - CALENDAR PAGE
+   ============================================ */
+html.dark .bg-backgroud_cal_light { background-color: #0f1117 !important; }
+html.dark #cal-left-panel { background-color: #13151f; border-color: var(--border-color); }
+html.dark #cal-title { color: #ffffff; }
+html.dark #cal-today { background-color: #1e2130; border-color: var(--border-color); color: #f1f5f9; }
+html.dark #cal-today:hover { background-color: #252840; }
+html.dark #cal-prev, html.dark #cal-next { color: #94a3b8; }
+html.dark #cal-prev:hover, html.dark #cal-next:hover { background-color: #1e2130; }
 
 /* View switcher */
-html.dark .inline-flex.rounded-xl.bg-gray-100 {
-    background-color: #1e2130;
-}
+html.dark .inline-flex.rounded-xl.bg-gray-100 { background-color: #1e2130; }
+html.dark .cal-view-btn { color: #94a3b8; }
+html.dark .cal-view-btn.active { background-color: #2d3148; color: #ffffff; }
 
-html.dark .cal-view-btn {
-    color: #94a3b8;
-}
+/* Main calendar grid */
+html.dark #calendar-container { background-color: #1a1d27; color: #ffffff; }
+html.dark #calendar-container * { color: inherit; }
+html.dark #calendar-container [class*="text-gray"], html.dark #calendar-container span,
+html.dark #calendar-container p, html.dark #calendar-container div { color: #e2e8f0; }
+html.dark #calendar-container .bg-indigo-600 span, html.dark #calendar-container .bg-indigo-600 div,
+html.dark #calendar-container .bg-indigo-500 span { color: #ffffff !important; }
+html.dark #calendar-container .text-gray-300, html.dark #calendar-container .text-gray-400,
+html.dark #calendar-container .opacity-40, html.dark #calendar-container .opacity-50 { color: #475569 !important; }
 
-html.dark .cal-view-btn.active {
-    background-color: #2d3148;
-    color: #ffffff;
-}
-
-/* Main calendar grid container */
-html.dark #calendar-container {
-    background-color: #1a1d27;
-    color: #ffffff;
-}
-
-/* All text nodes rendered inside the calendar grid by JS */
-html.dark #calendar-container * {
-    color: inherit;
-}
-
-/* Day/date number cells — covers whatever classes calendar.js applies */
-html.dark #calendar-container [class*="text-gray"],
-html.dark #calendar-container [class*="text-slate"],
-html.dark #calendar-container span,
-html.dark #calendar-container p,
-html.dark #calendar-container div {
-    color: #e2e8f0;
-}
-
-/* Today highlight — keep it readable */
-html.dark #calendar-container .bg-indigo-600 span,
-html.dark #calendar-container .bg-indigo-600 div,
-html.dark #calendar-container .bg-indigo-500 span {
-    color: #ffffff !important;
-}
-
-/* Muted / out-of-month dates */
-html.dark #calendar-container .text-gray-300,
-html.dark #calendar-container .text-gray-400,
-html.dark #calendar-container .opacity-40,
-html.dark #calendar-container .opacity-50 {
-    color: #475569 !important;
-}
-
-/* Week/day view hour labels and grid lines */
-html.dark #week-scroll,
-html.dark #day-scroll {
+/* Week/Day view */
+html.dark #week-scroll, html.dark #day-scroll {
     background-color: #1a1d27;
     color: #e2e8f0;
 }
-
-html.dark #week-scroll .border-gray-100,
-html.dark #day-scroll .border-gray-100,
-html.dark #week-scroll .border-gray-200,
-html.dark #day-scroll .border-gray-200 {
+html.dark #week-scroll .border-gray-100, html.dark #day-scroll .border-gray-100,
+html.dark #week-scroll .border-gray-200, html.dark #day-scroll .border-gray-200 {
     border-color: #2d3148 !important;
 }
 
 /* Mini calendar */
-html.dark #mini-calendar {
-    color: #ffffff;
-}
-
-html.dark #mini-calendar span,
-html.dark #mini-calendar div,
-html.dark #mini-calendar button {
+html.dark #mini-calendar { color: #ffffff; }
+html.dark #mini-calendar span, html.dark #mini-calendar div, html.dark #mini-calendar button {
     color: #e2e8f0;
 }
-
-html.dark #mini-calendar .text-gray-400,
-html.dark #mini-calendar .text-gray-300 {
-    color: #475569 !important;
-}
-
-/* Mini calendar today dot / selected */
-html.dark #mini-calendar .bg-indigo-600,
-html.dark #mini-calendar .bg-indigo-500 {
+html.dark #mini-calendar button:hover { background-color: #252840; }
+html.dark #mini-calendar .bg-indigo-600, html.dark #mini-calendar .bg-indigo-500 {
     color: #ffffff !important;
-}
-
-html.dark #mini-calendar .bg-indigo-600 span,
-html.dark #mini-calendar .bg-indigo-500 span {
-    color: #ffffff !important;
-}
-
-/* Hover states on mini calendar days */
-html.dark #mini-calendar button:hover {
-    background-color: #252840;
 }
 
 /* Agenda panels */
-html.dark #agenda-panel,
-html.dark #mobile-agenda-panel {
+html.dark #agenda-panel, html.dark #mobile-agenda-panel {
     background-color: #1a1d27;
     color: #e2e8f0;
     border-color: var(--border-color);
 }
-
-html.dark #agenda-panel *,
-html.dark #mobile-agenda-panel * {
-    color: #e2e8f0;
-}
-
-html.dark #agenda-panel .text-gray-400,
-html.dark #mobile-agenda-panel .text-gray-400,
-html.dark #agenda-panel .text-gray-500,
-html.dark #mobile-agenda-panel .text-gray-500 {
+html.dark #agenda-panel .text-gray-400, html.dark #mobile-agenda-panel .text-gray-400,
+html.dark #agenda-panel .text-gray-500, html.dark #mobile-agenda-panel .text-gray-500 {
     color: #64748b !important;
 }
 
-/* Add event button (desktop) */
-html.dark #add-event-btn {
-    background-color: #252840;
-    color: #e2e8f0;
-}
-
-html.dark #add-event-btn:hover {
-    background-color: #2d3148;
-}
-
 /* Event modal */
-html.dark #event-modal > div,
-html.dark #event-summary-modal > div {
+html.dark #add-event-btn { background-color: #252840; color: #e2e8f0; }
+html.dark #add-event-btn:hover { background-color: #2d3148; }
+html.dark #event-modal > div, html.dark #event-summary-modal > div {
     background-color: #1a1d27;
     border-color: var(--border-color);
 }
-
-html.dark #event-modal label,
-html.dark #event-summary-modal p,
-html.dark #event-form label {
-    color: #cbd5e1 !important;
-}
-
-html.dark #event-modal h3,
-html.dark #event-summary-modal h3,
-html.dark #summary-title {
-    color: #f1f5f9 !important;
-}
-
-html.dark #event-modal input,
-html.dark #event-modal select,
+html.dark #event-modal label, html.dark #event-summary-modal p,
+html.dark #event-form label { color: #cbd5e1 !important; }
+html.dark #event-modal h3, html.dark #event-summary-modal h3,
+html.dark #summary-title { color: #f1f5f9 !important; }
+html.dark #event-modal input, html.dark #event-modal select,
 html.dark #event-modal textarea {
     background-color: #252840;
     border-color: #3a3f5c;
     color: #f1f5f9;
 }
+html.dark .event-type-btn { border-color: #3a3f5c; color: #cbd5e1; background-color: #252840; }
+html.dark #event-cancel-btn { background-color: #252840; color: #cbd5e1; }
+html.dark #event-cancel-btn:hover { background-color: #2d3148; }
+html.dark #summary-edit-btn:hover, html.dark #summary-close-btn:hover { background-color: #252840; }
 
-html.dark #event-modal input:focus,
-html.dark #event-modal select:focus,
-html.dark #event-modal textarea:focus {
-    background-color: #2d3148;
-    border-color: #6366f1;
-}
-
-html.dark .event-type-btn {
-    border-color: #3a3f5c;
-    color: #cbd5e1;
-    background-color: #252840;
-}
-
-html.dark #event-cancel-btn {
-    background-color: #252840;
-    color: #cbd5e1;
-}
-
-html.dark #event-cancel-btn:hover {
-    background-color: #2d3148;
-}
-
-html.dark #summary-edit-btn:hover,
-html.dark #summary-close-btn:hover {
-    background-color: #252840;
-}
-
-html.dark #summary-datetime,
-html.dark #summary-duration,
-html.dark #summary-repeat,
-html.dark #summary-notes,
-html.dark #summary-description,
-html.dark #summary-completed {
-    color: #f1f5f9 !important;
-}
-
-html.dark .text-gray-500.text-sm {
-    color: #64748b !important;
-}
-
-/* ---------- Dark Mode: Dashboard ---------- */
- 
-/* Hero section overlay text */
-html.dark .text-text_dark_gray,
-html.dark [class*="text-text_dark_gray"] {
-    color: #f1f5f9 !important;
-}
- 
-/* Dashboard sidebar cards & feed cards */
-html.dark .bg-white.rounded-3xl,
-html.dark .bg-white.rounded-2xl,
-html.dark .bg-white.p-5,
-html.dark .bg-white.p-6 {
+/* ============================================
+   7. DARK MODE - DASHBOARD
+   ============================================ */
+html.dark .text-text_dark_gray, html.dark [class*="text-text_dark_gray"] { color: #f1f5f9 !important; }
+html.dark .bg-white.rounded-3xl, html.dark .bg-white.rounded-2xl,
+html.dark .bg-white.p-5, html.dark .bg-white.p-6 {
     background-color: var(--bg-card) !important;
 }
- 
-/* Card headings and body text */
-html.dark .bg-white h3,
-html.dark .bg-white .montserrat-semi-bold,
-html.dark .bg-white .montserrat-bold,
-html.dark .bg-white .montserrat-medium,
-html.dark .bg-white .roboto-regular,
-html.dark .bg-white .roboto-medium,
-html.dark .bg-white .font-semibold {
+html.dark .bg-white h3, html.dark .bg-white .montserrat-semi-bold,
+html.dark .bg-white .montserrat-bold, html.dark .bg-white .montserrat-medium,
+html.dark .bg-white .roboto-regular, html.dark .bg-white .roboto-medium,
+html.dark .bg-white .font-semibold { color: var(--text-primary) !important; }
+html.dark .bg-white .roboto-light, html.dark .bg-white .text-gray-500,
+html.dark .bg-white .text-gray-400 { color: var(--text-muted) !important; }
+
+/* Progress bar */
+html.dark .bg-gray-200.rounded-full { background-color: #2d3148 !important; }
+
+/* Task list */
+html.dark #task-list li, html.dark #task-list span, html.dark #task-list p {
     color: var(--text-primary) !important;
 }
- 
-html.dark .bg-white .roboto-light,
-html.dark .bg-white .text-gray-500,
-html.dark .bg-white .text-gray-400 {
-    color: var(--text-muted) !important;
-}
- 
-/* Progress bar track */
-html.dark .bg-gray-200.rounded-full {
-    background-color: #2d3148 !important;
-}
- 
-/* Task list items */
-html.dark #task-list li,
-html.dark #task-list span,
-html.dark #task-list p {
-    color: var(--text-primary) !important;
-}
- 
-/* Progress text */
-html.dark #progress-text {
-    color: var(--text-muted) !important;
-}
- 
+html.dark #progress-text { color: var(--text-muted) !important; }
+
 /* WAM card */
-html.dark #wam-card {
-    background: linear-gradient(to bottom right, var(--bg-card), #13151f) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark #wam-card .text-gray-600,
-html.dark #wam-card .text-gray-500,
-html.dark #wam-card .text-gray-700,
-html.dark #wam-card .text-gray-800 {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #wam-current {
-    color: #f1f5f9 !important;
-}
- 
-html.dark #wam-best {
-    color: #cbd5e1 !important;
-}
- 
-/* WAM ring bg track */
-html.dark #wam-card circle[stroke="#e5e7eb"] {
-    stroke: #2d3148;
-}
- 
-/* Semester badge on WAM */
-html.dark #semester-name {
-    background-color: #1a2e22 !important;
-    color: #4ade80 !important;
-}
- 
-/* Feed card - user name & muted text */
-html.dark .roboto-regular.text-text_dark_gray,
-html.dark .montserrat-semi-bold.text-text_dark_gray {
-    color: #f1f5f9 !important;
-}
- 
-/* Feed card borders */
-html.dark .border-t {
-    border-color: var(--border-color) !important;
-}
- 
-/* Feed action buttons */
-html.dark .border-t button {
-    color: var(--text-muted) !important;
-}
- 
-html.dark .border-t button:hover {
-    color: #818cf8 !important;
-}
- 
-/* Urgency card — keep its own bg, fix text if needed */
-html.dark .bg-task_pink p {
-    color: #ffffff !important;
-}
- 
-/* Streak / Study / Achievement cards */
-html.dark .text-task_yellow {
-    color: #fbbf24 !important;
-}
- 
-html.dark .text-task_green {
-    color: #34d399 !important;
-}
- 
-/* Current Focus card timer */
-html.dark .text-primary_purp {
-    color: #a78bfa !important;
-}
- 
-/* ---------- Dark Mode: Stats ---------- */
- 
-/* Filter bar */
-html.dark #period-tabs {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark .period-btn {
-    color: var(--text-muted) !important;
-}
- 
-html.dark .period-btn.bg-indigo-600 {
-    color: #ffffff !important;
-    background-color: #4f46e5 !important;
-}
- 
-/* Summary cards */
-html.dark #summary-cards .bg-white {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark #summary-cards .text-gray-800,
-html.dark #summary-cards [id^="stat-"] {
-    color: #f1f5f9 !important;
-}
- 
-html.dark #summary-cards .text-gray-400 {
-    color: var(--text-muted) !important;
-}
- 
-/* Icon badge backgrounds — keep colours, adjust opacity for dark */
-html.dark #summary-cards .bg-indigo-100  { background-color: #1e1b4b !important; }
-html.dark #summary-cards .bg-blue-100    { background-color: #172554 !important; }
-html.dark #summary-cards .bg-emerald-100 { background-color: #022c22 !important; }
-html.dark #summary-cards .bg-amber-100   { background-color: #2d1b00 !important; }
-html.dark #summary-cards .bg-rose-100    { background-color: #2d0a12 !important; }
- 
-/* Chart containers */
-html.dark #chart-hours-by-unit,
-html.dark #chart-donut,
-html.dark #chart-daily-trend,
-html.dark #chart-heatmap,
-html.dark #chart-task-completion {
-    color: #e2e8f0;
-}
- 
-/* Chart card wrappers */
-html.dark .bg-white.rounded-2xl.shadow-sm {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark .bg-white.rounded-2xl.shadow-sm h3,
-html.dark .bg-white.rounded-2xl.shadow-sm .montserrat-medium {
-    color: #e2e8f0 !important;
-}
- 
-/* Empty-state messages */
-html.dark #hours-empty,
-html.dark #donut-empty,
-html.dark #trend-empty,
-html.dark #tasks-empty {
-    color: var(--text-muted) !important;
-}
- 
-/* ApexCharts dark mode overrides
-   ApexCharts injects its own SVG text — force light colour via the wrapper */
-html.dark .apexcharts-text,
-html.dark .apexcharts-legend-text,
-html.dark .apexcharts-yaxis-label,
-html.dark .apexcharts-xaxis-label,
-html.dark .apexcharts-title-text,
-html.dark .apexcharts-datalabel,
-html.dark .apexcharts-datalabel-label,
-html.dark .apexcharts-datalabel-value,
-html.dark .apexcharts-tooltip {
-    color: #e2e8f0 !important;
-    fill: #e2e8f0 !important;
-}
- 
-html.dark .apexcharts-gridline {
-    stroke: #2d3148 !important;
-}
- 
-html.dark .apexcharts-tooltip {
-    background: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-    color: #f1f5f9 !important;
-}
- 
-html.dark .apexcharts-tooltip-title {
-    background: #1e2130 !important;
-    border-color: var(--border-color) !important;
-    color: #f1f5f9 !important;
-}
- 
-html.dark .apexcharts-tooltip-text-y-label,
-html.dark .apexcharts-tooltip-text-y-value {
-    color: #e2e8f0 !important;
-}
- 
-/* Semester select dropdown */
-html.dark #semester-filter {
-    background-color: var(--input-bg) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-primary) !important;
-}
+html.dark #wam-card { background: linear-gradient(to bottom right, var(--bg-card), #13151f) !important; border-color: var(--border-color) !important; }
+html.dark #wam-card .text-gray-600, html.dark #wam-card .text-gray-500,
+html.dark #wam-card .text-gray-700, html.dark #wam-card .text-gray-800 { color: var(--text-muted) !important; }
+html.dark #wam-current { color: #f1f5f9 !important; }
+html.dark #wam-best { color: #cbd5e1 !important; }
+html.dark #wam-card circle[stroke="#e5e7eb"] { stroke: #2d3148; }
+html.dark #semester-name { background-color: #1a2e22 !important; color: #4ade80 !important; }
 
-html.dark .apexcharts-canvas,
-html.dark .apexcharts-inner,
-html.dark .apexcharts-graphical {
-    background: transparent !important;
-}
- 
-/* Grid lines — replace #e5e7eb grey */
-html.dark .apexcharts-gridline,
-html.dark .apexcharts-grid line,
-html.dark .apexcharts-grid-borders line {
-    stroke: #2d3148 !important;
-}
- 
-/* X/Y axis border lines */
-html.dark .apexcharts-xaxis line,
-html.dark .apexcharts-yaxis line,
-html.dark .apexcharts-axis-texts-g line {
-    stroke: #2d3148 !important;
-}
- 
-/* Axis labels */
-html.dark .apexcharts-xaxis-label,
-html.dark .apexcharts-yaxis-label {
-    fill: #94a3b8 !important;
-}
- 
-/* Legend text */
-html.dark .apexcharts-legend-text {
-    color: #cbd5e1 !important;
-    fill: #cbd5e1 !important;
-}
- 
-/* Data labels on bars / donut */
-html.dark .apexcharts-datalabel,
-html.dark .apexcharts-datalabel-label,
-html.dark .apexcharts-datalabel-value,
-html.dark .apexcharts-pie-label {
-    fill: #f1f5f9 !important;
-    color: #f1f5f9 !important;
-}
- 
-/* Heatmap cell borders */
-html.dark .apexcharts-heatmap-rect {
-    stroke: #0f1117 !important;
-}
- 
-/* Tooltip */
-html.dark .apexcharts-tooltip {
-    background: #1a1d27 !important;
-    border-color: #2d3148 !important;
-    color: #f1f5f9 !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-}
-html.dark .apexcharts-tooltip-title {
-    background: #13151f !important;
-    border-color: #2d3148 !important;
-    color: #f1f5f9 !important;
-}
-html.dark .apexcharts-tooltip-text-y-label,
-html.dark .apexcharts-tooltip-text-y-value,
-html.dark .apexcharts-tooltip-text-goals-label,
-html.dark .apexcharts-tooltip-text-goals-value {
-    color: #e2e8f0 !important;
-}
-html.dark .apexcharts-tooltip-marker {
-    border-color: #2d3148 !important;
-}
- 
-/* Crosshair / zoom selection */
-html.dark .apexcharts-selection-rect,
-html.dark .apexcharts-zoom-rect {
-    fill: rgba(99, 102, 241, 0.15) !important;
-    stroke: #6366f1 !important;
-}
- 
-/* Bar chart track (empty part of bar) */
-html.dark .apexcharts-bar-area[fill="#e5e7eb"],
-html.dark .apexcharts-bar-area[fill="#f3f4f6"] {
-    fill: #2d3148 !important;
-}
- 
-/* Radial / donut track ring */
-html.dark .apexcharts-radialbar-track > path,
-html.dark .apexcharts-doughnut-slice-background {
-    stroke: #2d3148 !important;
-    fill: #2d3148 !important;
-}
- 
-/* ---------- Analog Clock: dark mode ---------- */
- 
-/* Clock face circle (the #e5e7eb ring) */
-html.dark #analog-clock circle[stroke="#e5e7eb"] {
-    stroke: #2d3148 !important;
-}
- 
-/* Clock face fill (#fafafa) */
-html.dark #analog-clock circle[fill="#fafafa"] {
-    fill: #1a1d27 !important;
-}
- 
-/* Hour hand and center dot (#374151) */
-html.dark #clock-hour,
-html.dark #analog-clock circle[fill="#374151"] {
-    stroke: #cbd5e1 !important;
-    fill: #cbd5e1 !important;
-}
-html.dark #analog-clock circle[fill="#fff"] {
-    fill: #1a1d27 !important;
-}
- 
-/* Hour numbers */
-html.dark #clock-numbers {
-    fill: #94a3b8 !important;
-}
- 
-/* Tick marks */
-html.dark #clock-ticks line {
-    stroke: #3a3f5c !important;
-}
- 
-/* Digital timer */
-html.dark #digital-timer {
-    color: #f1f5f9 !important;
-}
- 
-/* ---------- Sessions page: dark mode ---------- */
- 
-/* Main cards */
-html.dark #setup-phase .bg-white,
-html.dark #active-phase .bg-white,
-html.dark .mt-8 .bg-white {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-/* Headings & labels */
-html.dark #setup-phase h3,
-html.dark #setup-phase h4,
-html.dark #active-phase h3,
-html.dark #active-phase h4,
-html.dark .mt-8 h4 {
-    color: var(--text-primary) !important;
-}
- 
-html.dark #setup-phase label,
-html.dark #active-phase label,
-html.dark #edit-session-modal label {
-    color: #cbd5e1 !important;
-}
- 
-/* Muted text */
-html.dark #setup-phase .text-gray-500,
-html.dark #active-phase .text-gray-500,
-html.dark #active-phase .text-gray-400,
-html.dark .mt-8 .text-gray-500,
-html.dark .mt-8 .text-gray-400 {
-    color: var(--text-muted) !important;
-}
- 
-/* Input fields in setup */
-html.dark #session-name,
-html.dark #session-unit,
-html.dark #countdown-hours,
-html.dark #countdown-minutes,
-html.dark #new-checklist-item,
-html.dark #live-new-item,
-html.dark #edit-session-name,
-html.dark #edit-countdown-hours,
-html.dark #edit-countdown-minutes,
-html.dark #edit-new-item {
+/* Feed */
+html.dark .border-t { border-color: var(--border-color) !important; }
+html.dark .border-t button { color: var(--text-muted) !important; }
+html.dark .border-t button:hover { color: #818cf8 !important; }
+html.dark .bg-task_pink p { color: #ffffff !important; }
+html.dark .text-task_yellow { color: #fbbf24 !important; }
+html.dark .text-task_green { color: #34d399 !important; }
+html.dark .text-primary_purp { color: #a78bfa !important; }
+
+/* ============================================
+   8. DARK MODE - STATS PAGE
+   ============================================ */
+html.dark #period-tabs { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark .period-btn { color: var(--text-muted) !important; }
+html.dark .period-btn.bg-indigo-600 { color: #ffffff !important; background-color: #4f46e5 !important; }
+html.dark #summary-cards .bg-white { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #summary-cards .text-gray-800, html.dark #summary-cards [id^="stat-"] { color: #f1f5f9 !important; }
+html.dark #summary-cards .text-gray-400 { color: var(--text-muted) !important; }
+
+/* Icon badges */
+html.dark #summary-cards .bg-indigo-100 { background-color: #1e1b4b !important; }
+html.dark #summary-cards .bg-blue-100 { background-color: #172554 !important; }
+html.dark #summary-cards .bg-emerald-100 { background-color: #022c22 !important; }
+html.dark #summary-cards .bg-amber-100 { background-color: #2d1b00 !important; }
+html.dark #summary-cards .bg-rose-100 { background-color: #2d0a12 !important; }
+
+/* Chart containers */
+html.dark #chart-hours-by-unit, html.dark #chart-donut, html.dark #chart-daily-trend,
+html.dark #chart-heatmap, html.dark #chart-task-completion { color: #e2e8f0; }
+html.dark .bg-white.rounded-2xl.shadow-sm { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #hours-empty, html.dark #donut-empty, html.dark #trend-empty,
+html.dark #tasks-empty { color: var(--text-muted) !important; }
+html.dark #semester-filter { background-color: var(--input-bg) !important; border-color: var(--border-color) !important; color: var(--text-primary) !important; }
+
+/* ApexCharts */
+html.dark .apexcharts-canvas, html.dark .apexcharts-inner,
+html.dark .apexcharts-graphical { background: transparent !important; }
+html.dark .apexcharts-text, html.dark .apexcharts-legend-text,
+html.dark .apexcharts-yaxis-label, html.dark .apexcharts-xaxis-label,
+html.dark .apexcharts-title-text, html.dark .apexcharts-datalabel,
+html.dark .apexcharts-datalabel-label, html.dark .apexcharts-datalabel-value,
+html.dark .apexcharts-tooltip { color: #e2e8f0 !important; fill: #e2e8f0 !important; }
+html.dark .apexcharts-gridline, html.dark .apexcharts-grid line,
+html.dark .apexcharts-grid-borders line { stroke: #2d3148 !important; }
+html.dark .apexcharts-xaxis line, html.dark .apexcharts-yaxis line { stroke: #2d3148 !important; }
+html.dark .apexcharts-xaxis-label, html.dark .apexcharts-yaxis-label { fill: #94a3b8 !important; }
+html.dark .apexcharts-legend-text { color: #cbd5e1 !important; fill: #cbd5e1 !important; }
+html.dark .apexcharts-tooltip { background: #1a1d27 !important; border-color: #2d3148 !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+html.dark .apexcharts-tooltip-title { background: #13151f !important; border-color: #2d3148 !important; color: #f1f5f9 !important; }
+html.dark .apexcharts-bar-area[fill="#e5e7eb"], html.dark .apexcharts-bar-area[fill="#f3f4f6"] { fill: #2d3148 !important; }
+
+/* ============================================
+   9. DARK MODE - SESSIONS PAGE
+   ============================================ */
+html.dark #setup-phase .bg-white, html.dark #active-phase .bg-white,
+html.dark .mt-8 .bg-white { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #setup-phase h3, html.dark #setup-phase h4, html.dark #active-phase h3,
+html.dark #active-phase h4, html.dark .mt-8 h4 { color: var(--text-primary) !important; }
+html.dark #setup-phase label, html.dark #active-phase label,
+html.dark #edit-session-modal label { color: #cbd5e1 !important; }
+html.dark #setup-phase .text-gray-500, html.dark #active-phase .text-gray-500,
+html.dark #active-phase .text-gray-400, html.dark .mt-8 .text-gray-500,
+html.dark .mt-8 .text-gray-400 { color: var(--text-muted) !important; }
+
+/* Input fields */
+html.dark #session-name, html.dark #session-unit, html.dark #countdown-hours,
+html.dark #countdown-minutes, html.dark #new-checklist-item, html.dark #live-new-item,
+html.dark #edit-session-name, html.dark #edit-countdown-hours,
+html.dark #edit-countdown-minutes, html.dark #edit-new-item {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
     color: #f1f5f9 !important;
 }
- 
-html.dark #session-name:focus,
-html.dark #session-unit:focus,
-html.dark #new-checklist-item:focus,
-html.dark #live-new-item:focus {
+html.dark #session-name:focus, html.dark #session-unit:focus,
+html.dark #new-checklist-item:focus, html.dark #live-new-item:focus {
     background-color: #2d3148 !important;
     border-color: #6366f1 !important;
 }
- 
-/* Timer mode switcher bg */
+
+/* Timer mode switcher */
 html.dark .flex.rounded-xl.bg-gray-100,
 html.dark .flex.w-full.sm\:inline-flex.rounded-xl.bg-gray-100 {
     background-color: #1e2130 !important;
 }
- 
-html.dark .timer-mode-btn,
-html.dark .edit-timer-mode-btn {
-    color: var(--text-muted) !important;
-}
- 
-/* Active mode btn is bg-primary_purp — keep white text */
-html.dark .timer-mode-btn.bg-primary_purp,
-html.dark .edit-timer-mode-btn.bg-primary_purp {
+html.dark .timer-mode-btn, html.dark .edit-timer-mode-btn { color: var(--text-muted) !important; }
+html.dark .timer-mode-btn.bg-primary_purp, html.dark .edit-timer-mode-btn.bg-primary_purp {
     color: #ffffff !important;
 }
- 
-/* Start session btn disabled state */
-html.dark #start-session-btn.bg-gray-300 {
-    background-color: #2d3148 !important;
-    color: #64748b !important;
+html.dark .timer-mode-btn:hover, html.dark .edit-timer-mode-btn:hover {
+    background-color: #1e2130 !important;
+    color: #f1f5f9 !important;
 }
- 
-/* Session history list dividers */
-html.dark #history-list .divide-y > * + * {
-    border-color: var(--border-color) !important;
-}
- 
-html.dark .divide-y.divide-gray-50 > * + * {
-    border-color: var(--border-color) !important;
-}
- 
-/* History empty state icon */
-html.dark #history-empty svg {
-    color: #2d3148 !important;
-}
- 
-/* Active session name */
-html.dark #active-session-name,
-html.dark #active-timer-mode {
-    color: var(--text-primary) !important;
-}
- 
-/* In Progress badge */
-html.dark #active-badge {
-    background-color: #052e16 !important;
-    color: #4ade80 !important;
-}
- 
-/* Countdown done badge */
-html.dark #countdown-done-badge {
-    background-color: #2d1b00 !important;
-    color: #fbbf24 !important;
-}
- 
-/* Checklist items (rendered by JS — target wrapper) */
-html.dark #checklist-builder *,
-html.dark #live-checklist *,
-html.dark #edit-checklist-list * {
-    color: var(--text-primary) !important;
-}
- 
-/* Checklist item bg */
-html.dark #checklist-builder > div,
-html.dark #live-checklist > div {
+
+/* Start session button */
+html.dark #start-session-btn.bg-gray-300 { background-color: #2d3148 !important; color: #64748b !important; }
+
+/* Active session */
+html.dark #active-session-name, html.dark #active-timer-mode { color: var(--text-primary) !important; }
+html.dark #active-badge { background-color: #052e16 !important; color: #4ade80 !important; }
+html.dark #countdown-done-badge { background-color: #2d1b00 !important; color: #fbbf24 !important; }
+
+/* Checklist items */
+html.dark #checklist-builder * , html.dark #live-checklist *,
+html.dark #edit-checklist-list * { color: var(--text-primary) !important; }
+html.dark #checklist-builder > div, html.dark #live-checklist > div {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
 }
- 
-/* Session history rows */
-html.dark #history-list > div {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark #history-list .text-gray-800,
-html.dark #history-list .text-gray-700 {
-    color: var(--text-primary) !important;
-}
- 
-html.dark #history-list .text-gray-500,
-html.dark #history-list .text-gray-400 {
-    color: var(--text-muted) !important;
-}
- 
-/* Resume & Edit modals */
-html.dark #resume-choice-modal > div,
-html.dark #edit-session-modal > div,
-html.dark #delete-session-modal > div {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark #resume-choice-modal h3,
-html.dark #edit-session-modal h3,
-html.dark #delete-session-modal h3 {
-    color: var(--text-primary) !important;
-}
- 
-html.dark #resume-choice-modal p,
-html.dark #delete-session-modal p {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #resume-choice-continue-btn {
-    background-color: #4f46e5 !important;
-}
- 
-html.dark #resume-choice-new-btn {
+html.dark #checklist-builder > div:hover, html.dark #live-checklist label:hover {
     background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: var(--text-primary) !important;
 }
- 
-html.dark #resume-choice-cancel-btn {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #edit-cancel-btn,
-html.dark #delete-session-cancel {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: #cbd5e1 !important;
-}
- 
-html.dark #edit-modal-close {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #edit-modal-close:hover {
-    background-color: #252840 !important;
-    color: var(--text-primary) !important;
-}
- 
-/* Quick tips card */
-html.dark #setup-phase .text-xs.text-gray-500 {
-    color: var(--text-muted) !important;
-}
- 
-/* h/m labels next to countdown inputs */
-html.dark .text-sm.text-gray-500.roboto-regular {
-    color: var(--text-muted) !important;
-}
- 
-/* ---------- Groups page: dark mode ---------- */
- 
-/* Page background */
-html.dark .bg-backgroud_cal_light {
-    background-color: #0f1117 !important;
-}
- 
-/* Page heading */
-html.dark h2.text-gray-800 {
-    color: var(--text-primary) !important;
-}
- 
+
+/* Session history */
+html.dark #history-list > div { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #history-list .text-gray-800, html.dark #history-list .text-gray-700 { color: var(--text-primary) !important; }
+html.dark #history-list .text-gray-500, html.dark #history-list .text-gray-400 { color: var(--text-muted) !important; }
+html.dark .history-item:hover { background-color: #252840 !important; }
+html.dark #history-empty svg { color: #2d3148 !important; }
+
+/* Modals */
+html.dark #resume-choice-modal > div, html.dark #edit-session-modal > div,
+html.dark #delete-session-modal > div { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #resume-choice-modal h3, html.dark #edit-session-modal h3,
+html.dark #delete-session-modal h3 { color: var(--text-primary) !important; }
+html.dark #resume-choice-modal p, html.dark #delete-session-modal p { color: var(--text-muted) !important; }
+html.dark #resume-choice-continue-btn { background-color: #4f46e5 !important; }
+html.dark #resume-choice-new-btn, html.dark #edit-cancel-btn,
+html.dark #delete-session-cancel { background-color: #252840 !important; border-color: #3a3f5c !important; color: #cbd5e1 !important; }
+html.dark #resume-choice-new-btn:hover, html.dark #edit-cancel-btn:hover,
+html.dark #delete-session-cancel:hover { background-color: #2d3148 !important; }
+html.dark #resume-choice-cancel-btn { color: var(--text-muted) !important; }
+html.dark #edit-modal-close { color: var(--text-muted) !important; }
+html.dark #edit-modal-close:hover { background-color: #252840 !important; color: var(--text-primary) !important; }
+
+/* Edit checklist */
+html.dark #edit-checklist-list > div { background-color: #252840 !important; border-color: #3a3f5c !important; }
+html.dark #edit-checklist-list span { color: #f1f5f9 !important; }
+html.dark #session-unit option { background-color: #1a1d27 !important; }
+
+/* Checklist history hover */
+html.dark .history-details .checklist-item-row:hover { background-color: #252840 !important; }
+html.dark .tick-checklist-item:hover { background-color: #1a2e22 !important; color: #6ee7b7 !important; }
+html.dark .history-details .line-through { color: #64748b !important; }
+.history-details .checklist-item-row:hover { background-color: #f9fafb; }
+.tick-checklist-item:hover { background-color: #ecfdf5 !important; }
+
+/* ============================================
+   10. DARK MODE - GROUPS PAGE
+   ============================================ */
+html.dark .bg-backgroud_cal_light { background-color: #0f1117 !important; }
+html.dark h2.text-gray-800 { color: var(--text-primary) !important; }
+
 /* Search input */
-html.dark #group-search {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: #f1f5f9 !important;
-}
- 
-html.dark #group-search::placeholder {
-    color: #64748b !important;
-}
- 
+html.dark #group-search { background-color: #252840 !important; border-color: #3a3f5c !important; color: #f1f5f9 !important; }
+html.dark #group-search::placeholder { color: #64748b !important; }
+html.dark #group-search:focus { background-color: #2d3148 !important; border-color: #6366f1 !important; }
+
 /* Sidebar cards */
-html.dark #invitations,
-html.dark #sent-invitations,
-html.dark .w-72 .bg-white {
+html.dark #invitations, html.dark #sent-invitations, html.dark .w-72 .bg-white {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
 }
- 
-html.dark #invitations h3,
-html.dark #sent-invitations h3,
-html.dark .w-72 h3 {
+html.dark #invitations h3, html.dark #sent-invitations h3, html.dark .w-72 h3 {
     color: var(--text-primary) !important;
 }
- 
-html.dark #invitations .text-gray-400,
-html.dark #sent-invitations .text-gray-400,
-html.dark #no-invitations p,
-html.dark #no-sent-invitations p {
+html.dark #invitations .text-gray-400, html.dark #sent-invitations .text-gray-400,
+html.dark #no-invitations p, html.dark #no-sent-invitations p {
     color: var(--text-muted) !important;
 }
- 
-/* Friend code display box */
-html.dark .bg-indigo-50.rounded-xl {
-    background-color: #1e1b4b !important;
+html.dark #invitations .bg-gray-50, html.dark #sent-invitations .bg-gray-50 {
+    background-color: #1e2130 !important;
+    border-color: #2d3148 !important;
 }
- 
-html.dark #friend-code-display {
-    color: #a78bfa !important;
+html.dark #invitations .text-gray-700, html.dark #sent-invitations .text-gray-700 {
+    color: #e2e8f0 !important;
 }
- 
-html.dark #copy-friend-code {
-    background-color: #1e1b4b !important;
-    color: #818cf8 !important;
+
+/* Friend code */
+html.dark .bg-indigo-50.rounded-xl { background-color: #1e1b4b !important; }
+html.dark #friend-code-display { color: #a78bfa !important; }
+html.dark #copy-friend-code { background-color: #1e1b4b !important; color: #818cf8 !important; border-color: #2d3148 !important; }
+html.dark #copy-friend-code:hover { background-color: #252870 !important; color: #c4b5fd !important; }
+html.dark #copy-toast { color: #4ade80 !important; }
+
+/* Group cards */
+html.dark #groups-container > div { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #groups-container .text-gray-800, html.dark #groups-container .text-gray-700 { color: var(--text-primary) !important; }
+html.dark #groups-container .text-gray-500, html.dark #groups-container .text-gray-400 { color: var(--text-muted) !important; }
+html.dark #groups-container .bg-gray-100 { background-color: #252840 !important; }
+html.dark #empty-groups p { color: var(--text-muted) !important; }
+
+/* Group card inner */
+html.dark .group-card { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark .group-card .bg-gradient-to-br { background: linear-gradient(to bottom right, #1e2130, #13151f) !important; }
+html.dark .group-card h3, html.dark .group-card .text-gray-800 { color: var(--text-primary) !important; }
+html.dark .group-card .text-gray-500, html.dark .group-card .text-gray-400 { color: var(--text-muted) !important; }
+
+/* Invite button */
+html.dark .group-card .invite-btn { background-color: #1e1b4b !important; color: #818cf8 !important; border: 1px solid #2d3148 !important; }
+html.dark .group-card .invite-btn:hover { background-color: #252870 !important; color: #a78bfa !important; border-color: #6366f1 !important; }
+
+/* Role badges */
+html.dark .group-card .bg-indigo-100 { background-color: #1e1b4b !important; color: #818cf8 !important; }
+html.dark .group-card .bg-purple-100 { background-color: #2d1b4b !important; color: #a78bfa !important; }
+html.dark .group-card .bg-gray-100 { background-color: #1e2130 !important; color: #94a3b8 !important; }
+html.dark .group-card .bg-gradient-to-t { background: linear-gradient(to top, rgba(0,0,0,0.6), transparent) !important; }
+
+/* Accept/Decline buttons */
+html.dark .accept-invite-btn { background-color: #4f46e5 !important; }
+html.dark .accept-invite-btn:hover { background-color: #6366f1 !important; }
+html.dark .decline-invite-btn, html.dark .cancel-invite-btn {
+    background-color: transparent !important;
+    border-color: #3a3f5c !important;
+    color: #94a3b8 !important;
 }
- 
-html.dark #copy-friend-code:hover {
-    background-color: #252870 !important;
-}
- 
-html.dark #copy-toast {
-    color: #4ade80 !important;
-}
- 
-/* Groups grid cards (rendered by JS — target container children) */
-html.dark #groups-container > div {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
- 
-html.dark #groups-container .text-gray-800,
-html.dark #groups-container .text-gray-700 {
-    color: var(--text-primary) !important;
-}
- 
-html.dark #groups-container .text-gray-500,
-html.dark #groups-container .text-gray-400 {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #groups-container .bg-gray-100 {
+html.dark .decline-invite-btn:hover, html.dark .cancel-invite-btn:hover {
     background-color: #252840 !important;
+    color: #f1f5f9 !important;
 }
- 
-/* Empty groups message */
-html.dark #empty-groups p {
-    color: var(--text-muted) !important;
-}
- 
-/* Create Group / Invite Member modals */
-html.dark #group-modal > div > div,
-html.dark #group-modal .bg-white,
-html.dark #invite-modal .bg-white {
+
+/* Modals */
+html.dark #invite-modal > div, html.dark #group-modal > div {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
 }
- 
-html.dark #group-modal h3,
-html.dark #invite-modal h3 {
-    color: var(--text-primary) !important;
-}
- 
-html.dark #group-modal label,
-html.dark #invite-modal label {
-    color: #cbd5e1 !important;
-}
- 
-html.dark #group-modal .text-gray-500,
-html.dark #invite-modal .text-gray-400,
-html.dark #invite-modal .text-gray-500 {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #group-name,
-html.dark #group-description {
+html.dark #invite-modal h3, html.dark #group-modal h3 { color: var(--text-primary) !important; }
+html.dark #group-modal label, html.dark #invite-modal label { color: #cbd5e1 !important; }
+html.dark #group-modal .text-gray-500, html.dark #invite-modal .text-gray-400 { color: var(--text-muted) !important; }
+html.dark #group-name, html.dark #group-description {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
     color: #f1f5f9 !important;
 }
- 
-html.dark #group-name:focus,
-html.dark #group-description:focus {
-    background-color: #2d3148 !important;
-    border-color: #6366f1 !important;
-}
- 
-html.dark #group-cancel-btn,
-html.dark #modal-done-btn {
+html.dark #group-cancel-btn, html.dark #modal-done-btn {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
     color: #cbd5e1 !important;
 }
- 
-html.dark #group-modal-close,
-html.dark #invite-modal-close {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #group-modal-close:hover,
-html.dark #invite-modal-close:hover {
+html.dark #group-modal-close, html.dark #invite-modal-close { color: var(--text-muted) !important; }
+html.dark #group-modal-close:hover, html.dark #invite-modal-close:hover {
     background-color: #252840 !important;
     color: var(--text-primary) !important;
 }
- 
-/* Group created success icon badge */
-html.dark #modal-step-invite .bg-green-100 {
-    background-color: #052e16 !important;
-}
- 
-/* Invite code rows (friend code inputs rendered by JS) */
+html.dark #group-save-btn { background-color: #4f46e5 !important; }
+html.dark #group-save-btn:hover { background-color: #6366f1 !important; }
+html.dark #modal-step-invite .bg-green-100 { background-color: #052e16 !important; }
+
+/* Invite code rows */
 html.dark .invite-code-rows input {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
     color: #f1f5f9 !important;
 }
- 
-html.dark .invite-user-preview {
+html.dark .invite-user-preview { background-color: #1e2130 !important; border-color: #3a3f5c !important; color: var(--text-primary) !important; }
+html.dark .invite-code-remove { background-color: #1e2130 !important; border-color: #3a3f5c !important; color: #64748b !important; }
+html.dark .invite-code-remove:hover:not(:disabled) { background-color: #2d1b1b !important; color: #ef4444 !important; border-color: #ef4444 !important; }
+
+/* Preview panels */
+html.dark .invite-user-preview .bg-gray-50 { background-color: #1e2130 !important; border-color: #3a3f5c !important; }
+html.dark .invite-user-preview .bg-indigo-50 { background-color: #1e1b4b !important; border-color: #6366f1 !important; }
+html.dark .invite-user-preview .bg-red-50 { background-color: #2d1b1b !important; border-color: #ef4444 !important; }
+html.dark .invite-user-preview .bg-indigo-100 { background-color: #1e1b4b !important; color: #a78bfa !important; }
+
+/* Mass invite buttons */
+html.dark #invite-mass-btn, html.dark #modal-invite-mass-btn { background-color: #4f46e5 !important; }
+html.dark #invite-mass-btn:hover, html.dark #modal-invite-mass-btn:hover { background-color: #6366f1 !important; }
+
+/* Loading spinner */
+html.dark .invite-preview-spinner { border-color: #1e2130 !important; border-top-color: #6366f1 !important; }
+
+/* Member list sidebar */
+html.dark #members-sidebar { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #members-sidebar .text-gray-800, html.dark #members-sidebar .montserrat-medium {
+    color: var(--text-primary) !important;
+}
+html.dark #members-list .group { transition: background-color 0.2s ease; border-radius: 0.75rem; }
+html.dark #members-list .group:hover { background-color: #252840 !important; }
+html.dark #members-list .group .member-remove-btn { color: #64748b !important; }
+html.dark #members-list .group:hover .member-remove-btn { color: #ef4444 !important; }
+html.dark #members-list .group .member-remove-btn:hover { background-color: #2d1b1b !important; color: #f87171 !important; }
+html.dark #member-count { color: var(--text-muted) !important; }
+html.dark #members-list img, html.dark .settings-pane img { background-color: #1e2130 !important; }
+
+/* Settings modal */
+html.dark #settings-modal > div { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark .settings-tab { color: var(--text-muted) !important; }
+html.dark .settings-tab[data-tab="danger"] { color: #f87171 !important; }
+html.dark .settings-tab[data-tab="danger"]:hover { color: #ef4444 !important; }
+html.dark .settings-pane .bg-gray-50 { background-color: #1e2130 !important; border-color: #2d3148 !important; }
+html.dark .settings-pane .text-gray-800 { color: var(--text-primary) !important; }
+html.dark .role-change-btn.bg-indigo-50 { background-color: #1e1b4b !important; color: #818cf8 !important; }
+html.dark .role-change-btn.bg-gray-100 { background-color: #252840 !important; color: #94a3b8 !important; }
+html.dark .settings-remove-btn.bg-red-50 { background-color: #2d1b1b !important; color: #f87171 !important; }
+html.dark .settings-tab.border-primary_purp { border-bottom-color: #818cf8 !important; color: #a78bfa !important; }
+html.dark .settings-tab.border-red-500 { border-bottom-color: #ef4444 !important; color: #f87171 !important; }
+html.dark #settings-modal-close svg { color: var(--text-muted) !important; }
+html.dark #settings-modal-close:hover svg { color: var(--text-primary) !important; }
+
+/* Audit log */
+html.dark #settings-audit-list .bg-gray-50 { background-color: #1e2130 !important; border-color: #2d3148 !important; }
+html.dark #settings-audit-list .text-gray-700 { color: #cbd5e1 !important; }
+html.dark #settings-audit-list .bg-indigo-100 { background-color: #1e1b4b !important; color: #818cf8 !important; }
+
+/* Leave group modal */
+html.dark #leave-modal > div { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+html.dark #leave-cancel-btn { background-color: #1e2130 !important; border-color: #3a3f5c !important; color: #94a3b8 !important; }
+html.dark #leave-cancel-btn:hover { background-color: #252840 !important; color: var(--text-primary) !important; }
+html.dark #leave-confirm-btn { background-color: #dc2626 !important; }
+html.dark #leave-confirm-btn:hover { background-color: #ef4444 !important; }
+html.dark .delete-group-btn { background-color: #dc2626 !important; color: #ffffff !important; }
+html.dark .delete-group-btn:hover { background-color: #ef4444 !important; }
+
+/* ============================================
+   11. DARK MODE - ACADEMICS SETTINGS
+   ============================================ */
+html.dark .bg-white.rounded-xl { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; }
+
+/* Date inputs - VISIBLE calendar icon */
+input[type="date"] {
+    position: relative;
+    cursor: pointer;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.625rem 2.5rem 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+html.dark input[type="date"] {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #ffffff !important;
+}
+
+/* Calendar icon - VISIBLE in dark mode */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+    padding: 0.25rem;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0.2);
+    background-color: rgba(99, 102, 241, 0.1);
+    border-radius: 0.375rem;
+}
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) brightness(1.1) !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 2 !important;
+    pointer-events: auto !important;
+    background-color: transparent !important;
+}
+html.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) brightness(1.3) !important;
+    background-color: rgba(99, 102, 241, 0.2) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.25rem !important;
+}
+
+/* Date input text */
+input[type="date"]::-webkit-datetime-edit { color: #1f2937; }
+input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: #1f2937; }
+input[type="date"]::-webkit-datetime-edit-text { color: #6b7280; padding: 0 0.25rem; }
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field { color: #374151; }
+
+html.dark input[type="date"]::-webkit-datetime-edit { color: #ffffff !important; }
+html.dark input[type="date"]::-webkit-datetime-edit-fields-wrapper { color: #ffffff !important; }
+html.dark input[type="date"]::-webkit-datetime-edit-text { color: #94a3b8 !important; }
+html.dark input[type="date"]::-webkit-datetime-edit-month-field,
+html.dark input[type="date"]::-webkit-datetime-edit-day-field,
+html.dark input[type="date"]::-webkit-datetime-edit-year-field { color: #ffffff !important; }
+
+/* Calendar dropdown */
+html.dark ::-webkit-calendar-picker { background-color: #1a1d27 !important; color: #ffffff !important; border: 1px solid #2d3148 !important; border-radius: 0.5rem !important; }
+html.dark input[type="date"] { color-scheme: dark !important; }
+html.dark input[type="date"]:focus { outline: none !important; border-color: #6366f1 !important; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important; }
+
+/* Semester specific */
+html.dark #sem-start, html.dark #sem-end, html.dark #edit-sem-start, html.dark #edit-sem-end {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #ffffff !important;
+}
+
+/* Buttons */
+html.dark #add-sem-btn { background-color: #4f46e5 !important; }
+html.dark #add-sem-btn:hover { background-color: #6366f1 !important; }
+html.dark .edit-sem-btn, html.dark .delete-sem-btn { color: #64748b !important; transition: all 0.2s ease; }
+html.dark .edit-sem-btn:hover { background-color: #1e1b4b !important; color: #818cf8 !important; }
+html.dark .delete-sem-btn:hover { background-color: #2d1b1b !important; color: #f87171 !important; }
+
+/* Semester list cards */
+html.dark #semesters-list .flex.items-center.justify-between {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+html.dark #semesters-list .flex.items-center.justify-between:hover { border-color: #4f46e5 !important; }
+
+/* Modals */
+html.dark #edit-sem-modal > div, html.dark #delete-sem-modal > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    border-radius: 1rem !important;
+}
+html.dark #edit-sem-cancel, html.dark #delete-sem-cancel {
     background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+    color: #94a3b8 !important;
+}
+html.dark #edit-sem-cancel:hover, html.dark #delete-sem-cancel:hover {
+    background-color: #252840 !important;
+    color: var(--text-primary) !important;
+}
+html.dark #edit-sem-save { background-color: #4f46e5 !important; }
+html.dark #edit-sem-save:hover { background-color: #6366f1 !important; }
+html.dark #delete-sem-confirm { background-color: #dc2626 !important; }
+html.dark #delete-sem-confirm:hover { background-color: #ef4444 !important; }
+
+/* Form inputs */
+html.dark #sem-name, html.dark #edit-sem-name {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+    border-radius: 0.75rem !important;
+}
+html.dark label { color: #cbd5e1 !important; }
+html.dark label[for="sem-start"], html.dark label[for="sem-end"],
+html.dark label[for="edit-sem-start"], html.dark label[for="edit-sem-end"] {
+    color: #cbd5e1 !important;
+}
+
+/* Alert boxes */
+html.dark .bg-emerald-100 { background-color: #022c22 !important; color: #34d399 !important; border-color: #064e3b !important; }
+html.dark .bg-red-100 { background-color: #2d1b1b !important; color: #f87171 !important; border-color: #7f1d1d !important; }
+html.dark #semesters-empty p { color: var(--text-muted) !important; }
+
+/* ============================================
+   12. DARK MODE - GLOBAL HOVER STATES
+   ============================================ */
+button, a, [role="button"], .clickable,
+.hover\:bg-gray-50, .hover\:bg-gray-100, .hover\:bg-white,
+.hover\:bg-indigo-50, .hover\:bg-gray-200, [class*="hover:bg-"] {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Light mode hover defaults */
+.hover\:bg-gray-50:hover { background-color: #f9fafb !important; }
+.hover\:bg-gray-100:hover { background-color: #f3f4f6 !important; }
+.hover\:bg-gray-200:hover { background-color: #e5e7eb !important; }
+.hover\:bg-white:hover { background-color: #ffffff !important; }
+.hover\:bg-indigo-50:hover { background-color: #eef2ff !important; }
+
+/* Dark mode hover overrides */
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-gray-100:hover,
+html.dark [class*="hover:bg-gray-"]:hover { background-color: #252840 !important; }
+html.dark .hover\:bg-white:hover { background-color: #2d3148 !important; }
+html.dark .hover\:bg-indigo-50:hover { background-color: #1e1b4b !important; }
+html.dark .hover\:bg-red-50:hover { background-color: #2d1b1b !important; }
+html.dark .hover\:bg-green-50:hover { background-color: #022c22 !important; }
+html.dark .hover\:bg-yellow-50:hover { background-color: #2d1b00 !important; }
+html.dark .hover\:bg-purple-50:hover { background-color: #2d1b4b !important; }
+html.dark .hover\:bg-blue-50:hover { background-color: #172554 !important; }
+
+/* Text hover colors */
+html.dark .hover\:text-gray-700:hover { color: #e2e8f0 !important; }
+html.dark .hover\:text-gray-800:hover { color: #f1f5f9 !important; }
+html.dark .hover\:text-gray-900:hover { color: #ffffff !important; }
+html.dark .hover\:text-indigo-600:hover { color: #a78bfa !important; }
+html.dark .hover\:text-indigo-700:hover { color: #c4b5fd !important; }
+html.dark .hover\:text-red-500:hover, html.dark .hover\:text-red-600:hover { color: #f87171 !important; }
+html.dark .hover\:text-green-500:hover, html.dark .hover\:text-green-600:hover { color: #4ade80 !important; }
+
+/* Border hover */
+html.dark .hover\:border-gray-200:hover { border-color: #3a3f5c !important; }
+html.dark .hover\:border-gray-300:hover { border-color: #4a4f6c !important; }
+html.dark .hover\:border-indigo-200:hover { border-color: #6366f1 !important; }
+
+/* Shadow hover */
+html.dark .hover\:shadow-md:hover, html.dark .hover\:shadow-lg:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* General elements */
+html.dark button:hover:not(:disabled), html.dark .btn:hover:not(:disabled) { filter: brightness(1.1); }
+html.dark a:hover { color: #818cf8 !important; }
+html.dark .dropdown-item:hover, html.dark [role="menuitem"]:hover { background-color: #252840 !important; }
+html.dark li:hover:not(.no-hover), html.dark .list-item:hover { background-color: #252840 !important; }
+html.dark tr:hover td, html.dark tbody tr:hover { background-color: #252840 !important; }
+html.dark select option:hover, html.dark select optgroup option:hover { background-color: #252840 !important; }
+html.dark [class*="modal-close"]:hover, html.dark [class*="-close"]:hover { background-color: #252840 !important; }
+html.dark .tab:hover:not(.active) { background-color: #252840 !important; color: #e2e8f0 !important; }
+html.dark .pagination-btn:hover { background-color: #252840 !important; border-color: #3a3f5c !important; }
+html.dark .icon-btn:hover, html.dark [class*="icon-"]:hover { background-color: #252840 !important; }
+html.dark .nav-item:hover, html.dark .menu-item:hover { background-color: #252840 !important; color: #a78bfa !important; }
+html.dark .sidebar-item:hover { background-color: #252840 !important; }
+html.dark .breadcrumb-item:hover { color: #a78bfa !important; }
+html.dark .notification-item:hover, html.dark .chat-message:hover,
+html.dark .comment-item:hover, html.dark .post-card:hover,
+html.dark .friend-request:hover, html.dark .setting-item:hover { background-color: #252840 !important; }
+html.dark .calendar-event:hover { background-color: #2d3148 !important; }
+
+/* Special button hover preservation */
+html.dark .btn-primary:hover, html.dark .bg-primary_purp:hover,
+html.dark button.bg-indigo-600:hover { background-color: #6366f1 !important; filter: none !important; }
+html.dark .btn-danger:hover, html.dark .bg-red-500:hover,
+html.dark button.bg-red-600:hover { background-color: #ef4444 !important; }
+html.dark .btn-success:hover, html.dark .bg-green-500:hover { background-color: #10b981 !important; }
+html.dark .btn-warning:hover, html.dark .bg-amber-500:hover { background-color: #f59e0b !important; }
+
+/* Global transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+}
+svg path, svg circle, svg rect { transition: none; }
+
+/* Light mode body background */
+html:not(.dark) body, html:not(.dark) main {
+    background-color: #e5e3e3 !important;
+    color: var(--text-primary);
+}
+
+/* Analog clock dark mode */
+html.dark #analog-clock circle[stroke="#e5e7eb"] { stroke: #2d3148 !important; }
+html.dark #analog-clock circle[fill="#fafafa"] { fill: #1a1d27 !important; }
+html.dark #clock-hour, html.dark #analog-clock circle[fill="#374151"] {
+    stroke: #cbd5e1 !important;
+    fill: #cbd5e1 !important;
+}
+html.dark #analog-clock circle[fill="#fff"] { fill: #1a1d27 !important; }
+html.dark #clock-numbers { fill: #94a3b8 !important; }
+html.dark #clock-ticks line { stroke: #3a3f5c !important; }
+html.dark #digital-timer { color: #f1f5f9 !important; }
+
+/* ApexCharts additional fixes */
+html.dark .apexcharts-bar-area:hover { opacity: 0.8 !important; }
+html.dark .apexcharts-grid line { stroke: #2d3148 !important; }
+html.dark .apexcharts-data-labels text { fill: #f1f5f9 !important; }
+
+/* ============================================
+   13. DARK MODE - SCORES PAGE (Add Assessment Button)
+   ============================================ */
+
+/* Unit card container */
+html.dark #units-container .bg-white.rounded-2xl {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Unit card headings */
+html.dark #units-container .montserrat-bold.text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+/* Unit credit text */
+html.dark #units-container .text-gray-500 {
+    color: var(--text-muted) !important;
+}
+
+/* Total text */
+html.dark #units-container .text-gray-600 {
+    color: var(--text-muted) !important;
+}
+html.dark #units-container .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+/* Assessment card/row */
+html.dark #units-container .bg-white.rounded-xl {
+    background-color: #1e2130 !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Assessment labels */
+html.dark #units-container .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+
+/* Assessment input fields */
+html.dark #units-container input[type="text"],
+html.dark #units-container input[type="number"],
+html.dark #units-container input[type="date"] {
+    background-color: #252840 !important;
     border-color: #3a3f5c !important;
     color: var(--text-primary) !important;
 }
- 
-/* Modal note text */
-html.dark #group-modal p.text-\[11px\],
-html.dark #invite-modal p.text-\[11px\] {
-    color: var(--text-muted) !important;
-}
- 
-html.dark #invite-modal-group-name {
-    color: var(--text-muted) !important;
+
+html.dark #units-container input[type="text"]::placeholder,
+html.dark #units-container input[type="number"]::placeholder {
+    color: #64748b !important;
 }
 
-/* Force chart background to be transparent */
-html.dark .apexcharts-canvas,
-html.dark .apexcharts-canvas svg {
-    background: transparent !important;
+/* Assessment input focus state */
+html.dark #units-container input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
 }
 
-/* Fix legend text color in dark mode */
-html.dark .apexcharts-legend-text {
-    color: #cbd5e1 !important;
+/* Date input specific */
+html.dark #units-container input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) brightness(1.1);
+    cursor: pointer;
+}
+html.dark #units-container input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(1) brightness(1.3);
+    background-color: rgba(99, 102, 241, 0.2);
+    border-radius: 0.375rem;
 }
 
-/* Fix x-axis and y-axis label colors */
-html.dark .apexcharts-xaxis-label,
-html.dark .apexcharts-yaxis-label {
-    fill: #94a3b8 !important;
-}
-
-/* Fix data labels on bars */
-html.dark .apexcharts-data-labels text {
-    fill: #f1f5f9 !important;
-}
-
-/* Fix tooltip background in dark mode */
-html.dark .apexcharts-tooltip {
-    background: #1a1d27 !important;
-    border: 1px solid #2d3148 !important;
-    color: #f1f5f9 !important;
-}
-
-html.dark .apexcharts-tooltip-title {
-    background: #13151f !important;
-    border-bottom-color: #2d3148 !important;
-    color: #f1f5f9 !important;
-}
-
-/* Fix y-axis grid lines */
-html.dark .apexcharts-grid line {
-    stroke: #2d3148 !important;
-}
-
-/* Fix hover state for bars */
-html.dark .apexcharts-bar-area:hover {
-    opacity: 0.8 !important;
-}
-
-/* ---------- Dark Mode: Sessions Page Overrides ---------- */
-
-/* Setup phase cards */
-html.dark #setup-phase .bg-white,
-html.dark #active-phase .bg-white {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
-
-/* Checklist builder items hover */
-html.dark #checklist-builder > div:hover {
-    background-color: #252840 !important;
-}
-
-/* Live checklist items hover */
-html.dark #live-checklist label:hover {
-    background-color: #252840 !important;
-}
-
-/* History list dividers */
-html.dark #history-list .divide-y > * + * {
-    border-color: var(--border-color) !important;
-}
-
-/* History item hover */
-html.dark .history-item:hover {
-    background-color: #252840 !important;
-}
-
-/* Timer mode buttons in dark mode */
-html.dark .timer-mode-btn,
-html.dark .edit-timer-mode-btn {
-    color: #94a3b8 !important;
-}
-
-html.dark .timer-mode-btn:hover,
-html.dark .edit-timer-mode-btn:hover {
-    background-color: #1e2130 !important;
-    color: #f1f5f9 !important;
-}
-
-/* Countdown input fields */
-html.dark #countdown-hours,
-html.dark #countdown-minutes,
-html.dark #edit-countdown-hours,
-html.dark #edit-countdown-minutes {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: #f1f5f9 !important;
-}
-
-/* Modal backgrounds */
-html.dark #resume-choice-modal > div,
-html.dark #edit-session-modal > div,
-html.dark #delete-session-modal > div {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
-
-/* Modal buttons */
-html.dark #resume-choice-continue-btn {
+/* ADD ASSESSMENT BUTTON - Main fix */
+html.dark #units-container button[onclick*="addAssessment"] {
     background-color: #4f46e5 !important;
+    color: #ffffff !important;
+    border: none !important;
 }
 
-html.dark #resume-choice-new-btn,
-html.dark #edit-cancel-btn,
-html.dark #delete-session-cancel {
+html.dark #units-container button[onclick*="addAssessment"]:hover {
+    background-color: #6366f1 !important;
+    color: #ffffff !important;
+}
+
+/* Delete assessment button */
+html.dark #units-container button[onclick*="deleteAssessment"] {
+    background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+    color: #64748b !important;
+}
+
+html.dark #units-container button[onclick*="deleteAssessment"]:hover {
+    background-color: #2d1b1b !important;
+    color: #f87171 !important;
+    border-color: #ef4444 !important;
+}
+
+/* Warning text */
+html.dark #units-container .text-red-500 {
+    color: #f87171 !important;
+}
+
+/* No units message */
+html.dark #no-units-message {
+    color: var(--text-muted) !important;
+}
+
+/* Overall WAM display */
+html.dark #overall-wam {
+    color: #a78bfa !important;
+}
+
+/* Semester select dropdown */
+html.dark #semester-select {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
-    color: #cbd5e1 !important;
+    color: var(--text-primary) !important;
 }
 
-html.dark #resume-choice-new-btn:hover,
-html.dark #edit-cancel-btn:hover,
-html.dark #delete-session-cancel:hover {
-    background-color: #2d3148 !important;
-}
-
-/* Edit checklist items in modal */
-html.dark #edit-checklist-list > div {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-}
-
-html.dark #edit-checklist-list span {
-    color: #f1f5f9 !important;
-}
-
-/* Unit select dropdown */
-html.dark #session-unit {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: #f1f5f9 !important;
-}
-
-html.dark #session-unit option {
+html.dark #semester-select option {
     background-color: #1a1d27 !important;
 }
 
-/* ---------- Dark Mode: Groups Page ---------- */
+/* ============================================
+   14. DARK MODE - GROUPS PAGE (Member Hashtags/Badges)
+   ============================================ */
 
-/* Group cards */
-html.dark .group-card {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
-
-html.dark .group-card .bg-gradient-to-br {
-    background: linear-gradient(to bottom right, #1e2130, #13151f) !important;
-}
-
-html.dark .group-card h3,
-html.dark .group-card .text-gray-800 {
-    color: var(--text-primary) !important;
-}
-
-html.dark .group-card .text-gray-500,
-html.dark .group-card .text-gray-400 {
-    color: var(--text-muted) !important;
-}
-
-/* Invite button on group cards - Main fix for your issue */
-html.dark .group-card .invite-btn {
+/* Member role badges - Make them visible in dark mode */
+html.dark .group-card .bg-indigo-100,
+html.dark .bg-indigo-100 {
     background-color: #1e1b4b !important;
-    color: #818cf8 !important;
-    border: 1px solid #2d3148 !important;
-}
-
-html.dark .group-card .invite-btn:hover {
-    background-color: #252870 !important;
     color: #a78bfa !important;
-    border-color: #6366f1 !important;
 }
 
-/* Role badges */
-html.dark .group-card .bg-indigo-100 {
-    background-color: #1e1b4b !important;
-    color: #818cf8 !important;
-}
-
-html.dark .group-card .bg-purple-100 {
+html.dark .group-card .bg-purple-100,
+html.dark .bg-purple-100 {
     background-color: #2d1b4b !important;
-    color: #a78bfa !important;
+    color: #c4b5fd !important;
 }
 
-html.dark .group-card .bg-gray-100 {
+html.dark .group-card .bg-gray-100,
+html.dark .bg-gray-100 {
     background-color: #1e2130 !important;
     color: #94a3b8 !important;
 }
 
-/* Cover gradient overlay */
-html.dark .group-card .bg-gradient-to-t {
-    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent) !important;
+/* Hashtag-like text in groups */
+html.dark .hashtag,
+html.dark [class*="hashtag"],
+html.dark .group-tag,
+html.dark .member-tag,
+html.dark .role-tag {
+    color: #a78bfa !important;
 }
 
-/* Search input */
+html.dark .hashtag:hover,
+html.dark [class*="hashtag"]:hover {
+    color: #c4b5fd !important;
+}
+
+/* Member list sidebar badges */
+html.dark #members-list .bg-indigo-100,
+html.dark #members-list .bg-purple-100,
+html.dark #members-list .bg-gray-100 {
+    color: #ffffff !important;
+}
+
+html.dark #members-list .bg-indigo-100 {
+    background-color: #4f46e5 !important;
+}
+
+html.dark #members-list .bg-purple-100 {
+    background-color: #7c3aed !important;
+}
+
+html.dark #members-list .bg-gray-100 {
+    background-color: #3a3f5c !important;
+}
+
+/* Settings panel member badges */
+html.dark .settings-pane .bg-indigo-100 {
+    background-color: #1e1b4b !important;
+    color: #a78bfa !important;
+}
+
+html.dark .settings-pane .bg-purple-100 {
+    background-color: #2d1b4b !important;
+    color: #c4b5fd !important;
+}
+
+html.dark .settings-pane .bg-gray-100 {
+    background-color: #1e2130 !important;
+    color: #94a3b8 !important;
+}
+
+/* Member usernames */
+html.dark #members-list .text-gray-800,
+html.dark .settings-pane .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+/* Member count badge */
+html.dark #member-count {
+    color: var(--text-muted) !important;
+    background-color: #1e2130 !important;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+}
+
+/* Group member avatars */
+html.dark #members-list img,
+html.dark .settings-pane img {
+    background-color: #1e2130 !important;
+}
+
+/* Invite code field placeholder */
+html.dark .invite-code-field::placeholder {
+    color: #64748b !important;
+}
+
+/* Group search input */
 html.dark #group-search {
     background-color: #252840 !important;
     border-color: #3a3f5c !important;
@@ -1602,237 +1143,51 @@ html.dark #group-search::placeholder {
     color: #64748b !important;
 }
 
-html.dark #group-search:focus {
-    background-color: #2d3148 !important;
-    border-color: #6366f1 !important;
-}
+/* ============================================
+   15. DARK MODE - MEMBER ROLE BADGE IMPROVEMENTS
+   ============================================ */
 
-/* Invitations card */
-html.dark #invitations,
-html.dark #sent-invitations {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
-
-html.dark #invitations h3,
-html.dark #sent-invitations h3 {
-    color: var(--text-primary) !important;
-}
-
-html.dark #invitations .bg-gray-50,
-html.dark #sent-invitations .bg-gray-50 {
-    background-color: #1e2130 !important;
-    border-color: #2d3148 !important;
-}
-
-html.dark #invitations .text-gray-700,
-html.dark #sent-invitations .text-gray-700 {
-    color: #e2e8f0 !important;
-}
-
-html.dark #invitations .text-gray-400,
-html.dark #sent-invitations .text-gray-400 {
-    color: var(--text-muted) !important;
-}
-
-/* Accept/Decline buttons in dark mode */
-html.dark .accept-invite-btn {
-    background-color: #4f46e5 !important;
-}
-
-html.dark .accept-invite-btn:hover {
-    background-color: #6366f1 !important;
-}
-
-html.dark .decline-invite-btn,
-html.dark .cancel-invite-btn {
-    background-color: transparent !important;
-    border-color: #3a3f5c !important;
-    color: #94a3b8 !important;
-}
-
-html.dark .decline-invite-btn:hover,
-html.dark .cancel-invite-btn:hover {
-    background-color: #252840 !important;
-    color: #f1f5f9 !important;
-}
-
-/* Friend code display */
-html.dark .bg-indigo-50.rounded-xl {
+/* Make all role badges have good contrast in dark mode */
+html.dark [class*="rounded-full"].bg-indigo-100,
+html.dark .role-badge.owner {
     background-color: #1e1b4b !important;
-}
-
-html.dark #friend-code-display {
     color: #a78bfa !important;
 }
 
-html.dark #copy-friend-code {
-    background-color: #1e1b4b !important;
-    color: #818cf8 !important;
-    border-color: #2d3148 !important;
-}
-
-html.dark #copy-friend-code:hover {
-    background-color: #252870 !important;
+html.dark [class*="rounded-full"].bg-purple-100,
+html.dark .role-badge.admin {
+    background-color: #2d1b4b !important;
     color: #c4b5fd !important;
 }
 
-/* Modal styling for invite */
-html.dark #invite-modal > div,
-html.dark #group-modal > div {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-}
-
-html.dark #invite-modal h3,
-html.dark #group-modal h3 {
-    color: var(--text-primary) !important;
-}
-
-html.dark #invite-modal .text-gray-400,
-html.dark #invite-modal .text-gray-500,
-html.dark #group-modal .text-gray-400 {
-    color: var(--text-muted) !important;
-}
-
-/* Invite code input fields in dark mode */
-html.dark .invite-code-field {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: var(--text-primary) !important;
-}
-
-html.dark .invite-code-field:focus {
-    background-color: #2d3148 !important;
-    border-color: #6366f1 !important;
-}
-
-html.dark .invite-code-field::placeholder {
-    color: #64748b !important;
-}
-
-/* Remove button for invite rows */
-html.dark .invite-code-remove {
+html.dark [class*="rounded-full"].bg-gray-100,
+html.dark .role-badge.member {
     background-color: #1e2130 !important;
-    border-color: #3a3f5c !important;
-    color: #64748b !important;
-}
-
-html.dark .invite-code-remove:hover:not(:disabled) {
-    background-color: #2d1b1b !important;
-    color: #ef4444 !important;
-    border-color: #ef4444 !important;
-}
-
-/* User preview in invite modal */
-html.dark .invite-user-preview .bg-gray-50 {
-    background-color: #1e2130 !important;
-    border-color: #3a3f5c !important;
-}
-
-html.dark .invite-user-preview .bg-indigo-50 {
-    background-color: #1e1b4b !important;
-    border-color: #6366f1 !important;
-}
-
-html.dark .invite-user-preview .bg-red-50 {
-    background-color: #2d1b1b !important;
-    border-color: #ef4444 !important;
-}
-
-html.dark .invite-user-preview .text-gray-400,
-html.dark .invite-user-preview .text-gray-800,
-html.dark .invite-user-preview .text-gray-700 {
-    color: var(--text-primary) !important;
-}
-
-html.dark .invite-user-preview .text-indigo-500 {
-    color: #818cf8 !important;
-}
-
-html.dark .invite-user-preview .text-red-500 {
-    color: #f87171 !important;
-}
-
-/* Avatar in preview */
-html.dark .invite-user-preview .bg-indigo-100 {
-    background-color: #1e1b4b !important;
-    color: #a78bfa !important;
-}
-
-/* Modal invite mass button */
-html.dark #invite-mass-btn,
-html.dark #modal-invite-mass-btn {
-    background-color: #4f46e5 !important;
-}
-
-html.dark #invite-mass-btn:hover,
-html.dark #modal-invite-mass-btn:hover {
-    background-color: #6366f1 !important;
-}
-
-/* Empty state messages */
-html.dark #empty-groups p,
-html.dark #no-invitations p,
-html.dark #no-sent-invitations p {
-    color: var(--text-muted) !important;
-}
-
-/* Loading spinner */
-html.dark .invite-preview-spinner {
-    border-color: #1e2130 !important;
-    border-top-color: #6366f1 !important;
-}
-
-/* Modal close button */
-html.dark #invite-modal-close svg,
-html.dark #group-modal-close svg {
-    color: var(--text-muted) !important;
-}
-
-html.dark #invite-modal-close:hover svg,
-html.dark #group-modal-close:hover svg {
-    color: var(--text-primary) !important;
-}
-
-/* Group create modal */
-html.dark #group-name,
-html.dark #group-description {
-    background-color: #252840 !important;
-    border-color: #3a3f5c !important;
-    color: var(--text-primary) !important;
-}
-
-html.dark #group-name:focus,
-html.dark #group-description:focus {
-    background-color: #2d3148 !important;
-    border-color: #6366f1 !important;
-}
-
-html.dark #group-cancel-btn,
-html.dark #modal-done-btn {
-    background-color: #1e2130 !important;
-    border-color: #3a3f5c !important;
     color: #94a3b8 !important;
 }
 
-html.dark #group-cancel-btn:hover,
-html.dark #modal-done-btn:hover {
-    background-color: #252840 !important;
-    color: var(--text-primary) !important;
+/* Ensure role badge text is readable */
+html.dark .montserrat-medium.px-2\.py-0\.5.rounded-full {
+    font-weight: 500;
 }
 
-html.dark #group-save-btn {
+/* Owner badge special styling */
+html.dark .group-card .bg-indigo-100,
+html.dark [class*="owner"] .bg-indigo-100 {
     background-color: #4f46e5 !important;
+    color: #ffffff !important;
 }
 
-html.dark #group-save-btn:hover {
-    background-color: #6366f1 !important;
+/* Admin badge special styling */
+html.dark .group-card .bg-purple-100,
+html.dark [class*="admin"] .bg-purple-100 {
+    background-color: #7c3aed !important;
+    color: #ffffff !important;
 }
 
-/* Global page shell: light theme only (dark uses `html.dark body, html.dark main`). */
-html:not(.dark) body,
-html:not(.dark) main {
-    background-color: #e5e3e3 !important;
-    color: var(--text-primary);
+/* Member badge - make it visible but not too bright */
+html.dark .group-card .bg-gray-100,
+html.dark [class*="member"] .bg-gray-100 {
+    background-color: #334155 !important;
+    color: #cbd5e1 !important;
 }

@@ -960,19 +960,22 @@ $(function () {
     });
 
     function renderHistoryChecklist(sessionId, checklist) {
-        if (!checklist || checklist.length === 0) return '<p class="text-xs text-gray-400 roboto-regular">No checklist items.</p>';
+        const colors = getDynamicColors();
+        if (!checklist || checklist.length === 0) return '<p class="text-xs roboto-regular" style="color: ' + colors.badgeText + '">No checklist items.</p>';
         let html = '<div class="space-y-2">';
         checklist.forEach(function (item) {
-            html += '<div class="flex items-center gap-2 group hover:bg-gray-50 rounded-lg p-1 transition-colors">' +
-                '<button class="tick-checklist-item p-1 rounded-md transition-colors ' + (item.completed ? 'text-emerald-600 hover:text-emerald-700' : 'text-gray-400 hover:text-emerald-500') + '" ' +
-                'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + item.completed + '">' +
+            const isCompleted = item.completed === true;
+            html += '<div class="flex items-center gap-2 rounded-lg p-1 transition-colors checklist-item-row" style="background-color: transparent;">' +
+                '<button class="tick-checklist-item p-1 rounded-md transition-colors" ' +
+                'data-session-id="' + sessionId + '" data-item-id="' + item.id + '" data-completed="' + isCompleted + '" ' +
+                'style="color: ' + (isCompleted ? (isDarkMode() ? '#34d399' : '#10b981') : (isDarkMode() ? '#64748b' : '#9ca3af')) + '; background-color: transparent;">' +
                 '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">' +
-                (item.completed 
+                (isCompleted 
                     ? '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' 
                     : '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>') +
                 '</svg>' +
                 '</button>' +
-                '<span class="flex-1 text-xs roboto-regular ' + (item.completed ? 'text-gray-400 line-through' : 'text-gray-600') + '">' + 
+                '<span class="flex-1 text-xs roboto-regular ' + (isCompleted ? 'line-through' : '') + '" style="color: ' + (isCompleted ? colors.completedText : colors.checklistItemText) + '">' + 
                 $("<span>").text(item.title).html() + '</span>' +
                 '</div>';
         });
