@@ -62,50 +62,12 @@ def get_scores(semester_id):
     )
     return jsonify([_serialize(a) for a in assessments])
 
-<<<<<<< HEAD
-@scores_bp.route("/api/scores/<semester>", methods=["GET"])
-def get_scores(semester):
-    conn = get_db()
-    rows = conn.execute("""
-        SELECT a.*
-        FROM assessments a
-        JOIN units u ON a.unit_id = u.id
-        WHERE u.semester_id = ?
-    """, (semester,)).fetchall()
-
-    print(f'Scores: {dict(rows[0])}')
-    return jsonify([dict(row) for row in rows])
-=======
->>>>>>> main
 
 @scores_bp.route("/api/scores", methods=["POST"])
 @login_required
 def create_score():
     data = request.get_json(silent=True) or {}
 
-<<<<<<< HEAD
-    conn = get_db()
-    cursor = conn.execute("""
-        INSERT INTO assessments (unit_id, name, score, weight, due_date)
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        data.get("unit_id"),
-        data.get("name", "Assessment"),
-        data.get("score", 0),
-        data.get("weight", 0),
-        data.get("due_date", None)
-    ))
-    conn.commit()
-
-    return jsonify({
-        "id": cursor.lastrowid,
-        "unit_id": data.get("unit_id"),
-        "name": data.get("name", "Assessment"),
-        "score": data.get("score", 0),
-        "weight": data.get("weight", 0),
-        "due_date": data.get("due_date", None)
-    })
-=======
     unit = _user_unit_or_none(data.get("unit_id"))
     if not unit:
         return jsonify({"success": False, "message": "Unit not found."}), 404
@@ -116,7 +78,6 @@ def create_score():
         parsed_due = parse_client_datetime(due_raw)
         if parsed_due is None:
             return jsonify({"success": False, "message": "Invalid due date."}), 400
->>>>>>> main
 
     try:
         score = float(data.get("score") or 0)
@@ -124,37 +85,12 @@ def create_score():
     except (TypeError, ValueError):
         return jsonify({"success": False, "message": "Score and weight must be numbers."}), 400
 
-<<<<<<< HEAD
-    conn = get_db()
-    conn.execute("""
-        UPDATE assessments
-        SET name = ?, score = ?, weight = ?, due_date = ?
-        WHERE id = ?
-    """, (
-        data.get("name"),
-        data.get("score"),
-        data.get("weight"),
-        data.get("due_date", None),
-        id
-    ))
-    conn.commit()
-
-    return jsonify({"status": "updated"})
-
-@scores_bp.route("/api/scores/<int:id>", methods=["DELETE"])
-def delete_score(id):
-    conn = get_db()
-    conn.execute(
-        "DELETE FROM assessments WHERE id = ?",
-        (id,)
-=======
     assessment = Assessment(
         unit_id=unit.id,
         name=(data.get("name") or "Assessment"),
         score=score,
         weight=weight,
         due_date=parsed_due,
->>>>>>> main
     )
     db.session.add(assessment)
     db.session.commit()

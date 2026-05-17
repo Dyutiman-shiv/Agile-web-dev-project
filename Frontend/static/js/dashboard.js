@@ -724,7 +724,7 @@ function renderPosts(posts) {
       postsSinceLastMetric++;
 
       const coverHtml = post.group.cover_picture
-        ? `<img src="/static/${post.group.cover_picture}" class="w-full h-full object-cover" alt="cover">`
+        ? `<img src="/static/${post.group.cover_picture}" class="w-11 h-11 rounded-full object-cover" alt="cover">`
         : `<div class=" w-11 h-11 rounded-full p-2 object-cover bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
              <svg class="w-full h-full text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
