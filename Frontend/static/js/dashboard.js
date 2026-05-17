@@ -723,6 +723,17 @@ function renderPosts(posts) {
       }
       postsSinceLastMetric++;
 
+      const coverHtml = post.group.cover_picture
+        ? `<img src="/static/${post.group.cover_picture}" class="w-11 h-11 rounded-full object-cover" alt="cover">`
+        : `<div class=" w-11 h-11 rounded-full p-2 object-cover bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+             <svg class="w-full h-full text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857
+                        M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857
+                        m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+             </svg>
+           </div>`;
+
     html += `
       <div id="post-card-${post.id}" class="w-full bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
 
@@ -734,12 +745,7 @@ function renderPosts(posts) {
 
             ${
               post.group.name
-                ? `
-                  <img
-                    src="/static/${post.group.cover_picture || "/static/group_covers/default_group.png"}"
-                    class="w-11 h-11 rounded-full object-cover"
-                  />
-                `
+                ? coverHtml
                 : `
                   <div class="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
                     ${post.group.name[0].toUpperCase()}
