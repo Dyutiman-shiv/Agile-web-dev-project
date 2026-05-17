@@ -230,119 +230,15 @@ overflow-hidden bg-backgroud_cal_light
       </div>
 
       <!-- MAIN GRID -->
-      <div class="flex items-center mx-auto gap-6">
+      <div class="grid grid-cols-1 gap-6 max-w-2xl mx-auto px-4 w-full justify-center">
 
         <!-- FEED -->
-        <div class="xl:col-span-2 space-y-4">
+        <div class="space-y-6 w-full min-w-0">
 
           <div id="posts-container" class="space-y-6">
             <!-- js -->
             <div class="text-center py-10 text-gray-400">
               Cargando publicaciones recientes...
-            </div>
-          </div>
-
-          <!-- CARD -->
-          <div class="max-w-3xl mx-auto">
-
-            <div
-              class="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition flex flex-col"
-            >
-
-              <div class="p-5 space-y-4">
-
-                <!-- USER -->
-                <div class="flex items-center space-x-3">
-
-                  <img
-                    src="{{ current_user.profile_picture }}"
-                    class="w-12 h-12 rounded-full object-cover"
-                  />
-
-                  <div>
-                    <p class="montserrat-semi-bold text-text_dark_gray">
-                      Maria Lopez
-                    </p>
-
-                    <p class="roboto-light text-sm text-gray-400">
-                      AI Study Group • 2h ago
-                    </p>
-                  </div>
-
-                </div>
-
-                <!-- CONTENT -->
-                <div>
-
-                  <p class="roboto-regular text-text_dark_gray leading-relaxed">
-
-                    🎉 Just reached a milestone!
-
-                    Studied
-
-                    <span class="montserrat-bold text-primary_purp">
-                      Deep Learning
-                    </span>
-
-                    for
-
-                    <span class="montserrat-bold text-task_green">
-                      20 hours this week
-                    </span>
-
-                  </p>
-
-                  <p class="roboto-light text-sm text-gray-500 mt-2">
-                    Keep pushing — you're almost at your weekly goal 🚀
-                  </p>
-
-                </div>
-
-                <!-- IMAGE -->
-                <div class="h-[420px] w-full">
-
-                  <img
-                    src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
-                    class="w-full h-full object-cover"
-                  />
-
-                </div>
-
-                <!-- BADGE -->
-                <div class="flex items-center justify-between">
-
-                  <span
-                    class="bg-task_yellow/20 text-task_yellow px-3 py-1 rounded-full text-xs roboto-medium"
-                  >
-                    🏆 Milestone Achieved
-                  </span>
-
-                  <span class="text-xs text-gray-400 roboto-light">
-                    80% of weekly goal
-                  </span>
-
-                </div>
-
-                <!-- ACTIONS -->
-                <div
-                  class="flex justify-between border-t pt-3 text-sm roboto-medium text-gray-500"
-                >
-
-                  <button class="hover:text-primary_purp transition">
-                    👍 Like
-                  </button>
-
-                  <button class="hover:text-primary_purp transition">
-                    💬 Comment
-                  </button>
-
-                  <button class="hover:text-primary_purp transition">
-                    🎯 View Goal
-                  </button>
-
-                </div>
-
-              </div>
             </div>
           </div>
 
@@ -385,53 +281,53 @@ overflow-hidden bg-backgroud_cal_light
         </div>
 
         <!--Modal to confirm deletes for posts or comments-->
-  <div
-    id="delete-modal"
-    class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4"
-  >
-    <div
-      class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all"
-    >
-      <div
-        class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4 mx-auto"
-      >
-        <svg
-          class="w-6 h-6 text-red-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        <div
+          id="delete-modal"
+          class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm p-4"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
-      </div>
-      <h3 class="text-lg font-bold text-center text-gray-900 montserrat-bold">
-        Confirm delete action
-      </h3>
-      <p class="text-sm text-gray-500 text-center mt-2 roboto-regular">
-        This action cannot be undone. The content will be permanently deleted.
-      </p>
+          <div
+            class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl transform transition-all"
+          >
+            <div
+              class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mb-4 mx-auto"
+            >
+              <svg
+                class="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-center text-gray-900 montserrat-bold">
+              Confirm delete action
+            </h3>
+            <p class="text-sm text-gray-500 text-center mt-2 roboto-regular">
+              This action cannot be undone. The content will be permanently deleted.
+            </p>
 
-      <div class="flex gap-3 mt-6">
-        <button
-          onclick="closeDeleteModal()"
-          class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors font-medium"
-        >
-          Cancel
-        </button>
-        <button
-          id="confirm-delete-btn"
-          class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
-        >
-          Delete
-        </button>
-      </div>
-    </div>
-  </div>
+            <div class="flex gap-3 mt-6">
+              <button
+                onclick="closeDeleteModal()"
+                class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                id="confirm-delete-btn"
+                class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
 
       </div>
 

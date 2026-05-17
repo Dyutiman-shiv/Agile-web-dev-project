@@ -589,7 +589,7 @@ $("#confirm-delete-btn")
       const isLiked = likes.includes(currentUserId);
 
       html += `
-      <div id="post-card-${post.id}" class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
+      <div id="post-card-${post.id}" class="w-full bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden">
 
         <!-- POST -->
         <div class="p-6">
