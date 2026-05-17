@@ -888,3 +888,504 @@ html.dark #semester-filter {
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
 }
+
+html.dark .apexcharts-canvas,
+html.dark .apexcharts-inner,
+html.dark .apexcharts-graphical {
+    background: transparent !important;
+}
+ 
+/* Grid lines — replace #e5e7eb grey */
+html.dark .apexcharts-gridline,
+html.dark .apexcharts-grid line,
+html.dark .apexcharts-grid-borders line {
+    stroke: #2d3148 !important;
+}
+ 
+/* X/Y axis border lines */
+html.dark .apexcharts-xaxis line,
+html.dark .apexcharts-yaxis line,
+html.dark .apexcharts-axis-texts-g line {
+    stroke: #2d3148 !important;
+}
+ 
+/* Axis labels */
+html.dark .apexcharts-xaxis-label,
+html.dark .apexcharts-yaxis-label {
+    fill: #94a3b8 !important;
+}
+ 
+/* Legend text */
+html.dark .apexcharts-legend-text {
+    color: #cbd5e1 !important;
+    fill: #cbd5e1 !important;
+}
+ 
+/* Data labels on bars / donut */
+html.dark .apexcharts-datalabel,
+html.dark .apexcharts-datalabel-label,
+html.dark .apexcharts-datalabel-value,
+html.dark .apexcharts-pie-label {
+    fill: #f1f5f9 !important;
+    color: #f1f5f9 !important;
+}
+ 
+/* Heatmap cell borders */
+html.dark .apexcharts-heatmap-rect {
+    stroke: #0f1117 !important;
+}
+ 
+/* Tooltip */
+html.dark .apexcharts-tooltip {
+    background: #1a1d27 !important;
+    border-color: #2d3148 !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+html.dark .apexcharts-tooltip-title {
+    background: #13151f !important;
+    border-color: #2d3148 !important;
+    color: #f1f5f9 !important;
+}
+html.dark .apexcharts-tooltip-text-y-label,
+html.dark .apexcharts-tooltip-text-y-value,
+html.dark .apexcharts-tooltip-text-goals-label,
+html.dark .apexcharts-tooltip-text-goals-value {
+    color: #e2e8f0 !important;
+}
+html.dark .apexcharts-tooltip-marker {
+    border-color: #2d3148 !important;
+}
+ 
+/* Crosshair / zoom selection */
+html.dark .apexcharts-selection-rect,
+html.dark .apexcharts-zoom-rect {
+    fill: rgba(99, 102, 241, 0.15) !important;
+    stroke: #6366f1 !important;
+}
+ 
+/* Bar chart track (empty part of bar) */
+html.dark .apexcharts-bar-area[fill="#e5e7eb"],
+html.dark .apexcharts-bar-area[fill="#f3f4f6"] {
+    fill: #2d3148 !important;
+}
+ 
+/* Radial / donut track ring */
+html.dark .apexcharts-radialbar-track > path,
+html.dark .apexcharts-doughnut-slice-background {
+    stroke: #2d3148 !important;
+    fill: #2d3148 !important;
+}
+ 
+/* ---------- Analog Clock: dark mode ---------- */
+ 
+/* Clock face circle (the #e5e7eb ring) */
+html.dark #analog-clock circle[stroke="#e5e7eb"] {
+    stroke: #2d3148 !important;
+}
+ 
+/* Clock face fill (#fafafa) */
+html.dark #analog-clock circle[fill="#fafafa"] {
+    fill: #1a1d27 !important;
+}
+ 
+/* Hour hand and center dot (#374151) */
+html.dark #clock-hour,
+html.dark #analog-clock circle[fill="#374151"] {
+    stroke: #cbd5e1 !important;
+    fill: #cbd5e1 !important;
+}
+html.dark #analog-clock circle[fill="#fff"] {
+    fill: #1a1d27 !important;
+}
+ 
+/* Hour numbers */
+html.dark #clock-numbers {
+    fill: #94a3b8 !important;
+}
+ 
+/* Tick marks */
+html.dark #clock-ticks line {
+    stroke: #3a3f5c !important;
+}
+ 
+/* Digital timer */
+html.dark #digital-timer {
+    color: #f1f5f9 !important;
+}
+ 
+/* ---------- Sessions page: dark mode ---------- */
+ 
+/* Main cards */
+html.dark #setup-phase .bg-white,
+html.dark #active-phase .bg-white,
+html.dark .mt-8 .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+/* Headings & labels */
+html.dark #setup-phase h3,
+html.dark #setup-phase h4,
+html.dark #active-phase h3,
+html.dark #active-phase h4,
+html.dark .mt-8 h4 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #setup-phase label,
+html.dark #active-phase label,
+html.dark #edit-session-modal label {
+    color: #cbd5e1 !important;
+}
+ 
+/* Muted text */
+html.dark #setup-phase .text-gray-500,
+html.dark #active-phase .text-gray-500,
+html.dark #active-phase .text-gray-400,
+html.dark .mt-8 .text-gray-500,
+html.dark .mt-8 .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+ 
+/* Input fields in setup */
+html.dark #session-name,
+html.dark #session-unit,
+html.dark #countdown-hours,
+html.dark #countdown-minutes,
+html.dark #new-checklist-item,
+html.dark #live-new-item,
+html.dark #edit-session-name,
+html.dark #edit-countdown-hours,
+html.dark #edit-countdown-minutes,
+html.dark #edit-new-item {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark #session-name:focus,
+html.dark #session-unit:focus,
+html.dark #new-checklist-item:focus,
+html.dark #live-new-item:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+}
+ 
+/* Timer mode switcher bg */
+html.dark .flex.rounded-xl.bg-gray-100,
+html.dark .flex.w-full.sm\:inline-flex.rounded-xl.bg-gray-100 {
+    background-color: #1e2130 !important;
+}
+ 
+html.dark .timer-mode-btn,
+html.dark .edit-timer-mode-btn {
+    color: var(--text-muted) !important;
+}
+ 
+/* Active mode btn is bg-primary_purp — keep white text */
+html.dark .timer-mode-btn.bg-primary_purp,
+html.dark .edit-timer-mode-btn.bg-primary_purp {
+    color: #ffffff !important;
+}
+ 
+/* Start session btn disabled state */
+html.dark #start-session-btn.bg-gray-300 {
+    background-color: #2d3148 !important;
+    color: #64748b !important;
+}
+ 
+/* Session history list dividers */
+html.dark #history-list .divide-y > * + * {
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark .divide-y.divide-gray-50 > * + * {
+    border-color: var(--border-color) !important;
+}
+ 
+/* History empty state icon */
+html.dark #history-empty svg {
+    color: #2d3148 !important;
+}
+ 
+/* Active session name */
+html.dark #active-session-name,
+html.dark #active-timer-mode {
+    color: var(--text-primary) !important;
+}
+ 
+/* In Progress badge */
+html.dark #active-badge {
+    background-color: #052e16 !important;
+    color: #4ade80 !important;
+}
+ 
+/* Countdown done badge */
+html.dark #countdown-done-badge {
+    background-color: #2d1b00 !important;
+    color: #fbbf24 !important;
+}
+ 
+/* Checklist items (rendered by JS — target wrapper) */
+html.dark #checklist-builder *,
+html.dark #live-checklist *,
+html.dark #edit-checklist-list * {
+    color: var(--text-primary) !important;
+}
+ 
+/* Checklist item bg */
+html.dark #checklist-builder > div,
+html.dark #live-checklist > div {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+}
+ 
+/* Session history rows */
+html.dark #history-list > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #history-list .text-gray-800,
+html.dark #history-list .text-gray-700 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #history-list .text-gray-500,
+html.dark #history-list .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+ 
+/* Resume & Edit modals */
+html.dark #resume-choice-modal > div,
+html.dark #edit-session-modal > div,
+html.dark #delete-session-modal > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #resume-choice-modal h3,
+html.dark #edit-session-modal h3,
+html.dark #delete-session-modal h3 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #resume-choice-modal p,
+html.dark #delete-session-modal p {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #resume-choice-continue-btn {
+    background-color: #4f46e5 !important;
+}
+ 
+html.dark #resume-choice-new-btn {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #resume-choice-cancel-btn {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #edit-cancel-btn,
+html.dark #delete-session-cancel {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #cbd5e1 !important;
+}
+ 
+html.dark #edit-modal-close {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #edit-modal-close:hover {
+    background-color: #252840 !important;
+    color: var(--text-primary) !important;
+}
+ 
+/* Quick tips card */
+html.dark #setup-phase .text-xs.text-gray-500 {
+    color: var(--text-muted) !important;
+}
+ 
+/* h/m labels next to countdown inputs */
+html.dark .text-sm.text-gray-500.roboto-regular {
+    color: var(--text-muted) !important;
+}
+ 
+/* ---------- Groups page: dark mode ---------- */
+ 
+/* Page background */
+html.dark .bg-backgroud_cal_light {
+    background-color: #0f1117 !important;
+}
+ 
+/* Page heading */
+html.dark h2.text-gray-800 {
+    color: var(--text-primary) !important;
+}
+ 
+/* Search input */
+html.dark #group-search {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark #group-search::placeholder {
+    color: #64748b !important;
+}
+ 
+/* Sidebar cards */
+html.dark #invitations,
+html.dark #sent-invitations,
+html.dark .w-72 .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #invitations h3,
+html.dark #sent-invitations h3,
+html.dark .w-72 h3 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #invitations .text-gray-400,
+html.dark #sent-invitations .text-gray-400,
+html.dark #no-invitations p,
+html.dark #no-sent-invitations p {
+    color: var(--text-muted) !important;
+}
+ 
+/* Friend code display box */
+html.dark .bg-indigo-50.rounded-xl {
+    background-color: #1e1b4b !important;
+}
+ 
+html.dark #friend-code-display {
+    color: #a78bfa !important;
+}
+ 
+html.dark #copy-friend-code {
+    background-color: #1e1b4b !important;
+    color: #818cf8 !important;
+}
+ 
+html.dark #copy-friend-code:hover {
+    background-color: #252870 !important;
+}
+ 
+html.dark #copy-toast {
+    color: #4ade80 !important;
+}
+ 
+/* Groups grid cards (rendered by JS — target container children) */
+html.dark #groups-container > div {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #groups-container .text-gray-800,
+html.dark #groups-container .text-gray-700 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #groups-container .text-gray-500,
+html.dark #groups-container .text-gray-400 {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #groups-container .bg-gray-100 {
+    background-color: #252840 !important;
+}
+ 
+/* Empty groups message */
+html.dark #empty-groups p {
+    color: var(--text-muted) !important;
+}
+ 
+/* Create Group / Invite Member modals */
+html.dark #group-modal > div > div,
+html.dark #group-modal .bg-white,
+html.dark #invite-modal .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+ 
+html.dark #group-modal h3,
+html.dark #invite-modal h3 {
+    color: var(--text-primary) !important;
+}
+ 
+html.dark #group-modal label,
+html.dark #invite-modal label {
+    color: #cbd5e1 !important;
+}
+ 
+html.dark #group-modal .text-gray-500,
+html.dark #invite-modal .text-gray-400,
+html.dark #invite-modal .text-gray-500 {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #group-name,
+html.dark #group-description {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark #group-name:focus,
+html.dark #group-description:focus {
+    background-color: #2d3148 !important;
+    border-color: #6366f1 !important;
+}
+ 
+html.dark #group-cancel-btn,
+html.dark #modal-done-btn {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #cbd5e1 !important;
+}
+ 
+html.dark #group-modal-close,
+html.dark #invite-modal-close {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #group-modal-close:hover,
+html.dark #invite-modal-close:hover {
+    background-color: #252840 !important;
+    color: var(--text-primary) !important;
+}
+ 
+/* Group created success icon badge */
+html.dark #modal-step-invite .bg-green-100 {
+    background-color: #052e16 !important;
+}
+ 
+/* Invite code rows (friend code inputs rendered by JS) */
+html.dark .invite-code-rows input {
+    background-color: #252840 !important;
+    border-color: #3a3f5c !important;
+    color: #f1f5f9 !important;
+}
+ 
+html.dark .invite-user-preview {
+    background-color: #1e2130 !important;
+    border-color: #3a3f5c !important;
+    color: var(--text-primary) !important;
+}
+ 
+/* Modal note text */
+html.dark #group-modal p.text-\[11px\],
+html.dark #invite-modal p.text-\[11px\] {
+    color: var(--text-muted) !important;
+}
+ 
+html.dark #invite-modal-group-name {
+    color: var(--text-muted) !important;
+}
