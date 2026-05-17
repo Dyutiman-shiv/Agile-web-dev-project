@@ -219,14 +219,20 @@ $(document).ready(function () {
       }
 
       const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
       const futureAssessments = assessments.filter((a) => {
+
         if (!a.due_date) return false;
         const dueDate = new Date(a.due_date);
 
+         const dateParts = a.due_date.split('-');
+         const parsedDueDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+
         const isCompleted = parseFloat(a.score) > 0;
 
-        return dueDate >= now && !isCompleted;
+        return parsedDueDate >= startOfToday && !isCompleted;
+
       });
 
       if (futureAssessments.length === 0) {
@@ -530,7 +536,6 @@ $("#confirm-delete-btn")
 
   function loadDashboardFeed() {
     $.getJSON("/api/dashboard/feed", function (posts) {
-      // Reutilizamos exactamente la función renderPosts que ya programaste
       renderPosts(posts);
     }).fail(function () {
       $("#posts-container").html(`
@@ -591,29 +596,30 @@ $("#confirm-delete-btn")
 
           <div class="flex items-center gap-3 mb-2">
 
+
             ${
-              post.author_picture
+              post.group.name
                 ? `
                   <img
-                    src="${post.author_picture}"
+                    src="/static/${post.group.cover_picture || "/static/group_covers/default_group.png"}"
                     class="w-11 h-11 rounded-full object-cover"
                   />
                 `
                 : `
                   <div class="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold">
-                    ${post.author_name[0].toUpperCase()}
+                    ${post.group.name[0].toUpperCase()}
                   </div>
                 `
             }
 
             <div>
 
-              <p class="text-sm montserrat-medium text-gray-800">
-                ${post.author_name}
-              </p>
+              <a href="/api/groups/${post.group.id}" class="text-sm montserrat-medium text-gray-800 hover:opacity-80 transition-opacity">
+                ${post.group.name || "Unknown Group"}
+              </a>
 
               <p class="text-xs text-gray-400">
-                ${formattedDate}
+                <span>${post.author_name} - </span><span>${formattedDate}</span>
               </p>
 
             </div>

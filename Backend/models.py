@@ -491,7 +491,8 @@ class Post(db.Model):
             "author_id": self.author.id,
             "author_picture": self.author.profile_picture,
             "comments": [c.to_dict() for c in self.comments],
-            "likes": [l.user_id for l in self.likes]
+            "likes": [l.user_id for l in self.likes],
+            "group": self.group.to_dict() if self.group else None
         }
 
 
